@@ -8,7 +8,7 @@
 #include "DataStorage.h"
 #include "Executable.h"
 
-template<typename T, class ContainerType>
+template<typename T, typename ContainerType>
 void containerToDataStorage(DataStorage<T> &dest, const ContainerType &src)
 {
 	size_t cnt;
@@ -18,8 +18,8 @@ void containerToDataStorage(DataStorage<T> &dest, const ContainerType &src)
 		dest.get()[cnt ++] = i;
 }
 
-template<typename T, class ContainerType>
-void containerToDataStorage(DataStorage<T> &dest, ContainerType &&src)
+template<typename T, typename ContainerType>
+void containerToDataStorage(DataStorage<T> &dest, const ContainerType &&src)
 {
 	size_t cnt;
 	dest.resize(src.size());
@@ -29,7 +29,7 @@ void containerToDataStorage(DataStorage<T> &dest, ContainerType &&src)
 }
 
 template<typename T>
-void containerToDataStorage(DataStorage<T> &dest, std::string &&src)
+void containerToDataStorage(DataStorage<T> &dest, const std::string &&src)
 {
 	size_t cnt;
 	dest.resize(src.size() + 1);
