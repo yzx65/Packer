@@ -4,8 +4,14 @@
 #include <utility>
 #include "DataStorage.h"
 
+enum ArchitectureType
+{
+	ArchitectureWin32,
+	ArchitectureWin32AMD64,
+};
 struct ExecutableInfo
 {
+	ArchitectureType architecture;
 	uint64_t baseAddress;
 	uint64_t entryPoint;
 	uint64_t size;

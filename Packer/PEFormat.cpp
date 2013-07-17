@@ -31,7 +31,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file): file_(file)
 		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_.begin());
 		info_.baseAddress = optionalHeader.ImageBase;
 		info_.size = optionalHeader.SizeOfImage;
-		is64_ = false;
+		info_.architecture = ArchitectureWin32;
 		headerSize = optionalHeader.SizeOfHeaders;
 	}
 	else if(optionalHeaderBase.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
@@ -42,7 +42,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file): file_(file)
 		info_.baseAddress = optionalHeader.ImageBase;
 		info_.size = optionalHeader.SizeOfImage;
 		headerSize = optionalHeader.SizeOfHeaders;
-		is64_ = true;
+		info_.architecture = ArchitectureWin32AMD64;
 	}
 
 	std::list<IMAGE_SECTION_HEADER> sectionHeaders;
@@ -150,10 +150,11 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 
 			ImportFunction function;
 			function.ordinal = 0;
+			function.iat = iat;
 
-			if((is64_ && (*reinterpret_cast<uint64_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG64)) || (*reinterpret_cast<uint32_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG32))
+			if((info_.architecture == ArchitectureWin32AMD64 && (*reinterpret_cast<uint64_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG64)) || (*reinterpret_cast<uint32_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG32))
 			{
-				if(is64_)
+				if(info_.architecture == ArchitectureWin32AMD64)
 					function.ordinal = *reinterpret_cast<uint64_t *>(nameEntryPtr) & 0xffff;
 				else
 					function.ordinal = *reinterpret_cast<uint32_t *>(nameEntryPtr) & 0xffff;
@@ -161,7 +162,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 			else
 			{
 				IMAGE_IMPORT_BY_NAME *nameEntry;
-				if(is64_)
+				if(info_.architecture == ArchitectureWin32AMD64)
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint64_t *>(nameEntryPtr)));
 				else
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
@@ -170,15 +171,13 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 				containerToDataStorage(function.name, std::string(reinterpret_cast<const char *>(nameEntry->Name)));
 			}
 
-			if(is64_)
+			if(info_.architecture == ArchitectureWin32AMD64)
 			{
-				function.iat = iat;
 				nameEntryPtr += 2;
 				iat += 8;
 			}
 			else
 			{
-				function.iat = iat;
 				nameEntryPtr ++;
 				iat += 4;
 			}

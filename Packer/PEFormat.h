@@ -11,7 +11,6 @@
 class PEFormat : public FormatBase
 {
 private:
-	bool is64_;
 	std::array<IMAGE_DATA_DIRECTORY, 16> dataDirectories_;
 	std::shared_ptr<File> file_;
 	std::list<Section> sections_;
