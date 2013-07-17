@@ -41,7 +41,7 @@ std::list<ImportLibrary> PackerMain::loadImport(std::shared_ptr<FormatBase> inpu
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
-		const char *libraryName = i.libraryName.get();
+		std::string libraryName(i.libraryName.get());
 		for(auto &j : loadedFiles_)
 			if(j->getFilename().compare(libraryName) == 0)
 			{
@@ -51,9 +51,9 @@ std::list<ImportLibrary> PackerMain::loadImport(std::shared_ptr<FormatBase> inpu
 		if(alreadyLoaded)
 			continue;
 
-		std::shared_ptr<FormatBase> libraryFile = input->loadImport(std::string(libraryName));
-		if(libraryFile->isSystemLibrary())
+		if(input->isSystemLibrary(libraryName))
 			continue;
+		std::shared_ptr<FormatBase> libraryFile = input->loadImport(libraryName);
 		loadedFiles_.push_back(libraryFile);
 		ImportLibrary library;
 		library.library = libraryFile;
@@ -77,12 +77,12 @@ void PackerMain::processFile(std::shared_ptr<File> file)
 		throw std::exception();
 
 	loadedFiles_.push_back(input);
-
+	/*
 	//test
 	Executable executable = input->serialize();
 	Win32Loader loader(executable);
 	loader.load();
-
+	*/
 	std::list<ImportLibrary> imports = loadImport(input);
 }
 
