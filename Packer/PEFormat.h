@@ -28,7 +28,8 @@ public:
 
 	virtual std::string getFilename();
 	virtual std::shared_ptr<FormatBase> loadImport(const std::string &filename);
-	virtual bool isSystemLibrary();
 	virtual Executable serialize();
 	virtual std::list<Import> getImports();
+
+	virtual bool isSystemLibrary(const std::string &filename);
 };

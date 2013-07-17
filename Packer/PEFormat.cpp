@@ -2,10 +2,22 @@
 
 #include "Signature.h"
 #include "PEHeader.h"
+#include "Util.h"
 
 #include <list>
+#include <sstream>
 
-PEFormat::PEFormat(std::shared_ptr<File> file): file_(file)
+#ifdef _WIN32
+extern "C" {
+	int __stdcall GetEnvironmentVariableW(
+		_In_opt_   const wchar_t * lpName,
+		_Out_opt_  wchar_t * lpBuffer,
+		_In_       unsigned int nSize
+		);
+}
+#endif
+
+PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 {
 	IMAGE_DOS_HEADER dosHeader;
 	uint32_t ntSignature;
@@ -200,17 +212,28 @@ void PEFormat::processDataDirectory()
 
 std::string PEFormat::getFilename()
 {
-	return file_->getFilename();
+	return file_->getFileName();
 }
 
 std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 {
+	std::list<std::string> searchPaths;
+	searchPaths.push_back(file_->getFilePath());
+#ifdef _WIN32
+	wchar_t buffer[32768];
+	GetEnvironmentVariableW(L"Path", buffer, 32768);
+	std::wistringstream iss(buffer);
+	std::wstring item;
+	while(std::getline(iss, item, L';'))
+		searchPaths.push_back(WStringToString(item));
+#endif
+	for(auto &i : searchPaths)
+	{
+		std::string path = File::combinePath(i, filename);
+		if(File::isPathExists(path))
+			return std::make_shared<PEFormat>(File::open(path));
+	}
 	return std::make_shared<PEFormat>(nullptr);
-}
-
-bool PEFormat::isSystemLibrary()
-{
-	return true;
 }
 
 std::list<Import> PEFormat::getImports()
@@ -221,6 +244,7 @@ std::list<Import> PEFormat::getImports()
 Executable PEFormat::serialize()
 {
 	Executable executable;
+	containerToDataStorage(executable.fileName, getFilename());
 	executable.info = info_;
 	containerToDataStorage(executable.imports, imports_);
 	containerToDataStorage(executable.sections, sections_);
@@ -228,4 +252,15 @@ Executable PEFormat::serialize()
 	containerToDataStorage(executable.extendedData, extendedData_);
 
 	return std::move(executable);
+}
+
+bool PEFormat::isSystemLibrary(const std::string &filename)
+{
+	std::string lowered;
+	std::transform(filename.begin(), filename.end(), std::back_inserter(lowered), ::tolower);
+	const char *systemFiles[] = {"kernel32.dll", "user32.dll", nullptr};
+	for(int i = 0; systemFiles[i] != nullptr; i ++)
+		if(lowered.compare(systemFiles[i]) == 0)
+			return true;
+	return false;
 }
