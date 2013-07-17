@@ -97,7 +97,7 @@ struct Import
 struct Executable
 {
 	Executable() {}
-	Executable(Executable &&operand) : info(operand.info), sections(std::move(operand.sections)), imports(std::move(operand.imports)), relocations(std::move(operand.relocations)), extendedData(std::move(operand.extendedData)) {}
+	Executable(Executable &&operand) : info(operand.info), sections(std::move(operand.sections)), imports(std::move(operand.imports)), relocations(std::move(operand.relocations)), extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)) {}
 	const Executable &operator =(Executable &&operand)
 	{
 		info = std::move(operand.info);
@@ -105,10 +105,12 @@ struct Executable
 		imports = std::move(operand.imports);
 		relocations = std::move(operand.relocations);
 		extendedData = std::move(operand.extendedData);
+		fileName = std::move(operand.fileName);
 
 		return *this;
 	}
 	ExecutableInfo info;
+	DataStorage<char> fileName;
 	DataStorage<Section> sections;
 	DataStorage<Import> imports;
 	DataStorage<uint64_t> relocations;
