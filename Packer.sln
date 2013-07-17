@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packer", "Packer\Packer.vcxproj", "{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PETest", "PETest\PETest.vcxproj", "{37C23896-C95D-43B8-B809-907689B51CC6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}.Debug|Win32.ActiveCfg = Debug|Win32
+		{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}.Debug|Win32.Build.0 = Debug|Win32
+		{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}.Release|Win32.ActiveCfg = Release|Win32
+		{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}.Release|Win32.Build.0 = Release|Win32
+		{37C23896-C95D-43B8-B809-907689B51CC6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{37C23896-C95D-43B8-B809-907689B51CC6}.Debug|Win32.Build.0 = Debug|Win32
+		{37C23896-C95D-43B8-B809-907689B51CC6}.Release|Win32.ActiveCfg = Release|Win32
+		{37C23896-C95D-43B8-B809-907689B51CC6}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
