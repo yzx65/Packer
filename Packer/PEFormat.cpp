@@ -8,6 +8,7 @@
 #include <sstream>
 
 #ifdef _WIN32
+//We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.
 extern "C" {
 	int __stdcall GetEnvironmentVariableW(
 		_In_opt_   const wchar_t * lpName,
