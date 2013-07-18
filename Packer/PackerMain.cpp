@@ -72,11 +72,11 @@ void PackerMain::processFile(std::shared_ptr<File> file)
 	std::list<std::shared_ptr<FormatBase>> imports = loadImport(input);
 	
 	//test
-	Executable executable = input->serialize();
-	std::list<Executable> importExecutables;
+	Image image = input->serialize();
+	std::list<Image> importImages;
 	for(auto &i : imports)
-		importExecutables.push_back(i->serialize());
-	Win32Loader loader(executable, containerToDataStorage(std::move(importExecutables)));
+		importImages.push_back(i->serialize());
+	Win32Loader loader(image, containerToDataStorage(std::move(importImages)));
 	loader.execute();
 }
 

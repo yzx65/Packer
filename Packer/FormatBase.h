@@ -6,7 +6,7 @@
 #include <list>
 
 #include "DataStorage.h"
-#include "Executable.h"
+#include "Image.h"
 
 template<class ContainerType>
 DataStorage<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
@@ -62,7 +62,7 @@ public:
 	FormatBase() {}
 	virtual ~FormatBase() {}
 
-	virtual Executable serialize() = 0;
+	virtual Image serialize() = 0;
 	virtual std::string getFilename() = 0;
 	virtual std::shared_ptr<FormatBase> loadImport(const std::string &filename) = 0;
 	virtual std::list<Import> getImports() = 0;

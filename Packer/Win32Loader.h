@@ -1,18 +1,18 @@
 #pragma once
 
 #include "DataStorage.h"
-#include "Executable.h"
+#include "Image.h"
 
 class Win32Loader
 {
 private:
-	const Executable &executable_;
-	const DataStorage<Executable> &imports_;
+	const Image &image_;
+	const DataStorage<Image> &imports_;
 	void *loadLibrary(const char *filename);
 	uint32_t getFunctionAddress(void *library, const char *functionName);
-	uint8_t *loadExecutable(const Executable &executable);
+	uint8_t *loadImage(const Image &image);
 public:
-	Win32Loader(const Executable &executable, const DataStorage<Executable> imports);
+	Win32Loader(const Image &image, const DataStorage<Image> imports);
 	virtual ~Win32Loader() {}
 
 	void execute();

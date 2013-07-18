@@ -65,7 +65,7 @@
     <ClInclude Include="DataStorage.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Executable.h">
+    <ClInclude Include="Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

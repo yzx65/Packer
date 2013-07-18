@@ -17,7 +17,7 @@ private:
 	std::list<Import> imports_;
 	std::list<uint64_t> relocations_;
 	std::list<ExtendedData> extendedData_;
-	ExecutableInfo info_;
+	ImageInfo info_;
 	void processDataDirectory();
 	void processRelocation(IMAGE_BASE_RELOCATION *info);
 	void processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor);
@@ -28,7 +28,7 @@ public:
 
 	virtual std::string getFilename();
 	virtual std::shared_ptr<FormatBase> loadImport(const std::string &filename);
-	virtual Executable serialize();
+	virtual Image serialize();
 	virtual std::list<Import> getImports();
 
 	virtual bool isSystemLibrary(const std::string &filename);

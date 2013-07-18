@@ -241,17 +241,17 @@ std::list<Import> PEFormat::getImports()
 	return imports_;
 }
 
-Executable PEFormat::serialize()
+Image PEFormat::serialize()
 {
-	Executable executable;
-	executable.fileName = containerToDataStorage(getFilename());
-	executable.info = info_;
-	executable.imports = containerToDataStorage(imports_);
-	executable.sections = containerToDataStorage(sections_);
-	executable.relocations = containerToDataStorage(relocations_);
-	executable.extendedData = containerToDataStorage(extendedData_);
+	Image image;
+	image.fileName = containerToDataStorage(getFilename());
+	image.info = info_;
+	image.imports = containerToDataStorage(imports_);
+	image.sections = containerToDataStorage(sections_);
+	image.relocations = containerToDataStorage(relocations_);
+	image.extendedData = containerToDataStorage(extendedData_);
 
-	return std::move(executable);
+	return std::move(image);
 }
 
 bool PEFormat::isSystemLibrary(const std::string &filename)

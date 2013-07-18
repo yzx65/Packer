@@ -9,7 +9,7 @@ enum ArchitectureType
 	ArchitectureWin32,
 	ArchitectureWin32AMD64,
 };
-struct ExecutableInfo
+struct ImageInfo
 {
 	ArchitectureType architecture;
 	uint64_t baseAddress;
@@ -94,11 +94,11 @@ struct Import
 	DataStorage<ImportFunction> functions;
 };
 
-struct Executable
+struct Image
 {
-	Executable() {}
-	Executable(Executable &&operand) : info(operand.info), sections(std::move(operand.sections)), imports(std::move(operand.imports)), relocations(std::move(operand.relocations)), extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)) {}
-	const Executable &operator =(Executable &&operand)
+	Image() {}
+	Image(Image &&operand) : info(operand.info), sections(std::move(operand.sections)), imports(std::move(operand.imports)), relocations(std::move(operand.relocations)), extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)) {}
+	const Image &operator =(Image &&operand)
 	{
 		info = std::move(operand.info);
 		sections = std::move(operand.sections);
@@ -109,7 +109,7 @@ struct Executable
 
 		return *this;
 	}
-	ExecutableInfo info;
+	ImageInfo info;
 	DataStorage<char> fileName;
 	DataStorage<Section> sections;
 	DataStorage<Import> imports;
