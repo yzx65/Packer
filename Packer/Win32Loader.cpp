@@ -4,27 +4,27 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(const Executable &executable) : executable_(executable)
+Win32Loader::Win32Loader(const Executable &executable, const DataStorage<Executable> imports) : executable_(executable), imports_(imports)
 {
 	loaderInstance_ = this;
 }
 
-void Win32Loader::load()
+uint8_t *Win32Loader::loadExecutable(const Executable &executable)
 {
 	uint8_t *baseAddress;
-	baseAddress = reinterpret_cast<uint8_t *>(VirtualAlloc(nullptr, static_cast<uint32_t>(executable_.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+	baseAddress = reinterpret_cast<uint8_t *>(VirtualAlloc(nullptr, static_cast<uint32_t>(executable.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
-	for(auto &i : executable_.extendedData)
+	for(auto &i : executable.extendedData)
 		memcpy(baseAddress + i.baseAddress, &i.data[0], i.data.size());
 
-	for(auto &i : executable_.sections)
+	for(auto &i : executable.sections)
 		memcpy(baseAddress + i.baseAddress, &i.data[0], i.data.size());
 
-	int32_t diff = reinterpret_cast<int32_t>(baseAddress) - static_cast<int32_t>(executable_.info.baseAddress);
-	for(auto &i : executable_.relocations)
+	int32_t diff = reinterpret_cast<int32_t>(baseAddress) - static_cast<int32_t>(executable.info.baseAddress);
+	for(auto &i : executable.relocations)
 		*reinterpret_cast<int32_t *>(baseAddress + i) += diff;
 
-	for(auto &i : executable_.imports)
+	for(auto &i : executable.imports)
 	{
 		void *library = loadLibrary(i.libraryName.get());
 		for(auto &j : i.functions)
@@ -34,7 +34,7 @@ void Win32Loader::load()
 		}
 	}
 
-	for(auto &i : executable_.sections)
+	for(auto &i : executable.sections)
 	{
 		DWORD unused, protect = 0;
 		if(i.flag & SectionFlagRead)
@@ -52,6 +52,13 @@ void Win32Loader::load()
 		VirtualProtect(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
 
+	return baseAddress;
+}
+
+void Win32Loader::execute()
+{
+	uint8_t *baseAddress = loadExecutable(executable_);
+
 	typedef void (*EntryPointType)();
 	EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + executable_.info.entryPoint);
 	entryPoint();
@@ -59,6 +66,10 @@ void Win32Loader::load()
 
 void *Win32Loader::loadLibrary(const char *filename)
 {
+	for(auto &i : imports_)
+		if(strcmp(filename, i.fileName.get()) == 0)
+			return loadExecutable(i);
+
 	return LoadLibraryA(filename);
 }
 

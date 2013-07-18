@@ -69,13 +69,15 @@ void PackerMain::processFile(std::shared_ptr<File> file)
 		throw std::exception();
 
 	loadedFiles_.push_back(input->getFilename());
-	/*
+	std::list<std::shared_ptr<FormatBase>> imports = loadImport(input);
+	
 	//test
 	Executable executable = input->serialize();
-	Win32Loader loader(executable);
-	loader.load();
-	*/
-	std::list<std::shared_ptr<FormatBase>> imports = loadImport(input);
+	std::list<Executable> importExecutables;
+	for(auto &i : imports)
+		importExecutables.push_back(i->serialize());
+	Win32Loader loader(executable, containerToDataStorage(std::move(importExecutables)));
+	loader.execute();
 }
 
 #if !defined(_UNICODE) || !defined(_WIN32)
