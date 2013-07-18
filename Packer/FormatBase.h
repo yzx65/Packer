@@ -8,46 +8,52 @@
 #include "DataStorage.h"
 #include "Executable.h"
 
-template<typename T, typename ContainerType>
-void containerToDataStorage(DataStorage<T> &dest, const ContainerType &src)
+template<class ContainerType>
+DataStorage<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
 {
+	DataStorage<typename ContainerType::value_type> result;
 	size_t cnt;
-	dest.resize(src.size());
+	result.resize(src.size());
 	cnt = 0;
 	for(auto &i : src)
-		dest.get()[cnt ++] = i;
+		result.get()[cnt ++] = i;
+	return result;
 }
 
-template<typename T, typename ContainerType>
-void containerToDataStorage(DataStorage<T> &dest, const ContainerType &&src)
+template<class ContainerType>
+DataStorage<typename ContainerType::value_type> containerToDataStorage(ContainerType &&src)
 {
+	DataStorage<typename ContainerType::value_type> result;
 	size_t cnt;
-	dest.resize(src.size());
+	result.resize(src.size());
 	cnt = 0;
 	for(auto &i : src)
-		dest.get()[cnt ++] = std::move(i);
+		result.get()[cnt ++] = std::move(i);
+	return result;
 }
 
-template<typename T>
-void containerToDataStorage(DataStorage<T> &dest, const std::string &&src)
+inline DataStorage<char> containerToDataStorage(std::string &&src)
 {
+	DataStorage<char> result;
 	size_t cnt;
-	dest.resize(src.size() + 1);
+	result.resize(src.size() + 1);
 	cnt = 0;
 	for(auto &i : src)
-		dest.get()[cnt ++] = i;
-	dest.get()[cnt ++] = '\0';
+		result.get()[cnt ++] = i;
+	result.get()[cnt ++] = '\0';
+	return result;
 }
 
-template<typename T>
-void containerToDataStorage(DataStorage<T> &dest, const std::string &src)
+inline DataStorage<char> containerToDataStorage(const std::string &src)
 {
+	DataStorage<char> result;
 	size_t cnt;
-	dest.resize(src.size() + 1);
+	result.resize(src.size() + 1);
 	cnt = 0;
 	for(auto &i : src)
-		dest.get()[cnt ++] = i;
-	dest.get()[cnt ++] = '\0';
+		result.get()[cnt ++] = i;
+	result.get()[cnt ++] = '\0';
+	return result;
 }
 
 class FormatBase

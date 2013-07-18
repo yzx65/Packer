@@ -68,7 +68,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 	{
 		Section section;
 		section.baseAddress = sectionHeader.VirtualAddress;
-		containerToDataStorage(section.name, std::string(reinterpret_cast<const char *>(sectionHeader.Name)));
+		section.name = containerToDataStorage(std::string(reinterpret_cast<const char *>(sectionHeader.Name)));
 		section.size = sectionHeader.VirtualSize;
 		section.flag = 0;
 
@@ -149,7 +149,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 		Import import;
 
 		uint8_t *libraryNamePtr = getDataPointerOfRVA(descriptor->Name);
-		containerToDataStorage(import.libraryName, std::string(reinterpret_cast<const char *>(libraryNamePtr)));
+		import.libraryName = containerToDataStorage(std::string(reinterpret_cast<const char *>(libraryNamePtr)));
 
 		uint32_t *nameEntryPtr = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(descriptor->OriginalFirstThunk));
 		uint64_t iat = descriptor->FirstThunk;
@@ -180,7 +180,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
 				
-				containerToDataStorage(function.name, std::string(reinterpret_cast<const char *>(nameEntry->Name)));
+				function.name = containerToDataStorage(std::string(reinterpret_cast<const char *>(nameEntry->Name)));
 			}
 
 			if(info_.architecture == ArchitectureWin32AMD64)
@@ -196,7 +196,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 
 			importFunctions.push_back(std::move(function));
 		}
-		containerToDataStorage(import.functions, std::move(importFunctions));
+		import.functions = containerToDataStorage(std::move(importFunctions));
 
 		imports_.push_back(std::move(import));
 
@@ -244,12 +244,12 @@ std::list<Import> PEFormat::getImports()
 Executable PEFormat::serialize()
 {
 	Executable executable;
-	containerToDataStorage(executable.fileName, getFilename());
+	executable.fileName = containerToDataStorage(getFilename());
 	executable.info = info_;
-	containerToDataStorage(executable.imports, imports_);
-	containerToDataStorage(executable.sections, sections_);
-	containerToDataStorage(executable.relocations, relocations_);
-	containerToDataStorage(executable.extendedData, extendedData_);
+	executable.imports = containerToDataStorage(imports_);
+	executable.sections = containerToDataStorage(sections_);
+	executable.relocations = containerToDataStorage(relocations_);
+	executable.extendedData = containerToDataStorage(extendedData_);
 
 	return std::move(executable);
 }
