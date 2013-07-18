@@ -7,13 +7,6 @@
 #include "Signature.h"
 #include "Win32Loader.h"
 
-struct ImportLibrary
-{
-public:
-	std::shared_ptr<FormatBase> library;
-	std::list<ImportLibrary> dependencies;
-};
-
 PackerMain::PackerMain(const Option &option) : option_(option)
 {
 }
@@ -35,15 +28,15 @@ int PackerMain::process()
 	return 0;
 }
 
-std::list<ImportLibrary> PackerMain::loadImport(std::shared_ptr<FormatBase> input)
+std::list<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatBase> input)
 {
-	std::list<ImportLibrary> result;
+	std::list<std::shared_ptr<FormatBase>> result;
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
-		std::string libraryName(i.libraryName.get());
+		std::string fileName(i.libraryName.get());
 		for(auto &j : loadedFiles_)
-			if(j->getFilename().compare(libraryName) == 0)
+			if(j == fileName)
 			{
 				alreadyLoaded = true;
 				break;
@@ -51,15 +44,14 @@ std::list<ImportLibrary> PackerMain::loadImport(std::shared_ptr<FormatBase> inpu
 		if(alreadyLoaded)
 			continue;
 
-		if(input->isSystemLibrary(libraryName))
+		if(input->isSystemLibrary(fileName))
 			continue;
-		std::shared_ptr<FormatBase> libraryFile = input->loadImport(libraryName);
-		loadedFiles_.push_back(libraryFile);
-		ImportLibrary library;
-		library.library = libraryFile;
-		library.dependencies = loadImport(libraryFile);
+		std::shared_ptr<FormatBase> import = input->loadImport(fileName);
+		loadedFiles_.push_back(import->getFilename());
+		result.push_back(import);
 
-		result.push_back(library);
+		std::list<std::shared_ptr<FormatBase>> dependencies = loadImport(import);
+		result.insert(result.end(), dependencies.begin(), dependencies.end());
 	}
 
 	return result;
@@ -76,14 +68,14 @@ void PackerMain::processFile(std::shared_ptr<File> file)
 	else
 		throw std::exception();
 
-	loadedFiles_.push_back(input);
+	loadedFiles_.push_back(input->getFilename());
 	/*
 	//test
 	Executable executable = input->serialize();
 	Win32Loader loader(executable);
 	loader.load();
 	*/
-	std::list<ImportLibrary> imports = loadImport(input);
+	std::list<std::shared_ptr<FormatBase>> imports = loadImport(input);
 }
 
 #if !defined(_UNICODE) || !defined(_WIN32)
