@@ -101,6 +101,15 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 	extendedData.data = std::move(file_->readAmount(headerSize));
 
 	extendedData_.push_back(std::move(extendedData));
+
+	if(dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].Size)
+	{
+		ExtendedData extendedData;
+		extendedData.baseAddress = dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+		extendedData.data.assign(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress), dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].Size);
+
+		extendedData_.push_back(std::move(extendedData));
+	}
 }
 
 PEFormat::~PEFormat()
