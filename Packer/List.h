@@ -89,11 +89,11 @@ public:
 		head_->prev = item;
 	}
 
-	void push_back(const value_type &&data)
+	void push_back(value_type &&data)
 	{
 		ListItem *item = new ListItem();
 		item->next = head_;
-		item->data = data;
+		item->data = std::move(data);
 		item->prev = head_->prev;
 		head_->prev->next = item;
 		head_->prev = item;
