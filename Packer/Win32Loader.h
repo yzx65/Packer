@@ -12,7 +12,7 @@ private:
 	uint32_t getFunctionAddress(void *library, const char *functionName);
 	uint8_t *loadImage(const Image &image);
 public:
-	Win32Loader(const Image &image, const DataStorage<Image> imports);
+	Win32Loader(const Image &image, const DataStorage<Image> &imports);
 	virtual ~Win32Loader() {}
 
 	void execute();
