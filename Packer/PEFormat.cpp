@@ -4,7 +4,6 @@
 #include "PEHeader.h"
 #include "Util.h"
 
-#include <sstream>
 #include <algorithm>
 
 #ifdef _WIN32
@@ -232,10 +231,17 @@ std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 #ifdef _WIN32
 	wchar_t buffer[32768];
 	GetEnvironmentVariableW(L"Path", buffer, 32768);
-	std::wistringstream iss(buffer);
-	std::wstring item;
-	while(std::getline(iss, item, L';'))
-		searchPaths.push_back(WStringToString(item));
+
+	std::wstring temp(buffer);
+	int s = 0, e = 0;
+	while(true)
+	{
+		e = temp.find(L';', e + 1);
+		if(e == -1)
+			break;
+		searchPaths.push_back(WStringToString(temp.substr(s, e - s)));
+		s = e + 1;
+	}
 #endif
 	for(auto &i : searchPaths)
 	{
