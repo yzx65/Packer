@@ -2,20 +2,20 @@
 
 #include <memory>
 #include <string>
-#include <list>
 #include <map>
 
+#include "List.h"
 #include "Util.h"
 #include "File.h"
 
 class Option
 {
 private:
-	std::list<std::shared_ptr<File>> inputFiles_;
+	List<std::shared_ptr<File>> inputFiles_;
 	std::map<std::string, bool> booleanOptions_;
 	std::map<std::string, std::string> stringOptions_;
 
-	void parseOptions(int argc, std::list<std::string> rawOptions)
+	void parseOptions(int argc, List<std::string> rawOptions)
 	{
 		for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
 		{
@@ -49,7 +49,7 @@ private:
 public:
 	Option(int argc, char **argv)
 	{
-		std::list<std::string> rawOptions;
+		List<std::string> rawOptions;
 		for(int i = 1; i < argc; i ++)
 			rawOptions.push_back(std::string(argv[i]));
 		parseOptions(argc, rawOptions);
@@ -57,14 +57,14 @@ public:
 
 	Option(int argc, wchar_t **argv)
 	{
-		std::list<std::string> rawOptions;
+		List<std::string> rawOptions;
 		for(int i = 1; i < argc; i ++)
 			rawOptions.push_back(WStringToString(std::wstring(argv[i])));
 		parseOptions(argc, rawOptions);
 	}
 
 
-	std::list<std::shared_ptr<File>> getInputFiles() const
+	List<std::shared_ptr<File>> getInputFiles() const
 	{
 		return inputFiles_;
 	}
