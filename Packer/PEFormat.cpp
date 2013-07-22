@@ -5,6 +5,7 @@
 #include "Util.h"
 
 #include <sstream>
+#include <algorithm>
 
 #ifdef _WIN32
 //We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.
@@ -40,7 +41,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 	{
 		IMAGE_OPTIONAL_HEADER32 optionalHeader;
 		file_->read(&optionalHeader);
-		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_.begin());
+		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
 		info_.baseAddress = optionalHeader.ImageBase;
 		info_.size = optionalHeader.SizeOfImage;
 		info_.architecture = ArchitectureWin32;
@@ -50,7 +51,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 	{
 		IMAGE_OPTIONAL_HEADER64 optionalHeader;
 		file_->read(&optionalHeader);
-		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_.begin());
+		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
 		info_.baseAddress = optionalHeader.ImageBase;
 		info_.size = optionalHeader.SizeOfImage;
 		headerSize = optionalHeader.SizeOfHeaders;

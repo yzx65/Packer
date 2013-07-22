@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <memory>
 
 #include "FormatBase.h"
@@ -11,7 +10,7 @@
 class PEFormat : public FormatBase
 {
 private:
-	std::array<IMAGE_DATA_DIRECTORY, 16> dataDirectories_;
+	IMAGE_DATA_DIRECTORY dataDirectories_[16];
 	std::shared_ptr<File> file_;
 	List<Section> sections_;
 	List<Import> imports_;
