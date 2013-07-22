@@ -6,16 +6,16 @@ template<typename T>
 class List
 {
 private:
-	struct ListTag
+	struct ListNodeBase
 	{
-		ListTag *next;
-		ListTag *prev;
+		ListNodeBase *next;
+		ListNodeBase *prev;
 	};
-	struct ListItem : public ListTag
+	struct ListNode : public ListNodeBase
 	{
 		T data;
 	};
-	ListTag *head_;
+	ListNodeBase *head_;
 	
 	template<typename TagType, typename ItemType, typename ValueType>
 	class ListIterator
@@ -51,21 +51,21 @@ private:
 	};
 public:
 	typedef T value_type;
-	typedef ListIterator<const ListTag, const ListItem, const value_type> const_iterator;
-	typedef ListIterator<ListTag, ListItem, value_type> iterator;
+	typedef ListIterator<const ListNodeBase, const ListNode, const value_type> const_iterator;
+	typedef ListIterator<ListNodeBase, ListNode, value_type> iterator;
 	List() 
 	{
-		head_ = new ListTag();
+		head_ = new ListNodeBase();
 		head_->next = head_;
 		head_->prev = head_;
 	}
 
 	~List()
 	{
-		ListTag *item = head_->next;
+		ListNodeBase *item = head_->next;
 		while(item->next != head_)
 		{
-			ListItem *item_ = static_cast<ListItem *>(item);
+			ListNode *item_ = static_cast<ListNode *>(item);
 			item = item->next;
 			delete item_;
 		}
@@ -74,14 +74,14 @@ public:
 
 	List(const List &other)
 	{
-		head_ = new ListTag();
+		head_ = new ListNodeBase();
 		head_->next = head_;
 		head_->prev = head_;
 
-		ListTag *item = other.head_->next;
+		ListNodeBase *item = other.head_->next;
 		while(item->next != other.head_)
 		{
-			ListItem *item_ = static_cast<ListItem *>(item);
+			ListNode *item_ = static_cast<ListNode *>(item);
 			push_back(item_->data);
 			item = item->next;
 		}
@@ -89,7 +89,7 @@ public:
 
 	void push_back(const value_type &data)
 	{
-		ListItem *item = new ListItem();
+		ListNode *item = new ListNode();
 		item->next = head_;
 		item->data = data;
 		item->prev = head_->prev;
@@ -99,7 +99,7 @@ public:
 
 	void push_back(value_type &&data)
 	{
-		ListItem *item = new ListItem();
+		ListNode *item = new ListNode();
 		item->next = head_;
 		item->data = std::move(data);
 		item->prev = head_->prev;
@@ -130,7 +130,7 @@ public:
 	size_t size() const
 	{
 		size_t size = 0;
-		const ListTag *item = head_;
+		const ListNodeBase *item = head_;
 		while(item->next != head_)
 		{
 			size ++;
