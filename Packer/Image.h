@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <utility>
-#include "DataStorage.h"
+#include "Vector.h"
 
 enum ArchitectureType
 {
@@ -38,7 +38,7 @@ struct ExtendedData //resource, header, ...
 		return *this;
 	}
 	uint64_t baseAddress;
-	DataStorage<uint8_t> data;
+	Vector<uint8_t> data;
 };
 
 struct Section
@@ -55,10 +55,10 @@ struct Section
 
 		return *this;
 	}
-	DataStorage<char> name;
+	Vector<char> name;
 	uint64_t baseAddress;
 	uint64_t size;
-	DataStorage<uint8_t> data;
+	Vector<uint8_t> data;
 	uint32_t flag;
 };
 
@@ -75,7 +75,7 @@ struct ImportFunction
 		return *this;
 	}
 	uint16_t ordinal;
-	DataStorage<char> name;
+	Vector<char> name;
 	uint64_t iat;
 };
 
@@ -90,8 +90,8 @@ struct Import
 
 		return *this;
 	}
-	DataStorage<char> libraryName;
-	DataStorage<ImportFunction> functions;
+	Vector<char> libraryName;
+	Vector<ImportFunction> functions;
 };
 
 struct Image
@@ -110,9 +110,9 @@ struct Image
 		return *this;
 	}
 	ImageInfo info;
-	DataStorage<char> fileName;
-	DataStorage<Section> sections;
-	DataStorage<Import> imports;
-	DataStorage<uint64_t> relocations;
-	DataStorage<ExtendedData> extendedData;
+	Vector<char> fileName;
+	Vector<Section> sections;
+	Vector<Import> imports;
+	Vector<uint64_t> relocations;
+	Vector<ExtendedData> extendedData;
 };

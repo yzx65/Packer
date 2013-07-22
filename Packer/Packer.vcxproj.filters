@@ -62,13 +62,13 @@
     <ClInclude Include="Win32Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataStorage.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="List.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

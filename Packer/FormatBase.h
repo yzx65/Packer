@@ -4,14 +4,14 @@
 #include <string>
 #include <memory>
 
-#include "DataStorage.h"
+#include "Vector.h"
 #include "Image.h"
 #include "List.h"
 
 template<class ContainerType>
-DataStorage<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
+Vector<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
 {
-	DataStorage<typename ContainerType::value_type> result;
+	Vector<typename ContainerType::value_type> result;
 	size_t cnt;
 	result.resize(src.size());
 	cnt = 0;
@@ -21,9 +21,9 @@ DataStorage<typename ContainerType::value_type> containerToDataStorage(const Con
 }
 
 template<class ContainerType>
-DataStorage<typename ContainerType::value_type> containerToDataStorage(ContainerType &&src)
+Vector<typename ContainerType::value_type> containerToDataStorage(ContainerType &&src)
 {
-	DataStorage<typename ContainerType::value_type> result;
+	Vector<typename ContainerType::value_type> result;
 	size_t cnt;
 	result.resize(src.size());
 	cnt = 0;
@@ -32,9 +32,9 @@ DataStorage<typename ContainerType::value_type> containerToDataStorage(Container
 	return result;
 }
 
-inline DataStorage<char> containerToDataStorage(std::string &&src)
+inline Vector<char> containerToDataStorage(std::string &&src)
 {
-	DataStorage<char> result;
+	Vector<char> result;
 	size_t cnt;
 	result.resize(src.size() + 1);
 	cnt = 0;
@@ -44,9 +44,9 @@ inline DataStorage<char> containerToDataStorage(std::string &&src)
 	return result;
 }
 
-inline DataStorage<char> containerToDataStorage(const std::string &src)
+inline Vector<char> containerToDataStorage(const std::string &src)
 {
-	DataStorage<char> result;
+	Vector<char> result;
 	size_t cnt;
 	result.resize(src.size() + 1);
 	cnt = 0;

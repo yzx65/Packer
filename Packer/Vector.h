@@ -3,39 +3,39 @@
 #include <cstdint>
 
 template<typename T>
-class DataStorage
+class Vector
 {
 private:
 	int32_t size_;
 	T *data_;
 public:
-	DataStorage() : size_(-1), data_(nullptr) {}
-	DataStorage(uint32_t size) : size_(size), data_(new T[size]) {}
-	~DataStorage()
+	Vector() : size_(-1), data_(nullptr) {}
+	Vector(uint32_t size) : size_(size), data_(new T[size]) {}
+	~Vector()
 	{
 		if(data_)
 			delete [] data_;
 	}
 
-	DataStorage(const DataStorage &operand)
+	Vector(const Vector &operand)
 	{
 		*this = operand;
 	}
 
-	DataStorage(DataStorage &&operand) : size_(operand.size_), data_(operand.data_)
+	Vector(Vector &&operand) : size_(operand.size_), data_(operand.data_)
 	{
 		operand.size_ = -1;
 		operand.data_ = nullptr;
 	}
 
-	const DataStorage &operator =(const DataStorage &operand)
+	const Vector &operator =(const Vector &operand)
 	{
 		data_ = nullptr;
 		assign(operand.data_, operand.size_);
 		return *this;
 	}
 
-	const DataStorage &operator =(DataStorage &&operand)
+	const Vector &operator =(Vector &&operand)
 	{
 		data_ = operand.data_;
 		size_ = operand.size_;
@@ -45,9 +45,9 @@ public:
 		return *this;
 	}
 
-	DataStorage copy()
+	Vector copy()
 	{
-		DataStorage result;
+		Vector result;
 		result.assign(data_, size_);
 		return result;
 	}

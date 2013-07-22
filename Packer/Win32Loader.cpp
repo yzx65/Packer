@@ -4,7 +4,7 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(const Image &image, DataStorage<Image> &&imports) : image_(image), imports_(imports)
+Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports)
 {
 	loaderInstance_ = this;
 }

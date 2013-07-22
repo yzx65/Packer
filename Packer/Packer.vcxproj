@@ -85,7 +85,7 @@
     <ClCompile Include="PackerMain.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DataStorage.h" />
+    <ClInclude Include="Vector.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="FormatBase.h" />
     <ClInclude Include="Image.h" />

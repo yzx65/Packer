@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <memory>
 
-#include "DataStorage.h"
+#include "Vector.h"
 
 class File
 {
@@ -26,9 +26,9 @@ public:
 		read(sizeof(T), reinterpret_cast<uint8_t *>(dest));
 	}
 
-	DataStorage<uint8_t> readAmount(size_t size)
+	Vector<uint8_t> readAmount(size_t size)
 	{
-		DataStorage<uint8_t> result;
+		Vector<uint8_t> result;
 		result.resize(size);
 		read(size, &result[0]);
 		return result;
