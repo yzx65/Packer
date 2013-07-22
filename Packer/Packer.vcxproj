@@ -89,6 +89,7 @@
     <ClInclude Include="File.h" />
     <ClInclude Include="FormatBase.h" />
     <ClInclude Include="Image.h" />
+    <ClInclude Include="List.h" />
     <ClInclude Include="Win32Loader.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="PEFormat.h" />

@@ -4,7 +4,6 @@
 #include "PEHeader.h"
 #include "Util.h"
 
-#include <list>
 #include <sstream>
 
 #ifdef _WIN32
@@ -58,7 +57,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 		info_.architecture = ArchitectureWin32AMD64;
 	}
 
-	std::list<IMAGE_SECTION_HEADER> sectionHeaders;
+	List<IMAGE_SECTION_HEADER> sectionHeaders;
 	for(int i = 0; i < fileHeader.NumberOfSections; i ++)
 	{
 		IMAGE_SECTION_HEADER sectionHeader;
@@ -164,7 +163,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 		uint32_t *nameEntryPtr = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(descriptor->OriginalFirstThunk));
 		uint64_t iat = descriptor->FirstThunk;
 
-		std::list<ImportFunction> importFunctions;
+		List<ImportFunction> importFunctions;
 		while(true)
 		{
 			if(*nameEntryPtr == 0)
@@ -227,7 +226,7 @@ std::string PEFormat::getFilename()
 
 std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 {
-	std::list<std::string> searchPaths;
+	List<std::string> searchPaths;
 	searchPaths.push_back(file_->getFilePath());
 #ifdef _WIN32
 	wchar_t buffer[32768];
@@ -246,7 +245,7 @@ std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 	return std::make_shared<PEFormat>(nullptr);
 }
 
-std::list<Import> PEFormat::getImports()
+List<Import> PEFormat::getImports()
 {
 	return imports_;
 }
