@@ -35,10 +35,18 @@ private:
 			return item_ != operand.item_;
 		}
 
-		const ListIterator &operator ++()
+		ListIterator operator ++()
 		{
+			ListIterator result(item_->next);
 			item_ = item_->next;
-			return *this;
+			return result;
+		}
+
+		ListIterator operator ++(int)
+		{
+			ListIterator result(item_);
+			item_ = item_->next;
+			return result;
 		}
 	};
 public:
