@@ -20,10 +20,10 @@ public:
 	static std::string combinePath(const std::string &directory, const std::string &filename);
 	static bool isPathExists(const std::string &path);
 
-	template<typename T>
-	void read(T *dest)
+	template<typename ValueType>
+	void read(ValueType *dest)
 	{
-		read(sizeof(T), reinterpret_cast<uint8_t *>(dest));
+		read(sizeof(ValueType), reinterpret_cast<uint8_t *>(dest));
 	}
 
 	Vector<uint8_t> readAmount(size_t size)

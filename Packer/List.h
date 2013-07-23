@@ -2,7 +2,8 @@
 
 //replacement of std::list, to get rid of external dependency.
 
-template<typename T>
+
+template<typename ValueType>
 class List
 {
 private:
@@ -13,21 +14,21 @@ private:
 	};
 	struct ListNode : public ListNodeBase
 	{
-		T data;
+		ValueType data;
 	};
 	ListNodeBase *head_;
 	
-	template<typename TagType, typename ItemType, typename ValueType>
+	template<typename BaseType, typename NodeType, typename ValueType>
 	class ListIterator
 	{
 	private:
-		TagType *item_;
+		BaseType *item_;
 	public:
-		ListIterator(TagType *item) : item_(item) {}
+		ListIterator(BaseType *item) : item_(item) {}
 
 		ValueType &operator *()
 		{
-			return static_cast<ItemType *>(item_)->data;
+			return static_cast<NodeType *>(item_)->data;
 		}
 
 		bool operator !=(const ListIterator &operand) const
@@ -50,7 +51,7 @@ private:
 		}
 	};
 public:
-	typedef T value_type;
+	typedef ValueType value_type;
 	typedef ListIterator<const ListNodeBase, const ListNode, const value_type> const_iterator;
 	typedef ListIterator<ListNodeBase, ListNode, value_type> iterator;
 	List() 

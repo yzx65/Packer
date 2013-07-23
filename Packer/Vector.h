@@ -1,16 +1,17 @@
 #pragma once
 
 #include <cstdint>
+#include "Win32Runtime.h"
 
-template<typename T>
+template<typename ValueType>
 class Vector
 {
 private:
 	int32_t size_;
-	T *data_;
+	ValueType *data_;
 public:
 	Vector() : size_(-1), data_(nullptr) {}
-	Vector(uint32_t size) : size_(size), data_(new T[size]) {}
+	Vector(uint32_t size) : size_(size), data_(new ValueType[size]) {}
 	~Vector()
 	{
 		if(data_)
@@ -52,7 +53,7 @@ public:
 		return result;
 	}
 
-	T *get() const
+	ValueType *get() const
 	{
 		return data_;
 	}
@@ -62,14 +63,14 @@ public:
 		size_ = size;
 		if(data_)
 			delete data_;
-		data_ = new T[size];
+		data_ = new ValueType[size];
 	}
 
-	void assign(T *data, uint32_t size)
+	void assign(ValueType *data, uint32_t size)
 	{
 		resize(size);
 		for(uint32_t i = 0; i < size; i ++)
-			data_[i] = T(data[i]);
+			data_[i] = ValueType(data[i]);
 	}
 
 	int32_t size() const
@@ -77,32 +78,32 @@ public:
 		return size_;
 	}
 
-	T &operator[](uint32_t operand)
+	ValueType &operator[](uint32_t operand)
 	{
 		return data_[operand];
 	}
 
-	const T &operator[](uint32_t operand) const
+	const ValueType &operator[](uint32_t operand) const
 	{
 		return data_[operand];
 	}
 
-	T *begin()
+	ValueType *begin()
 	{
 		return data_;
 	}
 
-	T *end()
+	ValueType *end()
 	{
 		return data_ + size_;
 	}
 
-	const T *begin() const
+	const ValueType *begin() const
 	{
 		return data_;
 	}
 
-	const T *end() const
+	const ValueType *end() const
 	{
 		return data_ + size_;
 	}
