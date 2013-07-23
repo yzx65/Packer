@@ -17,52 +17,75 @@ extern "C" {
 }
 #endif
 
-PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
+//Helper
+class structureAtOffset
 {
-	IMAGE_DOS_HEADER dosHeader;
-	uint32_t ntSignature;
-	IMAGE_FILE_HEADER fileHeader;
-	IMAGE_OPTIONAL_HEADER_BASE optionalHeaderBase;
-	uint32_t headerSize;
+private:
+	uint8_t *data_;
+	size_t offset_;
+public:
+	structureAtOffset(uint8_t *data, size_t offset) : data_(data), offset_(offset) {}
 
-	file_->read(&dosHeader);
-	if(!dosHeader.e_lfanew)
-		throw std::exception(); //not PE
-	file_->seek(dosHeader.e_lfanew);
-	file_->read(&ntSignature);
-	if(ntSignature != IMAGE_NT_SIGNATURE)
-		throw std::exception(); //not PE
-	file_->read(&fileHeader);
-	file_->read(&optionalHeaderBase);
-
-	info_.entryPoint = optionalHeaderBase.AddressOfEntryPoint;
-	if(optionalHeaderBase.Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
+	template<typename T>
+	operator T()
 	{
-		IMAGE_OPTIONAL_HEADER32 optionalHeader;
-		file_->read(&optionalHeader);
-		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
-		info_.baseAddress = optionalHeader.ImageBase;
-		info_.size = optionalHeader.SizeOfImage;
-		info_.architecture = ArchitectureWin32;
-		headerSize = optionalHeader.SizeOfHeaders;
+		return reinterpret_cast<T>(data_ + offset_);
 	}
-	else if(optionalHeaderBase.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+};
+template<typename T>
+inline T *getStructureAtOffset(uint8_t *data, size_t offset)
+{
+	return reinterpret_cast<T *>(data + offset);
+}
+
+PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath) : data_(data), fileName_(fileName), filePath_(filePath)
+{
+	IMAGE_DOS_HEADER *dosHeader;
+	uint32_t *ntSignature;
+	IMAGE_FILE_HEADER *fileHeader;
+	IMAGE_OPTIONAL_HEADER_BASE *optionalHeaderBase;
+	uint32_t headerSize;
+	size_t offset;
+
+	dosHeader = structureAtOffset(data, 0);
+	if(!dosHeader->e_lfanew)
+		throw std::exception(); //not PE
+
+	ntSignature = structureAtOffset(data, dosHeader->e_lfanew);
+	if(*ntSignature != IMAGE_NT_SIGNATURE)
+		throw std::exception(); //not PE
+	fileHeader = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t));
+	optionalHeaderBase = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER));
+
+	offset = dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER_BASE);
+	info_.entryPoint = optionalHeaderBase->AddressOfEntryPoint;
+	if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
 	{
-		IMAGE_OPTIONAL_HEADER64 optionalHeader;
-		file_->read(&optionalHeader);
-		std::copy(optionalHeader.DataDirectory, optionalHeader.DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
-		info_.baseAddress = optionalHeader.ImageBase;
-		info_.size = optionalHeader.SizeOfImage;
-		headerSize = optionalHeader.SizeOfHeaders;
+		IMAGE_OPTIONAL_HEADER32 *optionalHeader = structureAtOffset(data, offset);
+		std::copy(optionalHeader->DataDirectory, optionalHeader->DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
+		info_.baseAddress = optionalHeader->ImageBase;
+		info_.size = optionalHeader->SizeOfImage;
+		info_.architecture = ArchitectureWin32;
+		headerSize = optionalHeader->SizeOfHeaders;
+		offset += sizeof(IMAGE_OPTIONAL_HEADER32);
+	}
+	else if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+	{
+		IMAGE_OPTIONAL_HEADER64 *optionalHeader = structureAtOffset(data, offset);
+		std::copy(optionalHeader->DataDirectory, optionalHeader->DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
+		info_.baseAddress = optionalHeader->ImageBase;
+		info_.size = optionalHeader->SizeOfImage;
+		headerSize = optionalHeader->SizeOfHeaders;
 		info_.architecture = ArchitectureWin32AMD64;
+		offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
 
 	List<IMAGE_SECTION_HEADER> sectionHeaders;
-	for(int i = 0; i < fileHeader.NumberOfSections; i ++)
+	for(int i = 0; i < fileHeader->NumberOfSections; i ++)
 	{
-		IMAGE_SECTION_HEADER sectionHeader;
-		file_->read(&sectionHeader);
-		sectionHeaders.push_back(std::move(sectionHeader));
+		IMAGE_SECTION_HEADER *sectionHeader = structureAtOffset(data, offset);
+		sectionHeaders.push_back(std::move(*sectionHeader));
+		offset += sizeof(IMAGE_SECTION_HEADER);
 	}
 	for(auto &sectionHeader : sectionHeaders)
 	{
@@ -85,8 +108,7 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 		if(sectionHeader.Characteristics & IMAGE_SCN_MEM_EXECUTE)
 			section.flag |= SectionFlagExecute;
 
-		file_->seek(sectionHeader.PointerToRawData);
-		section.data = std::move(file_->readAmount(sectionHeader.SizeOfRawData));
+		section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.VirtualSize);
 
 		sections_.push_back(std::move(section));
 	}
@@ -94,10 +116,9 @@ PEFormat::PEFormat(std::shared_ptr<File> file) : file_(file)
 	processDataDirectory();
 
 	//copy header
-	file_->seek(0);
 	ExtendedData extendedData;
 	extendedData.baseAddress = 0;
-	extendedData.data = std::move(file_->readAmount(headerSize));
+	extendedData.data.assign(data, headerSize);
 
 	extendedData_.push_back(std::move(extendedData));
 
@@ -221,13 +242,14 @@ void PEFormat::processDataDirectory()
 
 std::string PEFormat::getFilename()
 {
-	return file_->getFileName();
+	return fileName_;
 }
 
 std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 {
 	List<std::string> searchPaths;
-	searchPaths.push_back(file_->getFilePath());
+	if(filePath_.size())
+		searchPaths.push_back(filePath_);
 #ifdef _WIN32
 	wchar_t buffer[32768];
 	GetEnvironmentVariableW(L"Path", buffer, 32768);
@@ -247,9 +269,15 @@ std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 	{
 		std::string path = File::combinePath(i, filename);
 		if(File::isPathExists(path))
-			return std::make_shared<PEFormat>(File::open(path));
+		{
+			std::shared_ptr<File> file = File::open(path);
+			uint8_t *map = file->map();
+			std::shared_ptr<FormatBase> result = std::make_shared<PEFormat>(map, file->getFileName(), file->getFilePath());
+			file->unmap();
+			return result;
+		}
 	}
-	return std::make_shared<PEFormat>(nullptr);
+	return std::shared_ptr<FormatBase>(nullptr);
 }
 
 List<Import> PEFormat::getImports()

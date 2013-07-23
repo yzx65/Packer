@@ -60,11 +60,9 @@ List<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatB
 void PackerMain::processFile(std::shared_ptr<File> file)
 {
 	std::shared_ptr<FormatBase> input;
-	uint16_t magic;
-	file->read(&magic);
-	file->seek(0);
-	if(magic == IMAGE_DOS_SIGNATURE)
-		input = std::make_shared<PEFormat>(file);
+	uint8_t *fileData = file->map();
+	if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
+		input = std::make_shared<PEFormat>(fileData, file->getFileName(), file->getFilePath());
 	else
 		throw std::exception();
 

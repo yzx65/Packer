@@ -11,18 +11,22 @@ class PEFormat : public FormatBase
 {
 private:
 	IMAGE_DATA_DIRECTORY dataDirectories_[16];
-	std::shared_ptr<File> file_;
+	uint8_t *data_;
 	List<Section> sections_;
 	List<Import> imports_;
 	List<uint64_t> relocations_;
 	List<ExtendedData> extendedData_;
 	ImageInfo info_;
+
+	std::string fileName_;
+	std::string filePath_;
+
 	void processDataDirectory();
 	void processRelocation(IMAGE_BASE_RELOCATION *info);
 	void processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor);
 	uint8_t *getDataPointerOfRVA(uint64_t rva);
 public:
-	PEFormat(std::shared_ptr<File> file);
+	PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath);
 	~PEFormat();
 
 	virtual std::string getFilename();

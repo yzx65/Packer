@@ -38,21 +38,22 @@ void Win32File::close()
 	CloseHandle(fileHandle_);
 }
 
-uint32_t Win32File::read(int size, uint8_t *out)
+uint8_t *Win32File::map()
 {
-	DWORD readBytes;
-	if(ReadFile(fileHandle_, out, size, &readBytes, nullptr) == FALSE)
-		throw std::exception();
-	
-	return readBytes;
+	if(mapAddress_)
+		return mapAddress_;
+	mapHandle_ = CreateFileMapping(fileHandle_, NULL, PAGE_READONLY, 0, 0, NULL);
+	mapAddress_ = static_cast<uint8_t *>(MapViewOfFile(mapHandle_, FILE_MAP_READ, 0, 0, 0));
+	return mapAddress_;
 }
 
-void Win32File::seek(uint64_t newPosition)
+void Win32File::unmap()
 {
-	LARGE_INTEGER distance;
-	distance.QuadPart = newPosition;
-
-	SetFilePointerEx(fileHandle_, distance, nullptr, FILE_BEGIN);
+	if(!mapAddress_)
+		return;
+	UnmapViewOfFile(static_cast<LPVOID>(mapAddress_));
+	CloseHandle(mapHandle_);
+	mapHandle_ = mapAddress_ = nullptr;
 }
 
 std::string Win32File::getFileName()
