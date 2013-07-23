@@ -5,9 +5,8 @@
 #include <map>
 
 #include "List.h"
-#include "Util.h"
-#include "File.h"
 
+class File;
 class Option
 {
 private:
@@ -15,57 +14,12 @@ private:
 	std::map<std::string, bool> booleanOptions_;
 	std::map<std::string, std::string> stringOptions_;
 
-	void parseOptions(int argc, List<std::string> rawOptions)
-	{
-		for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
-		{
-			std::string arg = *it;
-			if(arg.length() > 0 && arg.at(0) == '-')
-			{
-				std::string optionName(arg.begin(), arg.end());
-				if(isBooleanOption(optionName))
-					booleanOptions_[optionName] = true;
-				else
-				{
-					it ++;
-					if(it != rawOptions.end())
-						handleStringOption(optionName, *it);
-				}
-			}
-			else
-			{
-				//input file
-				inputFiles_.push_back(File::open(arg));
-			}
-		}
-	}
-
-	template<typename StringType>
-	void handleStringOption(const std::string &name, const StringType &value)
-	{
-
-	}
+	void parseOptions(int argc, List<std::string> rawOptions);
+	void handleStringOption(const std::string &name, const std::string &value);
 	bool isBooleanOption(const std::string &optionName);
 public:
-	Option(int argc, char **argv)
-	{
-		List<std::string> rawOptions;
-		for(int i = 1; i < argc; i ++)
-			rawOptions.push_back(std::string(argv[i]));
-		parseOptions(argc, rawOptions);
-	}
+	Option(int argc, char **argv);
+	Option(int argc, wchar_t **argv);
 
-	Option(int argc, wchar_t **argv)
-	{
-		List<std::string> rawOptions;
-		for(int i = 1; i < argc; i ++)
-			rawOptions.push_back(WStringToString(std::wstring(argv[i])));
-		parseOptions(argc, rawOptions);
-	}
-
-
-	List<std::shared_ptr<File>> getInputFiles() const
-	{
-		return inputFiles_;
-	}
+	List<std::shared_ptr<File>> getInputFiles() const;
 };
