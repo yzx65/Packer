@@ -21,6 +21,7 @@ private:
 	template<typename BaseType, typename NodeType, typename ValueType>
 	class ListIterator
 	{
+		friend class List;
 	private:
 		BaseType *item_;
 	public:
@@ -106,6 +107,22 @@ public:
 		item->prev = head_->prev;
 		head_->prev->next = item;
 		head_->prev = item;
+	}
+
+	template<typename InputIterator>
+	iterator insert(iterator at, InputIterator start, InputIterator end)
+	{
+		ListNode *position = static_cast<ListNode *>(at.item_);
+		for(; start != end; start ++)
+		{
+			ListNode *item = new ListNode();
+			item->next = position;
+			item->data = *start;
+			item->prev = position->prev;
+			position->prev->next = item;
+			position->prev = item;
+		}
+		return iterator(position);
 	}
 
 	const_iterator begin() const
