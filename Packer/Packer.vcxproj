@@ -83,9 +83,12 @@
     <ClCompile Include="Win32File.cpp" />
     <ClCompile Include="Option.cpp" />
     <ClCompile Include="PackerMain.cpp" />
+    <ClCompile Include="Win32Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Map.h" />
+    <ClInclude Include="String.h" />
+    <ClInclude Include="Win32Runtime.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="FormatBase.h" />
