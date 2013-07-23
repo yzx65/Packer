@@ -28,9 +28,9 @@ int PackerMain::process()
 	return 0;
 }
 
-std::list<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatBase> input)
+List<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatBase> input)
 {
-	std::list<std::shared_ptr<FormatBase>> result;
+	List<std::shared_ptr<FormatBase>> result;
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
@@ -50,7 +50,7 @@ std::list<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<Fo
 		loadedFiles_.push_back(import->getFilename());
 		result.push_back(import);
 
-		std::list<std::shared_ptr<FormatBase>> dependencies = loadImport(import);
+		List<std::shared_ptr<FormatBase>> dependencies = loadImport(import);
 		result.insert(result.end(), dependencies.begin(), dependencies.end());
 	}
 
@@ -69,11 +69,11 @@ void PackerMain::processFile(std::shared_ptr<File> file)
 		throw std::exception();
 
 	loadedFiles_.push_back(input->getFilename());
-	std::list<std::shared_ptr<FormatBase>> imports = loadImport(input);
+	List<std::shared_ptr<FormatBase>> imports = loadImport(input);
 	
 	//test
 	Image image = input->serialize();
-	std::list<Image> importImages;
+	List<Image> importImages;
 	for(auto &i : imports)
 		importImages.push_back(i->serialize());
 	Win32Loader loader(image, containerToDataStorage(std::move(importImages)));
