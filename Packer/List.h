@@ -81,7 +81,7 @@ public:
 		head_->prev = head_;
 
 		ListNodeBase *item = other.head_->next;
-		while(item->next != other.head_)
+		while(item != other.head_)
 		{
 			ListNode *item_ = static_cast<ListNode *>(item);
 			push_back(item_->data);
