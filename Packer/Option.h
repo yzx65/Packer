@@ -2,17 +2,17 @@
 
 #include <memory>
 #include <string>
-#include <map>
 
 #include "List.h"
+#include "Map.h"
 
 class File;
 class Option
 {
 private:
 	List<std::shared_ptr<File>> inputFiles_;
-	std::map<std::string, bool> booleanOptions_;
-	std::map<std::string, std::string> stringOptions_;
+	Map<std::string, bool> booleanOptions_;
+	Map<std::string, std::string> stringOptions_;
 
 	void parseOptions(int argc, List<std::string> rawOptions);
 	void handleStringOption(const std::string &name, const std::string &value);

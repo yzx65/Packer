@@ -85,6 +85,7 @@
     <ClCompile Include="PackerMain.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Map.h" />
     <ClInclude Include="Vector.h" />
     <ClInclude Include="File.h" />
     <ClInclude Include="FormatBase.h" />
