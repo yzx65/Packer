@@ -12,7 +12,7 @@ class PackerMain
 {
 private:
 	const Option &option_;
-	List<std::string> loadedFiles_;
+	List<String> loadedFiles_;
 
 	void processFile(std::shared_ptr<File> file);
 	List<std::shared_ptr<FormatBase>> loadImport(std::shared_ptr<FormatBase> input);

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string>
+#include "String.h"
 
-inline std::string WStringToString(const std::wstring &input)
+inline String WStringToString(const WString &input)
 {
-	std::string result;
+	String result;
 	if(sizeof(wchar_t) == 2)
 	{
 		//utf16
@@ -94,12 +94,12 @@ inline std::string WStringToString(const std::wstring &input)
 	return result;
 }
 
-inline std::wstring StringToWString(const std::string &input)
+inline WString StringToWString(const String &input)
 {
-	std::wstring result;
+	WString result;
 	if(sizeof(wchar_t) == 2)
 	{
-		for(size_t i = 0; i < input.size();)
+		for(size_t i = 0; i < input.length();)
 		{
 			if(!((input[i] & 0xF0) == 0xF0))
 			{
@@ -132,7 +132,7 @@ inline std::wstring StringToWString(const std::string &input)
 	}
 	else if(sizeof(wchar_t) == 4)
 	{
-		for(size_t i = 0; i < input.size();)
+		for(size_t i = 0; i < input.length();)
 		{
 			if((input[i] & 0xF0) == 0xF0)
 			{

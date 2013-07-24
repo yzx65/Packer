@@ -34,7 +34,7 @@ List<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatB
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
-		std::string fileName(i.libraryName.get());
+		String fileName(i.libraryName.get());
 		for(auto &j : loadedFiles_)
 			if(j == fileName)
 			{

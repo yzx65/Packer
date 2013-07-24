@@ -1,12 +1,12 @@
 #pragma once
 
 #include <cstdint>
-#include <string>
 #include <memory>
 
 #include "Vector.h"
-#include "Image.h"
 #include "List.h"
+#include "String.h"
+#include "Image.h"
 
 template<class ContainerType>
 Vector<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
@@ -32,11 +32,11 @@ Vector<typename ContainerType::value_type> containerToDataStorage(ContainerType 
 	return result;
 }
 
-inline Vector<char> containerToDataStorage(std::string &&src)
+inline Vector<char> containerToDataStorage(String &&src)
 {
 	Vector<char> result;
 	size_t cnt;
-	result.resize(src.size() + 1);
+	result.resize(src.length() + 1);
 	cnt = 0;
 	for(auto &i : src)
 		result.get()[cnt ++] = i;
@@ -44,11 +44,11 @@ inline Vector<char> containerToDataStorage(std::string &&src)
 	return result;
 }
 
-inline Vector<char> containerToDataStorage(const std::string &src)
+inline Vector<char> containerToDataStorage(const String &src)
 {
 	Vector<char> result;
 	size_t cnt;
-	result.resize(src.size() + 1);
+	result.resize(src.length() + 1);
 	cnt = 0;
 	for(auto &i : src)
 		result.get()[cnt ++] = i;
@@ -63,9 +63,9 @@ public:
 	virtual ~FormatBase() {}
 
 	virtual Image serialize() = 0;
-	virtual std::string getFilename() = 0;
-	virtual std::shared_ptr<FormatBase> loadImport(const std::string &filename) = 0;
+	virtual String getFilename() = 0;
+	virtual std::shared_ptr<FormatBase> loadImport(const String &filename) = 0;
 	virtual List<Import> getImports() = 0;
 
-	virtual bool isSystemLibrary(const std::string &filename) = 0;
+	virtual bool isSystemLibrary(const String &filename) = 0;
 };

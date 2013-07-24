@@ -1,22 +1,22 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
 #include "List.h"
 #include "Map.h"
+#include "String.h"
 
 class File;
 class Option
 {
 private:
 	List<std::shared_ptr<File>> inputFiles_;
-	Map<std::string, bool> booleanOptions_;
-	Map<std::string, std::string> stringOptions_;
+	Map<String, bool> booleanOptions_;
+	Map<String, String> stringOptions_;
 
-	void parseOptions(int argc, List<std::string> rawOptions);
-	void handleStringOption(const std::string &name, const std::string &value);
-	bool isBooleanOption(const std::string &optionName);
+	void parseOptions(int argc, List<String> rawOptions);
+	void handleStringOption(const String &name, const String &value);
+	bool isBooleanOption(const String &optionName);
 public:
 	Option(int argc, char **argv);
 	Option(int argc, wchar_t **argv);

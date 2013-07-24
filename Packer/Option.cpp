@@ -5,38 +5,38 @@
 
 Option::Option(int argc, char **argv)
 {
-	List<std::string> rawOptions;
+	List<String> rawOptions;
 	for(int i = 1; i < argc; i ++)
-		rawOptions.push_back(std::string(argv[i]));
+		rawOptions.push_back(String(argv[i]));
 	parseOptions(argc, rawOptions);
 }
 
 Option::Option(int argc, wchar_t **argv)
 {
-	List<std::string> rawOptions;
+	List<String> rawOptions;
 	for(int i = 1; i < argc; i ++)
-		rawOptions.push_back(WStringToString(std::wstring(argv[i])));
+		rawOptions.push_back(WStringToString(WString(argv[i])));
 	parseOptions(argc, rawOptions);
 }
 
-bool Option::isBooleanOption(const std::string &optionName)
+bool Option::isBooleanOption(const String &optionName)
 {
 	return false;
 }
 
-void Option::handleStringOption(const std::string &name, const std::string &value)
+void Option::handleStringOption(const String &name, const String &value)
 {
 
 }
 
-void Option::parseOptions(int argc, List<std::string> rawOptions)
+void Option::parseOptions(int argc, List<String> rawOptions)
 {
 	for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
 	{
-		std::string arg = *it;
+		String arg = *it;
 		if(arg.length() > 0 && arg.at(0) == '-')
 		{
-			std::string optionName(arg.begin(), arg.end());
+			String optionName = arg.substr(1);
 			if(isBooleanOption(optionName))
 				booleanOptions_[optionName] = true;
 			else

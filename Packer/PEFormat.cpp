@@ -38,7 +38,7 @@ inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath, bool fromLoaded) : data_(data), fileName_(fileName), filePath_(filePath)
+PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath, bool fromLoaded) : data_(data), fileName_(fileName), filePath_(filePath)
 {
 	IMAGE_DOS_HEADER *dosHeader;
 	uint32_t *ntSignature;
@@ -91,7 +91,7 @@ PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string
 	{
 		Section section;
 		section.baseAddress = sectionHeader.VirtualAddress;
-		section.name = containerToDataStorage(std::string(reinterpret_cast<const char *>(sectionHeader.Name)));
+		section.name = containerToDataStorage(String(reinterpret_cast<const char *>(sectionHeader.Name)));
 		section.size = sectionHeader.VirtualSize;
 		section.flag = 0;
 
@@ -182,7 +182,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 		Import import;
 
 		uint8_t *libraryNamePtr = getDataPointerOfRVA(descriptor->Name);
-		import.libraryName = containerToDataStorage(std::string(reinterpret_cast<const char *>(libraryNamePtr)));
+		import.libraryName = containerToDataStorage(String(reinterpret_cast<const char *>(libraryNamePtr)));
 
 		uint32_t *nameEntryPtr = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(descriptor->OriginalFirstThunk));
 		uint64_t iat = descriptor->FirstThunk;
@@ -213,7 +213,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
 				
-				function.name = containerToDataStorage(std::string(reinterpret_cast<const char *>(nameEntry->Name)));
+				function.name = containerToDataStorage(String(reinterpret_cast<const char *>(nameEntry->Name)));
 			}
 
 			if(info_.architecture == ArchitectureWin32AMD64)
@@ -243,21 +243,21 @@ void PEFormat::processDataDirectory()
 	processRelocation(reinterpret_cast<IMAGE_BASE_RELOCATION *>(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress)));
 }
 
-std::string PEFormat::getFilename()
+String PEFormat::getFilename()
 {
 	return fileName_;
 }
 
-std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
+std::shared_ptr<FormatBase> PEFormat::loadImport(const String &filename)
 {
-	List<std::string> searchPaths;
-	if(filePath_.size())
+	List<String> searchPaths;
+	if(filePath_.length())
 		searchPaths.push_back(filePath_);
 #ifdef _WIN32
 	wchar_t buffer[32768];
 	GetEnvironmentVariableW(L"Path", buffer, 32768);
 
-	std::wstring temp(buffer);
+	WString temp(buffer);
 	int s = 0, e = 0;
 	while(true)
 	{
@@ -270,7 +270,7 @@ std::shared_ptr<FormatBase> PEFormat::loadImport(const std::string &filename)
 #endif
 	for(auto &i : searchPaths)
 	{
-		std::string path = File::combinePath(i, filename);
+		String path = File::combinePath(i, filename);
 		if(File::isPathExists(path))
 		{
 			std::shared_ptr<File> file = File::open(path);
@@ -301,10 +301,11 @@ Image PEFormat::serialize()
 	return std::move(image);
 }
 
-bool PEFormat::isSystemLibrary(const std::string &filename)
+bool PEFormat::isSystemLibrary(const String &filename)
 {
-	std::string lowered;
-	std::transform(filename.begin(), filename.end(), std::back_inserter(lowered), ::tolower);
+	String lowered;
+	for(auto &i : filename)
+		lowered.push_back((i >= 'A' && i <= 'Z' ? i - ('A' - 'a') : i));
 	const char *systemFiles[] = {"kernel32.dll", "user32.dll", nullptr};
 	for(int i = 0; systemFiles[i] != nullptr; i ++)
 		if(lowered.compare(systemFiles[i]) == 0)

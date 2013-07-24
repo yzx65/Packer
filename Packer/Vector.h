@@ -7,50 +7,69 @@ template<typename ValueType>
 class Vector
 {
 private:
-	int32_t size_;
+	size_t alloc_;
+	size_t size_;
 	ValueType *data_;
+
+	void resize_(uint32_t size, bool preserve = false)
+	{
+		if(alloc_ <= size)
+		{
+			alloc_ *= 2;
+			if(alloc_ < size)
+				alloc_ = size + 10;
+			ValueType *oldData = data_;
+			data_ = new ValueType[alloc_];
+			if(oldData)
+			{
+				if(preserve)
+					for(size_t i = 0; i < size_; i ++)
+						data_[i] = oldData[i];
+				delete [] oldData;
+			}
+		}
+	}
 public:
-	Vector() : size_(-1), data_(nullptr) {}
-	Vector(uint32_t size) : size_(size), data_(new ValueType[size]) {}
+	typedef ValueType value_type;
+	typedef ValueType *iterator;
+	typedef ValueType *const const_iterator;
+
+	Vector() : size_(0), alloc_(0), data_(nullptr) {}
+	Vector(uint32_t size) : size_(size), alloc_(size), data_(new ValueType[size]) {}
 	~Vector()
 	{
 		if(data_)
 			delete [] data_;
 	}
 
-	Vector(const Vector &operand)
+	Vector(const Vector &operand) : alloc_(0), size_(0), data_(nullptr)
 	{
 		*this = operand;
 	}
 
-	Vector(Vector &&operand) : size_(operand.size_), data_(operand.data_)
+	Vector(Vector &&operand) : size_(operand.size_), alloc_(operand.alloc_), data_(operand.data_)
 	{
-		operand.size_ = -1;
+		operand.alloc_ = 0;
+		operand.size_ = 0;
 		operand.data_ = nullptr;
 	}
 
 	const Vector &operator =(const Vector &operand)
 	{
-		data_ = nullptr;
 		assign(operand.data_, operand.size_);
 		return *this;
 	}
 
 	const Vector &operator =(Vector &&operand)
 	{
+		alloc_ = operand.alloc_;
 		data_ = operand.data_;
 		size_ = operand.size_;
 
 		operand.data_ = nullptr;
-		operand.size_ = -1;
+		operand.size_ = 0;
+		operand.alloc_ = 0;
 		return *this;
-	}
-
-	Vector copy()
-	{
-		Vector result;
-		result.assign(data_, size_);
-		return result;
 	}
 
 	ValueType *get() const
@@ -58,22 +77,42 @@ public:
 		return data_;
 	}
 
+	void reserve(uint32_t size)
+	{
+		resize_(size, true);
+	}
+
 	void resize(uint32_t size)
 	{
+		resize_(size, false);
 		size_ = size;
-		if(data_)
-			delete data_;
-		data_ = new ValueType[size];
 	}
 
 	void assign(ValueType *data, uint32_t size)
 	{
 		resize(size);
 		for(uint32_t i = 0; i < size; i ++)
-			data_[i] = ValueType(data[i]);
+			data_[i] = data[i];
 	}
 
-	int32_t size() const
+	void push_back(ValueType data)
+	{
+		reserve(size_ + 1);
+		data_[size_] = data;
+		size_ ++;
+	}
+
+	void insert(size_t pos, ValueType data)
+	{
+		reserve(size_ + 1);
+
+		for(size_t i = size(); i >= pos; i --)
+			data_[i] = data_[i - 1];
+		data_[pos] = data;
+		size_ ++;
+	}
+
+	size_t size() const
 	{
 		return size_;
 	}
@@ -88,22 +127,22 @@ public:
 		return data_[operand];
 	}
 
-	ValueType *begin()
+	iterator begin()
 	{
 		return data_;
 	}
 
-	ValueType *end()
+	iterator end()
 	{
 		return data_ + size_;
 	}
 
-	const ValueType *begin() const
+	const_iterator begin() const
 	{
 		return data_;
 	}
 
-	const ValueType *end() const
+	const_iterator end() const
 	{
 		return data_ + size_;
 	}
