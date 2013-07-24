@@ -33,6 +33,7 @@ public:
 	}
 
 	StringBase(StringBase &&operand) : Vector<CharacterType>(std::move(operand)) {}
+	StringBase(const StringBase &operand) : Vector<CharacterType>(operand) {}
 
 	template<typename IteratorType>
 	StringBase(IteratorType start, IteratorType end)
