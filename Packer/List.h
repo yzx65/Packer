@@ -51,6 +51,11 @@ private:
 			item_ = item_->next;
 			return result;
 		}
+
+		ValueType *operator ->()
+		{
+			return &static_cast<NodeType *>(item_)->data;
+		}
 	};
 public:
 	typedef ValueType value_type;

@@ -33,23 +33,22 @@ void Option::parseOptions(int argc, List<String> rawOptions)
 {
 	for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
 	{
-		String arg = *it;
-		if(arg.length() > 0 && arg.at(0) == '-')
+		if(it->length() > 0 && it->at(0) == '-')
 		{
-			String optionName = arg.substr(1);
+			String optionName = it->substr(1);
 			if(isBooleanOption(optionName))
 				booleanOptions_[optionName] = true;
 			else
 			{
 				it ++;
 				if(it != rawOptions.end())
-					handleStringOption(optionName, arg);
+					handleStringOption(optionName, *it);
 			}
 		}
 		else
 		{
 			//input file
-			inputFiles_.push_back(File::open(arg));
+			inputFiles_.push_back(File::open(*it));
 		}
 	}
 }
