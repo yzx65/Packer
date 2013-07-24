@@ -4,7 +4,7 @@
 #include "PEHeader.h"
 #include "Util.h"
 
-#include <algorithm>
+#include <utility>
 
 #ifdef _WIN32
 //We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.

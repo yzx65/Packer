@@ -1,5 +1,7 @@
 #pragma once
 
+#include <utility>
+
 #include "Win32Runtime.h"
 
 template<typename KeyType, typename ValueType>

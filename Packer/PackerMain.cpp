@@ -1,6 +1,7 @@
 #include "PackerMain.h"
 
 #include <exception>
+#include "Vector.h"
 
 #include "FormatBase.h"
 #include "PEFormat.h"

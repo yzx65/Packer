@@ -1,8 +1,9 @@
 #pragma once
 
-#include "Vector.h"
-
 #include <cstdint>
+#include <utility>
+
+#include "Vector.h"
 
 template<typename CharacterType=char>
 class StringBase : private Vector<CharacterType>
