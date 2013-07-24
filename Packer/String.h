@@ -32,6 +32,8 @@ public:
 		assign(const_cast<CharacterType *>(string), length + 1);
 	}
 
+	StringBase(StringBase &&operand) : Vector<CharacterType>(std::move(operand)) {}
+
 	template<typename IteratorType>
 	StringBase(IteratorType start, IteratorType end)
 	{
