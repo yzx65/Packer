@@ -26,7 +26,7 @@ private:
 	void processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor);
 	uint8_t *getDataPointerOfRVA(uint64_t rva);
 public:
-	PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath);
+	PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath, bool fromLoaded = false);
 	~PEFormat();
 
 	virtual std::string getFilename();

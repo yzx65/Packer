@@ -38,7 +38,7 @@ inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath) : data_(data), fileName_(fileName), filePath_(filePath)
+PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string &filePath, bool fromLoaded) : data_(data), fileName_(fileName), filePath_(filePath)
 {
 	IMAGE_DOS_HEADER *dosHeader;
 	uint32_t *ntSignature;
@@ -108,7 +108,10 @@ PEFormat::PEFormat(uint8_t *data, const std::string &fileName, const std::string
 		if(sectionHeader.Characteristics & IMAGE_SCN_MEM_EXECUTE)
 			section.flag |= SectionFlagExecute;
 
-		section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.VirtualSize);
+		if(!fromLoaded)
+			section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.VirtualSize);
+		else
+			section.data.assign(data + sectionHeader.VirtualAddress, sectionHeader.VirtualSize);
 
 		sections_.push_back(std::move(section));
 	}
