@@ -87,9 +87,14 @@ public:
 		return get()[pos];
 	}
 
-	CharacterType operator [](size_t pos) const
+	CharacterType &operator [](size_t pos) const
 	{
 		return get()[pos];
+	}
+
+	void resize(size_t size)
+	{
+		return Vector<CharacterType>::resize(size);
 	}
 
 	size_t length() const

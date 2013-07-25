@@ -254,10 +254,9 @@ SharedPtr<FormatBase> PEFormat::loadImport(const String &filename)
 	if(filePath_.length())
 		searchPaths.push_back(filePath_);
 #ifdef _WIN32
-	wchar_t buffer[32768];
-	GetEnvironmentVariableW(L"Path", buffer, 32768);
-
-	WString temp(buffer);
+	WString temp;
+	temp.resize(32768);
+	GetEnvironmentVariableW(L"Path", &temp[0], 32768);
 	int s = 0, e = 0;
 	while(true)
 	{

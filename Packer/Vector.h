@@ -77,21 +77,21 @@ public:
 		return data_;
 	}
 
-	void reserve(uint32_t size)
+	void reserve(size_t size)
 	{
 		resize_(size, true);
 	}
 
-	void resize(uint32_t size)
+	void resize(size_t size)
 	{
 		resize_(size, false);
 		size_ = size;
 	}
 
-	void assign(ValueType *data, uint32_t size)
+	void assign(ValueType *data, size_t size)
 	{
 		resize(size);
-		for(uint32_t i = 0; i < size; i ++)
+		for(size_t i = 0; i < size; i ++)
 			data_[i] = data[i];
 	}
 
