@@ -15,10 +15,12 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 	baseAddress = reinterpret_cast<uint8_t *>(VirtualAlloc(nullptr, static_cast<uint32_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
 	for(auto &i : image.extendedData)
-		memcpy(baseAddress + i.baseAddress, &i.data[0], i.data.size());
+		for(size_t j = 0; j < i.data.size(); j ++)
+			(baseAddress + i.baseAddress)[j] = i.data[j];
 
 	for(auto &i : image.sections)
-		memcpy(baseAddress + i.baseAddress, &i.data[0], i.data.size());
+		for(size_t j = 0; j < i.data.size(); j ++)
+			(baseAddress + i.baseAddress)[j] = i.data[j];
 
 	int32_t diff = reinterpret_cast<int32_t>(baseAddress) - static_cast<int32_t>(image.info.baseAddress);
 	for(auto &i : image.relocations)
@@ -26,10 +28,10 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 
 	for(auto &i : image.imports)
 	{
-		void *library = loadLibrary(i.libraryName.get());
+		void *library = loadLibrary(i.libraryName.c_str());
 		for(auto &j : i.functions)
 		{
-			uint32_t functionAddress = getFunctionAddress(library, j.name.get());
+			uint32_t functionAddress = getFunctionAddress(library, j.name.c_str());
 			*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
 		}
 	}
@@ -67,7 +69,7 @@ void Win32Loader::execute()
 void *Win32Loader::loadLibrary(const char *filename)
 {
 	for(auto &i : imports_)
-		if(strcmp(filename, i.fileName.get()) == 0)
+		if(i.fileName == filename)
 			return loadImage(i);
 
 	return LoadLibraryA(filename);
