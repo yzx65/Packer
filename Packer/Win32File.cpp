@@ -3,9 +3,6 @@
 #include "Util.h"
 
 #include <windows.h>
-#include <Shlwapi.h>
-
-#pragma comment(lib, "shlwapi.lib")
 
 void Win32File::open(const String &filename)
 {
@@ -14,7 +11,7 @@ void Win32File::open(const String &filename)
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
 
-	if(PathIsRelative(wFileName.c_str()))
+	if(wFileName[1] != L':') //relative
 	{
 		wchar_t temp[MAX_PATH + 1];
 		GetCurrentDirectory(MAX_PATH, temp);
@@ -23,12 +20,11 @@ void Win32File::open(const String &filename)
 	}
 	else
 	{
-		wchar_t temp[MAX_PATH + 1];
-		for(size_t i = 0; i < wFileName.length() + 1; i ++)
-			temp[i] = wFileName[i];
-		PathRemoveFileSpec(temp);
-		filePath_ = WStringToString(WString(temp));
-		fileName_ = WStringToString(WString(PathFindFileName(wFileName.c_str())));
+		int pathSeparatorPos = wFileName.rfind(L'\\');
+		WString path = wFileName.substr(0, pathSeparatorPos);
+		WString fileName = wFileName.substr(pathSeparatorPos + 1);
+		filePath_ = WStringToString(path);
+		fileName_ = WStringToString(fileName);
 	}
 }
 
@@ -67,12 +63,12 @@ String Win32File::getFilePath()
 
 String File::combinePath(const String &directory, const String &filename)
 {
-	wchar_t temp[MAX_PATH + 1];
-	PathCombine(temp, StringToWString(directory).c_str(), StringToWString(filename).c_str());
-	return WStringToString(WString(temp));
+	return directory + '\\' + filename;
 }
 
 bool File::isPathExists(const String &path)
 {
-	return PathFileExists(StringToWString(path).c_str()) == TRUE;
+	if(GetFileAttributes(StringToWString(path).c_str()) == INVALID_FILE_ATTRIBUTES)
+		return false;
+	return true;
 }
