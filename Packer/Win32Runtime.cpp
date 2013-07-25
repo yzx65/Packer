@@ -8,6 +8,11 @@ void* operator new(size_t num)
 	return HeapAlloc(GetProcessHeap(), 0, num);
 }
 
+void* operator new[](size_t num)
+{
+	return HeapAlloc(GetProcessHeap(), 0, num);
+}
+
 void operator delete(void *ptr)
 {
 	HeapFree(GetProcessHeap(), 0, ptr);
