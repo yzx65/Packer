@@ -1,10 +1,10 @@
 #pragma once
 
 #include <cstdint>
-#include <memory>
 
 #include "Vector.h"
 #include "String.h"
+#include "SharedPtr.h"
 
 class File
 {
@@ -12,7 +12,7 @@ public:
 	File() {}
 	virtual ~File() {}
 
-	static std::shared_ptr<File> open(const String &filename);
+	static SharedPtr<File> open(const String &filename);
 
 	virtual String getFileName() = 0;
 	virtual String getFilePath() = 0;

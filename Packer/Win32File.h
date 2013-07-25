@@ -32,7 +32,7 @@ public:
 	virtual void unmap();
 };
 
-std::shared_ptr<File> File::open(const String &filename)
+SharedPtr<File> File::open(const String &filename)
 {
-	return std::make_shared<Win32File>(filename);
+	return MakeShared<Win32File>(filename);
 }

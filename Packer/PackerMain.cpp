@@ -14,7 +14,7 @@ PackerMain::PackerMain(const Option &option) : option_(option)
 
 int PackerMain::process()
 {
-	for(std::shared_ptr<File> &file : option_.getInputFiles())
+	for(SharedPtr<File> &file : option_.getInputFiles())
 	{
 		try
 		{
@@ -29,9 +29,9 @@ int PackerMain::process()
 	return 0;
 }
 
-List<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatBase> input)
+List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 {
-	List<std::shared_ptr<FormatBase>> result;
+	List<SharedPtr<FormatBase>> result;
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
@@ -47,28 +47,28 @@ List<std::shared_ptr<FormatBase>> PackerMain::loadImport(std::shared_ptr<FormatB
 
 		if(input->isSystemLibrary(fileName))
 			continue;
-		std::shared_ptr<FormatBase> import = input->loadImport(fileName);
+		SharedPtr<FormatBase> import = input->loadImport(fileName);
 		loadedFiles_.push_back(import->getFilename());
 		result.push_back(import);
 
-		List<std::shared_ptr<FormatBase>> dependencies = loadImport(import);
+		List<SharedPtr<FormatBase>> dependencies = loadImport(import);
 		result.insert(result.end(), dependencies.begin(), dependencies.end());
 	}
 
 	return result;
 }
 
-void PackerMain::processFile(std::shared_ptr<File> file)
+void PackerMain::processFile(SharedPtr<File> file)
 {
-	std::shared_ptr<FormatBase> input;
+	SharedPtr<FormatBase> input;
 	uint8_t *fileData = file->map();
 	if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
-		input = std::make_shared<PEFormat>(fileData, file->getFileName(), file->getFilePath());
+		input = MakeShared<PEFormat>(fileData, file->getFileName(), file->getFilePath());
 	else
 		throw std::exception();
 
 	loadedFiles_.push_back(input->getFilename());
-	List<std::shared_ptr<FormatBase>> imports = loadImport(input);
+	List<SharedPtr<FormatBase>> imports = loadImport(input);
 	
 	//test
 	Image image = input->serialize();

@@ -2,12 +2,12 @@
 
 #include <cstdint>
 #include <utility>
-#include <memory>
 
 #include "Vector.h"
 #include "List.h"
 #include "String.h"
 #include "Image.h"
+#include "SharedPtr.h"
 
 template<class ContainerType>
 Vector<typename ContainerType::value_type> containerToDataStorage(const ContainerType &src)
@@ -65,7 +65,7 @@ public:
 
 	virtual Image serialize() = 0;
 	virtual String getFilename() = 0;
-	virtual std::shared_ptr<FormatBase> loadImport(const String &filename) = 0;
+	virtual SharedPtr<FormatBase> loadImport(const String &filename) = 0;
 	virtual List<Import> getImports() = 0;
 
 	virtual bool isSystemLibrary(const String &filename) = 0;

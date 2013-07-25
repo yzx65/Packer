@@ -53,7 +53,7 @@ void Option::parseOptions(int argc, List<String> rawOptions)
 	}
 }
 
-List<std::shared_ptr<File>> Option::getInputFiles() const
+List<SharedPtr<File>> Option::getInputFiles() const
 {
 	return inputFiles_;
 }

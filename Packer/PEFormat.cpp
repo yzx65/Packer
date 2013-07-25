@@ -5,6 +5,8 @@
 #include "Util.h"
 
 #include <utility>
+#include <exception>
+#include <algorithm>
 
 #ifdef _WIN32
 //We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.
@@ -248,7 +250,7 @@ String PEFormat::getFilename()
 	return fileName_;
 }
 
-std::shared_ptr<FormatBase> PEFormat::loadImport(const String &filename)
+SharedPtr<FormatBase> PEFormat::loadImport(const String &filename)
 {
 	List<String> searchPaths;
 	if(filePath_.length())
@@ -273,14 +275,14 @@ std::shared_ptr<FormatBase> PEFormat::loadImport(const String &filename)
 		String path = File::combinePath(i, filename);
 		if(File::isPathExists(path))
 		{
-			std::shared_ptr<File> file = File::open(path);
+			SharedPtr<File> file = File::open(path);
 			uint8_t *map = file->map();
-			std::shared_ptr<FormatBase> result = std::make_shared<PEFormat>(map, file->getFileName(), file->getFilePath());
+			SharedPtr<FormatBase> result = MakeShared<PEFormat>(map, file->getFileName(), file->getFilePath());
 			file->unmap();
 			return result;
 		}
 	}
-	return std::shared_ptr<FormatBase>(nullptr);
+	return SharedPtr<FormatBase>(nullptr);
 }
 
 List<Import> PEFormat::getImports()

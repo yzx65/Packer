@@ -1,10 +1,9 @@
 #pragma once
 
-#include <memory>
-
 #include "FormatBase.h"
 #include "File.h"
 #include "PEHeader.h"
+#include "SharedPtr.h"
 #include "List.h"
 
 class PEFormat : public FormatBase
@@ -30,7 +29,7 @@ public:
 	~PEFormat();
 
 	virtual String getFilename();
-	virtual std::shared_ptr<FormatBase> loadImport(const String &filename);
+	virtual SharedPtr<FormatBase> loadImport(const String &filename);
 	virtual Image serialize();
 	virtual List<Import> getImports();
 
