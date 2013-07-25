@@ -30,7 +30,7 @@ public:
 	{
 		size_t length = length_(string);
 		resize(length + 1);
-		assign(const_cast<CharacterType *>(string), length + 1);
+		Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
 	}
 
 	StringBase(StringBase &&operand) : Vector<CharacterType>(std::move(operand)) {}
@@ -39,9 +39,18 @@ public:
 	template<typename IteratorType>
 	StringBase(IteratorType start, IteratorType end)
 	{
-		size_t length = end - start + 1;
+		assign(start, end);
+	}
+
+	template<typename IteratorType>
+	void assign(IteratorType start, IteratorType end)
+	{
+		size_t length = end - start;
 		resize(length + 1);
-		assign(&*start, length);
+
+		size_t i = 0;
+		for(IteratorType it = start; it != end; it ++, i ++)
+			get()[i] = *it;
 		get()[length] = 0;
 	}
 
@@ -55,6 +64,17 @@ public:
 			Vector<CharacterType>::push_back(item);
 			Vector<CharacterType>::push_back(0);
 		}
+	}
+
+	void append(const StringBase &operand)
+	{
+		if(size())
+		{
+			Vector<CharacterType>::insert(length(), operand);
+			resize(size() - 1);
+		}
+		else
+			assign(operand.begin(), operand.end());
 	}
 
 	CharacterType at(size_t pos) const
@@ -113,6 +133,16 @@ public:
 		return -1;
 	}
 
+	int rfind(CharacterType pattern, int start = -1)
+	{
+		if(start == -1)
+			start = length();
+		for(size_t i = start - 1; i >= 0; i --)
+			if(get()[i] == pattern)
+				return i;
+		return -1;
+	}
+
 	int compare(const CharacterType *operand) const
 	{
 		size_t i;
@@ -135,6 +165,20 @@ public:
 	bool operator !=(const StringBase &operand) const
 	{
 		return compare(operand.c_str()) != 0;
+	}
+
+	StringBase operator +(CharacterType operand) const
+	{
+		String result(*this);
+		result.push_back(operand);
+		return result;
+	}
+
+	StringBase operator +(const StringBase &operand) const
+	{
+		StringBase result(*this);
+		result.append(operand);
+		return result;
 	}
 };
 

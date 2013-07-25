@@ -112,6 +112,17 @@ public:
 		size_ ++;
 	}
 
+	void insert(size_t pos, const Vector &data)
+	{
+		reserve(size_ + data.size());
+
+		for(size_t i = size(); i >= pos; i --)
+			data_[i] = data_[i - data.size()];
+		for(size_t i = 0; i < data.size(); i ++)
+			data_[i + pos] = data[i];
+		size_ += data.size();
+	}
+
 	size_t size() const
 	{
 		return size_;
