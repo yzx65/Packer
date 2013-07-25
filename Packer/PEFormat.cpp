@@ -293,7 +293,7 @@ List<Import> PEFormat::getImports()
 Image PEFormat::serialize()
 {
 	Image image;
-	image.fileName = containerToDataStorage(getFilename());
+	image.fileName = getFilename();
 	image.info = info_;
 	image.imports = containerToDataStorage(imports_);
 	image.sections = containerToDataStorage(sections_);

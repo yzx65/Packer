@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <utility>
 #include "Vector.h"
+#include "String.h"
 
 enum ArchitectureType
 {
@@ -110,7 +111,7 @@ struct Image
 		return *this;
 	}
 	ImageInfo info;
-	Vector<char> fileName;
+	String fileName;
 	Vector<Section> sections;
 	Vector<Import> imports;
 	Vector<uint64_t> relocations;
