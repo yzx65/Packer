@@ -1,8 +1,6 @@
 #include "PackerMain.h"
 
-#include <exception>
 #include "Vector.h"
-
 #include "FormatBase.h"
 #include "PEFormat.h"
 #include "Signature.h"
@@ -15,16 +13,7 @@ PackerMain::PackerMain(const Option &option) : option_(option)
 int PackerMain::process()
 {
 	for(SharedPtr<File> &file : option_.getInputFiles())
-	{
-		try
-		{
-			processFile(file);
-		}
-		catch(...)
-		{
-
-		}
-	}
+		processFile(file);
 
 	return 0;
 }
@@ -65,7 +54,7 @@ void PackerMain::processFile(SharedPtr<File> file)
 	if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
 		input = MakeShared<PEFormat>(fileData, file->getFileName(), file->getFilePath());
 	else
-		throw std::exception();
+		return;
 
 	loadedFiles_.push_back(input->getFilename());
 	List<SharedPtr<FormatBase>> imports = loadImport(input);

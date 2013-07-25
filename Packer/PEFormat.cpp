@@ -5,7 +5,6 @@
 #include "Util.h"
 
 #include <utility>
-#include <exception>
 #include <algorithm>
 
 #ifdef _WIN32
@@ -51,11 +50,11 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 
 	dosHeader = structureAtOffset(data, 0);
 	if(!dosHeader->e_lfanew)
-		throw std::exception(); //not PE
+		return; //not PE
 
 	ntSignature = structureAtOffset(data, dosHeader->e_lfanew);
 	if(*ntSignature != IMAGE_NT_SIGNATURE)
-		throw std::exception(); //not PE
+		return; //not PE
 	fileHeader = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t));
 	optionalHeaderBase = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER));
 
