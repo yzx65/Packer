@@ -5,7 +5,6 @@
 #include "Util.h"
 
 #include <utility>
-#include <algorithm>
 
 #ifdef _WIN32
 //We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.
@@ -63,7 +62,8 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 	if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
 	{
 		IMAGE_OPTIONAL_HEADER32 *optionalHeader = structureAtOffset(data, offset);
-		std::copy(optionalHeader->DataDirectory, optionalHeader->DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
+		for(int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i ++)
+			dataDirectories_[i] = optionalHeader->DataDirectory[i];
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		info_.architecture = ArchitectureWin32;
@@ -73,7 +73,8 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 	else if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 	{
 		IMAGE_OPTIONAL_HEADER64 *optionalHeader = structureAtOffset(data, offset);
-		std::copy(optionalHeader->DataDirectory, optionalHeader->DataDirectory + IMAGE_NUMBEROF_DIRECTORY_ENTRIES, dataDirectories_);
+		for(int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i ++)
+			dataDirectories_[i] = optionalHeader->DataDirectory[i];
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		headerSize = optionalHeader->SizeOfHeaders;
