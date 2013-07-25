@@ -2,8 +2,6 @@
 
 #include "Util.h"
 
-#include <array>
-
 #include <windows.h>
 #include <Shlwapi.h>
 
@@ -14,7 +12,7 @@ void Win32File::open(const String &filename)
 	WString wFileName = StringToWString(filename);
 	fileHandle_ = CreateFile(wFileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
-		throw std::exception();
+		return;
 
 	if(PathIsRelative(wFileName.c_str()))
 	{
@@ -26,7 +24,8 @@ void Win32File::open(const String &filename)
 	else
 	{
 		wchar_t temp[MAX_PATH + 1];
-		std::copy(wFileName.begin(), wFileName.end(), temp);
+		for(size_t i = 0; i < wFileName.length() + 1; i ++)
+			temp[i] = wFileName[i];
 		PathRemoveFileSpec(temp);
 		filePath_ = WStringToString(WString(temp));
 		fileName_ = WStringToString(WString(PathFindFileName(wFileName.c_str())));
