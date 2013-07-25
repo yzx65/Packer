@@ -58,6 +58,18 @@ private:
 		{
 			return &static_cast<NodeType *>(item_)->data;
 		}
+
+		size_t operator -(const ListIterator &operand) const
+		{
+			size_t cnt = 0;
+			BaseType *node = operand.item_;
+			while(node != item_)
+			{
+				cnt ++;
+				node = node->next;
+			}
+			return cnt;
+		}
 	};
 public:
 	typedef ValueType value_type;

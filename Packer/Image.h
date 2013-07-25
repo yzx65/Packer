@@ -56,7 +56,7 @@ struct Section
 
 		return *this;
 	}
-	Vector<char> name;
+	String name;
 	uint64_t baseAddress;
 	uint64_t size;
 	Vector<uint8_t> data;
@@ -76,7 +76,7 @@ struct ImportFunction
 		return *this;
 	}
 	uint16_t ordinal;
-	Vector<char> name;
+	String name;
 	uint64_t iat;
 };
 
@@ -91,7 +91,7 @@ struct Import
 
 		return *this;
 	}
-	Vector<char> libraryName;
+	String libraryName;
 	Vector<ImportFunction> functions;
 };
 

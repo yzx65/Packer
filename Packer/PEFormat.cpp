@@ -93,7 +93,7 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 	{
 		Section section;
 		section.baseAddress = sectionHeader.VirtualAddress;
-		section.name = containerToDataStorage(String(reinterpret_cast<const char *>(sectionHeader.Name)));
+		section.name.assign(reinterpret_cast<const char *>(sectionHeader.Name));
 		section.size = sectionHeader.VirtualSize;
 		section.flag = 0;
 
@@ -184,12 +184,11 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 		Import import;
 
 		uint8_t *libraryNamePtr = getDataPointerOfRVA(descriptor->Name);
-		import.libraryName = containerToDataStorage(String(reinterpret_cast<const char *>(libraryNamePtr)));
+		import.libraryName.assign(reinterpret_cast<const char *>(libraryNamePtr));
 
 		uint32_t *nameEntryPtr = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(descriptor->OriginalFirstThunk));
 		uint64_t iat = descriptor->FirstThunk;
 
-		List<ImportFunction> importFunctions;
 		while(true)
 		{
 			if(*nameEntryPtr == 0)
@@ -215,7 +214,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
 				
-				function.name = containerToDataStorage(String(reinterpret_cast<const char *>(nameEntry->Name)));
+				function.name.assign(reinterpret_cast<const char *>(nameEntry->Name));
 			}
 
 			if(info_.architecture == ArchitectureWin32AMD64)
@@ -229,9 +228,8 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 				iat += 4;
 			}
 
-			importFunctions.push_back(std::move(function));
+			import.functions.push_back(std::move(function));
 		}
-		import.functions = containerToDataStorage(std::move(importFunctions));
 
 		imports_.push_back(std::move(import));
 
@@ -295,10 +293,10 @@ Image PEFormat::serialize()
 	Image image;
 	image.fileName = getFilename();
 	image.info = info_;
-	image.imports = containerToDataStorage(imports_);
-	image.sections = containerToDataStorage(sections_);
-	image.relocations = containerToDataStorage(relocations_);
-	image.extendedData = containerToDataStorage(extendedData_);
+	image.imports.assign(imports_.begin(), imports_.end());
+	image.sections.assign(sections_.begin(), sections_.end());
+	image.relocations.assign(relocations_.begin(), relocations_.end());
+	image.extendedData.assign(extendedData_.begin(), extendedData_.end());
 
 	return std::move(image);
 }

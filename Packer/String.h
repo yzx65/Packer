@@ -28,9 +28,7 @@ public:
 
 	StringBase(const CharacterType *string)
 	{
-		size_t length = length_(string);
-		resize(length + 1);
-		Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
+		assign(string);
 	}
 
 	StringBase(StringBase &&operand) : Vector<CharacterType>(std::move(operand)) {}
@@ -52,6 +50,13 @@ public:
 		for(IteratorType it = start; it != end; it ++, i ++)
 			get()[i] = *it;
 		get()[length] = 0;
+	}
+
+	void assign(const CharacterType *string)
+	{
+		size_t length = length_(string);
+		resize(length + 1);
+		Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
 	}
 
 	void push_back(CharacterType item)

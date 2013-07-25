@@ -95,6 +95,17 @@ public:
 			data_[i] = data[i];
 	}
 
+	template<typename IteratorType>
+	void assign(IteratorType start, IteratorType end)
+	{
+		size_t length = end - start;
+		resize(length);
+
+		size_t i = 0;
+		for(IteratorType it = start; it != end; it ++, i ++)
+			data_[i] = *it;
+	}
+
 	void push_back(ValueType data)
 	{
 		reserve(size_ + 1);
