@@ -96,6 +96,18 @@ public:
 		return *this;
 	}
 
+	const SharedPtr &operator =(SharedPtr &&other)
+	{
+		item_ = other.item_;
+		refCounter_ = other.refCounter_;
+		deleter_ = other.deleter_;
+		
+		other.item_ = nullptr;
+		other.refCounter_ = nullptr;
+		other.deleter_ = nullptr;
+		return *this;
+	}
+
 	void reset(PointerType *item, Impl::RefCounter *refCounter, Impl::DeleterBase *deleter)
 	{
 		if(item_)
