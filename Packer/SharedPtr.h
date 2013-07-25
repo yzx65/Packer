@@ -70,6 +70,21 @@ public:
 		reset(static_cast<PointerType *>(other.item_), other.refCounter_, other.deleter_);
 	}
 
+	SharedPtr(SharedPtr &&other) : item_(other.item_), refCounter_(other.refCounter_), deleter_(other.deleter_)
+	{
+		other.item_ = nullptr;
+		other.refCounter_ = nullptr;
+		other.deleter_ = nullptr;
+	}
+
+	template<typename PointerType2>
+	SharedPtr(SharedPtr<PointerType2> &&other) : item_(static_cast<PointerType *>(other.item_)), refCounter_(other.refCounter_), deleter_(other.deleter_) 
+	{
+		other.item_ = nullptr;
+		other.refCounter_ = nullptr;
+		other.deleter_ = nullptr;
+	}
+
 	~SharedPtr()
 	{
 		reset(nullptr, nullptr, nullptr);
