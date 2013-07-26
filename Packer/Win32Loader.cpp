@@ -71,7 +71,7 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 	if(image_.info.entryPoint)
 	{
 		typedef void (*EntryPointType)();
-		EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image_.info.entryPoint);
+		EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image.info.entryPoint);
 		entryPoint();
 	}
 
