@@ -113,9 +113,9 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 			section.flag |= SectionFlagExecute;
 
 		if(!fromLoaded)
-			section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.VirtualSize);
+			section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.SizeOfRawData);
 		else
-			section.data.assign(data + sectionHeader.VirtualAddress, sectionHeader.VirtualSize);
+			section.data.assign(data + sectionHeader.VirtualAddress, sectionHeader.SizeOfRawData);
 
 		sections_.push_back(std::move(section));
 	}
