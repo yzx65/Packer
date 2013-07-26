@@ -125,11 +125,11 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 
 	extendedData_.push_back(std::move(extendedData));
 
-	if(dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].Size)
+	if(dataDirectories_[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size)
 	{
 		ExtendedData extendedData;
-		extendedData.baseAddress = dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-		extendedData.data.assign(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress), dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].Size);
+		extendedData.baseAddress = dataDirectories_[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress;
+		extendedData.data.assign(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress), dataDirectories_[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
 
 		extendedData_.push_back(std::move(extendedData));
 	}
