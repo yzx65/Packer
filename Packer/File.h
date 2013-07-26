@@ -2,7 +2,6 @@
 
 #include <cstdint>
 
-#include "Vector.h"
 #include "String.h"
 #include "SharedPtr.h"
 

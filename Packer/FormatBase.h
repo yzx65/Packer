@@ -1,11 +1,8 @@
 #pragma once
 
-#include <cstdint>
-#include <utility>
-
-#include "Vector.h"
 #include "List.h"
 #include "Image.h"
+#include "String.h"
 #include "SharedPtr.h"
 
 class FormatBase
