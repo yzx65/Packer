@@ -68,11 +68,20 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		VirtualProtect(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
 
-	if(image_.info.entryPoint)
+	if(image.info.entryPoint)
 	{
-		typedef void (*EntryPointType)();
-		EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image.info.entryPoint);
-		entryPoint();
+		if(image.info.flag & ImageFlagLibrary)
+		{
+			typedef int (__stdcall *DllEntryPointType)(HINSTANCE, int, LPVOID);
+			DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image.info.entryPoint);
+			entryPoint(reinterpret_cast<HINSTANCE>(baseAddress), DLL_PROCESS_ATTACH, 0);
+		}
+		else
+		{
+			typedef int (__stdcall *EntryPointType)();
+			EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image.info.entryPoint);
+			entryPoint();
+		}
 	}
 
 	return baseAddress;

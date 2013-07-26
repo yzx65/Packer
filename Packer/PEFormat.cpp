@@ -57,6 +57,10 @@ PEFormat::PEFormat(uint8_t *data, const String &fileName, const String &filePath
 
 	offset = dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER_BASE);
 	info_.entryPoint = optionalHeaderBase->AddressOfEntryPoint;
+	info_.flag = 0;
+	if(fileHeader->Characteristics & IMAGE_FILE_DLL)
+		info_.flag |= ImageFlagLibrary;
+
 	if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
 	{
 		IMAGE_OPTIONAL_HEADER32 *optionalHeader = structureAtOffset(data, offset);

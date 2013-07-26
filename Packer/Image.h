@@ -8,15 +8,22 @@
 
 enum ArchitectureType
 {
-	ArchitectureWin32,
-	ArchitectureWin32AMD64,
+	ArchitectureWin32 = 1,
+	ArchitectureWin32AMD64 = 2,
 };
+
+enum ImageFlag
+{
+	ImageFlagLibrary = 1,
+};
+
 struct ImageInfo
 {
 	ArchitectureType architecture;
 	uint64_t baseAddress;
 	uint64_t entryPoint;
 	uint64_t size;
+	uint32_t flag;
 };
 
 enum SectionFlag
