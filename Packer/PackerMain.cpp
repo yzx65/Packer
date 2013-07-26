@@ -24,7 +24,7 @@ List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
-		String fileName(i.libraryName.get());
+		String fileName = i.libraryName;
 		for(auto &j : loadedFiles_)
 			if(j == fileName)
 			{
@@ -61,21 +61,10 @@ void PackerMain::processFile(SharedPtr<File> file)
 	
 	//test
 	Image image = input->serialize();
-	List<Image> importImages;
+	Vector<Image> importImages;
+	importImages.reserve(imports.size());
 	for(auto &i : imports)
 		importImages.push_back(i->serialize());
-	Win32Loader loader(image, containerToDataStorage(std::move(importImages)));
+	Win32Loader loader(image, std::move(importImages));
 	loader.execute();
 }
-
-#if !defined(_UNICODE) || !defined(_WIN32)
-int main(int argc, char **argv)
-{
-	return PackerMain(Option(argc, argv)).process();
-}
-#else
-int wmain(int argc, wchar_t **argv)
-{
-	return PackerMain(Option(argc, argv)).process();
-}
-#endif

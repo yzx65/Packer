@@ -22,3 +22,11 @@ void operator delete[](void *ptr)
 {
 	HeapFree(GetProcessHeap(), 0, ptr);
 }
+
+extern "C"
+{
+	int _purecall()
+	{
+		return 0;
+	}
+}
