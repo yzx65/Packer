@@ -74,7 +74,7 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		{
 			typedef int (__stdcall *DllEntryPointType)(HINSTANCE, int, LPVOID);
 			DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image.info.entryPoint);
-			entryPoint(reinterpret_cast<HINSTANCE>(baseAddress), DLL_PROCESS_ATTACH, 0);
+			entryPoint(reinterpret_cast<HINSTANCE>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<LPVOID>(1));  //lpReserved is non-null for static loads
 		}
 		else
 		{
