@@ -2,9 +2,7 @@
 
 //replacement of std::list, to get rid of external dependency.
 
-#include <utility>
-
-#include "Win32Runtime.h"
+#include "Runtime.h"
 
 template<typename ValueType>
 class List

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include "Win32Runtime.h"
+#include "Runtime.h"
 
 template<typename ValueType>
 class Vector

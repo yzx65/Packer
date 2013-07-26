@@ -89,5 +89,8 @@
     <ClInclude Include="SharedPtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Runtime.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -98,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Map.h" />
+    <ClInclude Include="Runtime.h" />
     <ClInclude Include="SharedPtr.h" />
     <ClInclude Include="String.h" />
     <ClInclude Include="Win32Runtime.h" />
