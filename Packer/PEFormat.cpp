@@ -140,7 +140,7 @@ PEFormat::~PEFormat()
 
 }
 
-uint8_t *PEFormat::getDataPointerOfRVA(uint64_t rva)
+uint8_t *PEFormat::getDataPointerOfRVA(uint32_t rva)
 {
 	for(auto &section : sections_)
 		if(rva >= section.baseAddress && rva < section.baseAddress + section.size)
@@ -207,7 +207,7 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 			{
 				IMAGE_IMPORT_BY_NAME *nameEntry;
 				if(info_.architecture == ArchitectureWin32AMD64)
-					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint64_t *>(nameEntryPtr)));
+					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(static_cast<uint32_t>(*reinterpret_cast<uint64_t *>(nameEntryPtr))));
 				else
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
@@ -235,9 +235,33 @@ void PEFormat::processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor)
 	}
 }
 
+void PEFormat::processExport(IMAGE_EXPORT_DIRECTORY *directory)
+{
+	if(!directory)
+		return;
+
+	uint32_t *addressOfFunctions = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(directory->AddressOfFunctions));
+	uint32_t *addressOfNames = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(directory->AddressOfNames));
+	uint16_t *ordinals = reinterpret_cast<uint16_t *>(getDataPointerOfRVA(directory->AddressOfNameOrdinals));
+	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
+	{
+		ExportFunction entry;
+		if(addressOfNames[i])
+			entry.name.assign(reinterpret_cast<const char *>(getDataPointerOfRVA(addressOfNames[i])));
+		entry.ordinal = ordinals[i];
+		if(info_.architecture == ArchitectureWin32AMD64)
+			entry.address = (reinterpret_cast<uint64_t *>(addressOfFunctions))[i];
+		else
+			entry.address = addressOfFunctions[i];
+
+		exports_.push_back(entry);
+	}
+}
+
 void PEFormat::processDataDirectory()
 {
 	processImport(reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR *>(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress)));
+	processExport(reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress)));
 	processRelocation(reinterpret_cast<IMAGE_BASE_RELOCATION *>(getDataPointerOfRVA(dataDirectories_[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress)));
 }
 
@@ -294,6 +318,7 @@ Image PEFormat::serialize()
 	image.sections.assign(sections_.begin(), sections_.end());
 	image.relocations.assign(relocations_.begin(), relocations_.end());
 	image.extendedData.assign(extendedData_.begin(), extendedData_.end());
+	image.exports.assign(exports_.begin(), exports_.end());
 
 	return std::move(image);
 }

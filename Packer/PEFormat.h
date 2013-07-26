@@ -15,6 +15,7 @@ private:
 	List<Import> imports_;
 	List<uint64_t> relocations_;
 	List<ExtendedData> extendedData_;
+	List<ExportFunction> exports_;
 	ImageInfo info_;
 
 	String fileName_;
@@ -23,7 +24,8 @@ private:
 	void processDataDirectory();
 	void processRelocation(IMAGE_BASE_RELOCATION *info);
 	void processImport(IMAGE_IMPORT_DESCRIPTOR *descriptor);
-	uint8_t *getDataPointerOfRVA(uint64_t rva);
+	void processExport(IMAGE_EXPORT_DIRECTORY *directory);
+	uint8_t *getDataPointerOfRVA(uint32_t rva);
 public:
 	PEFormat(uint8_t *data, const String &fileName, const String &filePath, bool fromLoaded = false);
 	~PEFormat();

@@ -96,6 +96,23 @@ struct Import
 	Vector<ImportFunction> functions;
 };
 
+struct ExportFunction
+{
+	ExportFunction() {}
+	ExportFunction(ExportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), address(operand.address) {}
+	const ExportFunction &operator =(ExportFunction &&operand)
+	{
+		ordinal = operand.ordinal;
+		name = std::move(operand.name);
+		address = operand.address;
+
+		return *this;
+	}
+	uint16_t ordinal;
+	String name;
+	uint64_t address;
+};
+
 struct Image
 {
 	Image() {}
@@ -113,6 +130,7 @@ struct Image
 	}
 	ImageInfo info;
 	String fileName;
+	Vector<ExportFunction> exports;
 	Vector<Section> sections;
 	Vector<Import> imports;
 	Vector<uint64_t> relocations;
