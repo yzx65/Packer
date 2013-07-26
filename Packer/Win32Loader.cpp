@@ -22,17 +22,31 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		for(size_t j = 0; j < i.data.size(); j ++)
 			(baseAddress + i.baseAddress)[j] = i.data[j];
 
-	int32_t diff = reinterpret_cast<int32_t>(baseAddress) - static_cast<int32_t>(image.info.baseAddress);
+	int64_t diff = reinterpret_cast<int64_t>(baseAddress) - static_cast<int64_t>(image.info.baseAddress);
 	for(auto &i : image.relocations)
-		*reinterpret_cast<int32_t *>(baseAddress + i) += diff;
+		if(image.info.architecture == ArchitectureWin32)
+			*reinterpret_cast<int32_t *>(baseAddress + i) += static_cast<int32_t>(diff);
+		else
+			*reinterpret_cast<int64_t *>(baseAddress + i) += diff;
+
+	loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
+	loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
 
 	for(auto &i : image.imports)
 	{
 		void *library = loadLibrary(i.libraryName.c_str());
 		for(auto &j : i.functions)
 		{
-			uint32_t functionAddress = getFunctionAddress(library, j.name.c_str());
-			*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
+			if(image.info.architecture == ArchitectureWin32)
+			{
+				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name.c_str()));
+				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
+			}
+			else
+			{
+				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name.c_str()));
+				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = functionAddress;
+			}
 		}
 	}
 
@@ -68,14 +82,29 @@ void Win32Loader::execute()
 
 void *Win32Loader::loadLibrary(const char *filename)
 {
+	auto it = loadedLibraries_.find(String(filename));
+	if(it != loadedLibraries_.end())
+		return reinterpret_cast<void *>(*it);
 	for(auto &i : imports_)
 		if(i.fileName == filename)
-			return loadImage(i);
+		{
+			void *baseAddress = loadImage(i);
+			return baseAddress;
+		}
 
 	return LoadLibraryA(filename);
 }
 
-uint32_t Win32Loader::getFunctionAddress(void *library, const char *functionName)
+uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName)
 {
-	return reinterpret_cast<uint32_t>(GetProcAddress(reinterpret_cast<HMODULE>(library), functionName));
+	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
+	if(it != loadedImages_.end())
+	{
+		for(auto &i : (*it)->exports)
+			if(i.name == functionName)
+				return i.address + reinterpret_cast<uint64_t>(library);
+	}
+	else
+		return reinterpret_cast<uint64_t>(GetProcAddress(reinterpret_cast<HMODULE>(library), functionName));
+	return 0;
 }

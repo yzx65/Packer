@@ -116,7 +116,11 @@ struct ExportFunction
 struct Image
 {
 	Image() {}
-	Image(Image &&operand) : info(operand.info), sections(std::move(operand.sections)), imports(std::move(operand.imports)), relocations(std::move(operand.relocations)), extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)) {}
+	Image(Image &&operand) : 
+		info(operand.info), sections(std::move(operand.sections)), 
+		imports(std::move(operand.imports)), relocations(std::move(operand.relocations)),
+		extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)),
+		exports(std::move(operand.exports)) {}
 	const Image &operator =(Image &&operand)
 	{
 		info = std::move(operand.info);
@@ -125,6 +129,7 @@ struct Image
 		relocations = std::move(operand.relocations);
 		extendedData = std::move(operand.extendedData);
 		fileName = std::move(operand.fileName);
+		exports = std::move(operand.exports);
 
 		return *this;
 	}

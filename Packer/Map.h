@@ -30,9 +30,19 @@ private:
 			return node_->data;
 		}
 
+		ValueType *operator ->()
+		{
+			return node_->data;
+		}
+
 		bool operator ==(const MapIterator &operand)
 		{
 			return node_ == operand.node_;
+		}
+
+		bool operator !=(const MapIterator &operand)
+		{
+			return node_ != operand.node_;
 		}
 	};
 public:
