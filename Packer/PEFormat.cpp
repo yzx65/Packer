@@ -249,10 +249,12 @@ void PEFormat::processExport(IMAGE_EXPORT_DIRECTORY *directory)
 	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
 	{
 		ExportFunction entry;
-		if(addressOfNames[i])
+		if(addressOfNames && addressOfNames[i])
 			entry.name.assign(reinterpret_cast<const char *>(getDataPointerOfRVA(addressOfNames[i])));
+
 		entry.ordinal = ordinals[i];
-		entry.address = addressOfFunctions[i];
+		entry.address = addressOfFunctions[entry.ordinal];
+		entry.ordinal += directory->Base;
 
 		exports_.push_back(entry);
 	}
