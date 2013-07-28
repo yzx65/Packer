@@ -37,7 +37,7 @@ List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 		if(input->isSystemLibrary(fileName))
 			continue;
 		SharedPtr<FormatBase> import = input->loadImport(fileName);
-		loadedFiles_.push_back(import->getFilename());
+		loadedFiles_.push_back(import->getFileName());
 		result.push_back(import);
 
 		List<SharedPtr<FormatBase>> dependencies = loadImport(import);
@@ -52,11 +52,15 @@ void PackerMain::processFile(SharedPtr<File> file)
 	SharedPtr<FormatBase> input;
 	uint8_t *fileData = file->map();
 	if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
-		input = MakeShared<PEFormat>(fileData, file->getFileName(), file->getFilePath());
+	{
+		input = MakeShared<PEFormat>(fileData);
+		input->setFileName(file->getFileName());
+		input->setFilePath(file->getFilePath());
+	}
 	else
 		return;
 
-	loadedFiles_.push_back(input->getFilename());
+	loadedFiles_.push_back(input->getFileName());
 	List<SharedPtr<FormatBase>> imports = loadImport(input);
 	
 	//test
