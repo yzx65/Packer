@@ -8,6 +8,7 @@
 class PEFormat : public FormatBase
 {
 private:
+	void *dataDirectories_;
 	List<Section> sections_;
 	List<Import> imports_;
 	List<uint64_t> relocations_;
@@ -23,9 +24,9 @@ private:
 	void processExport(uint8_t *directory_);
 	uint8_t *getDataPointerOfRVA(uint32_t rva);
 	void loadSectionData(int numberOfSections, uint8_t *data, size_t offset, bool fromLoaded);
-	void processExtra(void *dataDirectories_, uint8_t *data, size_t headerSize);
+	void processExtra(uint8_t *data, size_t headerSize);
 public:
-	PEFormat(uint8_t *data, bool fromLoaded = false);
+	PEFormat(uint8_t *data, bool fromLoaded = false, bool fullLoad = true);
 	~PEFormat();
 
 	virtual void setFileName(const String &fileName);
@@ -37,4 +38,6 @@ public:
 	virtual List<ExportFunction> getExports();
 
 	virtual bool isSystemLibrary(const String &filename);
+
+	void *getDataDirectories();
 };

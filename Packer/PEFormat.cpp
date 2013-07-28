@@ -36,7 +36,7 @@ inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat(uint8_t *data, bool fromLoaded)
+PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad)
 {
 	IMAGE_DOS_HEADER *dosHeader;
 	uint32_t *ntSignature;
@@ -44,7 +44,6 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded)
 	IMAGE_OPTIONAL_HEADER_BASE *optionalHeaderBase;
 	uint32_t headerSize;
 	size_t offset;
-	IMAGE_DATA_DIRECTORY dataDirectories[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 
 	dosHeader = structureAtOffset(data, 0);
 	if(!dosHeader->e_lfanew)
@@ -65,8 +64,7 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded)
 	if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
 	{
 		IMAGE_OPTIONAL_HEADER32 *optionalHeader = structureAtOffset(data, offset);
-		for(int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i ++)
-			dataDirectories[i] = optionalHeader->DataDirectory[i];
+		dataDirectories_ = optionalHeader->DataDirectory;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		info_.architecture = ArchitectureWin32;
@@ -76,8 +74,7 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded)
 	else if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 	{
 		IMAGE_OPTIONAL_HEADER64 *optionalHeader = structureAtOffset(data, offset);
-		for(int i = 0; i < IMAGE_NUMBEROF_DIRECTORY_ENTRIES; i ++)
-			dataDirectories[i] = optionalHeader->DataDirectory[i];
+		dataDirectories_ = optionalHeader->DataDirectory;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		headerSize = optionalHeader->SizeOfHeaders;
@@ -85,8 +82,11 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded)
 		offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
 
-	loadSectionData(fileHeader->NumberOfSections, data, offset, fromLoaded);
-	processExtra(dataDirectories, data, headerSize);
+	if(fullLoad)
+	{
+		loadSectionData(fileHeader->NumberOfSections, data, offset, fromLoaded);
+		processExtra(data, headerSize);
+	}
 }
 
 PEFormat::~PEFormat()
@@ -94,7 +94,7 @@ PEFormat::~PEFormat()
 
 }
 
-void PEFormat::processExtra(void *dataDirectories_, uint8_t *data, size_t headerSize)
+void PEFormat::processExtra(uint8_t *data, size_t headerSize)
 {
 	IMAGE_DATA_DIRECTORY *dataDirectories = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(dataDirectories_);
 	processImport(getDataPointerOfRVA(dataDirectories[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
@@ -361,4 +361,9 @@ bool PEFormat::isSystemLibrary(const String &filename)
 		if(lowered.compare(systemFiles[i]) == 0)
 			return true;
 	return false;
+}
+
+void *PEFormat::getDataDirectories()
+{
+	return dataDirectories_;
 }
