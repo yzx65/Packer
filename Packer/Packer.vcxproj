@@ -115,6 +115,7 @@
     <ClInclude Include="Win32File.h" />
     <ClInclude Include="Option.h" />
     <ClInclude Include="PackerMain.h" />
+    <ClInclude Include="Win32Structure.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
