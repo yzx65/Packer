@@ -259,10 +259,14 @@ void PEFormat::processExport(uint8_t *directory_)
 	if(!directory)
 		return;
 
+	bool *checker = new bool[directory->NumberOfFunctions];
+	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
+		checker[i] = false;
+
 	uint32_t *addressOfFunctions = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(directory->AddressOfFunctions));
 	uint32_t *addressOfNames = reinterpret_cast<uint32_t *>(getDataPointerOfRVA(directory->AddressOfNames));
 	uint16_t *ordinals = reinterpret_cast<uint16_t *>(getDataPointerOfRVA(directory->AddressOfNameOrdinals));
-	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
+	for(size_t i = 0; i < directory->NumberOfNames; i ++)
 	{
 		ExportFunction entry;
 		if(addressOfNames && addressOfNames[i])
@@ -270,10 +274,22 @@ void PEFormat::processExport(uint8_t *directory_)
 
 		entry.ordinal = ordinals[i];
 		entry.address = addressOfFunctions[entry.ordinal];
+		checker[entry.ordinal] = true;
 		entry.ordinal += directory->Base;
 
 		exports_.push_back(entry);
 	}
+
+	for(size_t i = 0; i < directory->NumberOfNames; i ++)
+	{
+		//entry without names
+		ExportFunction entry;
+		entry.ordinal = i + directory->Base;
+		entry.address = addressOfFunctions[i];
+
+		exports_.push_back(entry);
+	}
+	delete [] checker;
 }
 
 void PEFormat::setFileName(const String &fileName)
