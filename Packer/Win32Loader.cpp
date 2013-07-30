@@ -118,8 +118,24 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName
 {
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
-		for(auto &i : (*it)->exports)
-			if(i.name == functionName)
-				return i.address + reinterpret_cast<uint64_t>(library);
+	{
+		int s = 0;
+		int e = (*it)->exports.size();
+
+		while(true)
+		{
+			int m = (s + e) / 2;
+			int cmp = (*it)->exports[m].name.compare(functionName);
+			if(cmp < 0)
+			{
+				s = 0;
+				e = m - 1;
+			}
+			else if(cmp > 0)
+				s = m + 1;
+			else
+				return (*it)->exports[m].address + reinterpret_cast<uint64_t>(library);
+		}
+	}
 	return 0;
 }
