@@ -106,11 +106,13 @@ public:
 			data_[i] = *it;
 	}
 
-	void push_back(ValueType data)
+	iterator push_back(ValueType data)
 	{
 		reserve(size_ + 1);
 		data_[size_] = data;
 		size_ ++;
+
+		return &data_[size_ - 1];
 	}
 
 	void insert(size_t pos, ValueType data)

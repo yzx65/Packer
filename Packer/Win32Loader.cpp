@@ -103,7 +103,8 @@ void *Win32Loader::loadLibrary(const char *filename)
 			return loadImage(i);
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
-	return loadImage(format->serialize());
+	Image image = format->serialize();
+	return loadImage(*imports_.push_back(image));
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName)
