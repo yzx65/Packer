@@ -117,7 +117,7 @@ public:
 	{
 		reserve(size_ + 1);
 
-		for(size_t i = size(); i >= pos; i --)
+		for(size_t i = size(); i >= pos + 1; i --)
 			data_[i] = data_[i - 1];
 		data_[pos] = data;
 		size_ ++;
@@ -127,7 +127,7 @@ public:
 	{
 		reserve(size_ + data.size());
 
-		for(size_t i = size(); i >= pos; i --)
+		for(size_t i = size(); i >= pos + data.size(); i --)
 			data_[i] = data_[i - data.size()];
 		for(size_t i = 0; i < data.size(); i ++)
 			data_[i + pos] = data[i];
