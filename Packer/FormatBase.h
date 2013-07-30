@@ -15,8 +15,10 @@ public:
 	virtual void setFileName(const String &fileName) = 0;
 	virtual void setFilePath(const String &filePath) = 0;
 	virtual String getFileName() = 0;
-	virtual SharedPtr<FormatBase> loadImport(const String &filename) = 0;
+	virtual String getFilePath() = 0;
 	virtual List<Import> getImports() = 0;
 
 	virtual bool isSystemLibrary(const String &filename) = 0;
+
+	static SharedPtr<FormatBase> loadImport(const String &filename, SharedPtr<FormatBase> hint = SharedPtr<FormatBase>(nullptr));
 };

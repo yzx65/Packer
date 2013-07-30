@@ -1,5 +1,6 @@
 #include "Win32Loader.h"
 
+#include "FormatBase.h"
 #include <Windows.h>
 
 Win32Loader *loaderInstance_;
@@ -99,24 +100,18 @@ void *Win32Loader::loadLibrary(const char *filename)
 		return reinterpret_cast<void *>(*it);
 	for(auto &i : imports_)
 		if(i.fileName == filename)
-		{
-			void *baseAddress = loadImage(i);
-			return baseAddress;
-		}
+			return loadImage(i);
 
-	return LoadLibraryA(filename);
+	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
+	return loadImage(format->serialize());
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName)
 {
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
-	{
 		for(auto &i : (*it)->exports)
 			if(i.name == functionName)
 				return i.address + reinterpret_cast<uint64_t>(library);
-	}
-	else
-		return reinterpret_cast<uint64_t>(GetProcAddress(reinterpret_cast<HMODULE>(library), functionName));
 	return 0;
 }

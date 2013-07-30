@@ -32,7 +32,7 @@ public:
 	virtual void setFileName(const String &fileName);
 	virtual void setFilePath(const String &filePath);
 	virtual String getFileName();
-	virtual SharedPtr<FormatBase> loadImport(const String &filename);
+	virtual String getFilePath();
 	virtual Image serialize();
 	virtual List<Import> getImports();
 	virtual List<ExportFunction> getExports();

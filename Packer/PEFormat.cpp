@@ -307,40 +307,9 @@ String PEFormat::getFileName()
 	return fileName_;
 }
 
-SharedPtr<FormatBase> PEFormat::loadImport(const String &filename)
+String PEFormat::getFilePath()
 {
-	List<String> searchPaths;
-	if(filePath_.length())
-		searchPaths.push_back(filePath_);
-#ifdef _WIN32
-	WString temp;
-	temp.resize(32768);
-	GetEnvironmentVariableW(L"Path", &temp[0], 32768);
-	int s = 0, e = 0;
-	while(true)
-	{
-		e = temp.find(L';', e + 1);
-		if(e == -1)
-			break;
-		searchPaths.push_back(WStringToString(temp.substr(s, e - s)));
-		s = e + 1;
-	}
-#endif
-	for(auto &i : searchPaths)
-	{
-		String path = File::combinePath(i, filename);
-		if(File::isPathExists(path))
-		{
-			SharedPtr<File> file = File::open(path);
-			uint8_t *map = file->map();
-			SharedPtr<FormatBase> result = MakeShared<PEFormat>(map);
-			result->setFileName(file->getFileName());
-			result->setFilePath(file->getFilePath());
-			file->unmap();
-			return result;
-		}
-	}
-	return SharedPtr<FormatBase>(nullptr);
+	return filePath_;
 }
 
 List<Import> PEFormat::getImports()
@@ -382,4 +351,40 @@ bool PEFormat::isSystemLibrary(const String &filename)
 void *PEFormat::getDataDirectories()
 {
 	return dataDirectories_;
+}
+
+SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, SharedPtr<FormatBase> hint)
+{
+	List<String> searchPaths;
+	if(hint->getFilePath().length())
+		searchPaths.push_back(hint->getFilePath());
+#ifdef _WIN32
+	WString temp;
+	temp.resize(32768);
+	GetEnvironmentVariableW(L"Path", &temp[0], 32768);
+	int s = 0, e = 0;
+	while(true)
+	{
+		e = temp.find(L';', e + 1);
+		if(e == -1)
+			break;
+		searchPaths.push_back(WStringToString(temp.substr(s, e - s)));
+		s = e + 1;
+	}
+#endif
+	for(auto &i : searchPaths)
+	{
+		String path = File::combinePath(i, filename);
+		if(File::isPathExists(path))
+		{
+			SharedPtr<File> file = File::open(path);
+			uint8_t *map = file->map();
+			SharedPtr<FormatBase> result = MakeShared<PEFormat>(map);
+			result->setFileName(file->getFileName());
+			result->setFilePath(file->getFilePath());
+			file->unmap();
+			return result;
+		}
+	}
+	return SharedPtr<FormatBase>(nullptr);
 }
