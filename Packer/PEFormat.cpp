@@ -282,6 +282,8 @@ void PEFormat::processExport(uint8_t *directory_)
 
 	for(size_t i = 0; i < directory->NumberOfNames; i ++)
 	{
+		if(checker[i] == true)
+			continue;
 		//entry without names
 		ExportFunction entry;
 		entry.ordinal = i + directory->Base;
