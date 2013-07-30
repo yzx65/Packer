@@ -18,7 +18,6 @@ private:
 	bool isBooleanOption(const String &optionName);
 public:
 	Option(int argc, char **argv);
-	Option(int argc, wchar_t **argv);
 
 	List<SharedPtr<File>> getInputFiles() const;
 };

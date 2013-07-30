@@ -4,6 +4,8 @@
 
 #include "Win32Structure.h"
 #include "PEFormat.h"
+#include "String.h"
+#include "Util.h"
 
 Win32NativeHelper g_helper;
 
@@ -51,10 +53,10 @@ void Win32NativeHelper::init()
 #elif defined(__WIN32)
 	pebAddress = __readgsqword(0x60);
 #endif
-	PEB *peb = reinterpret_cast<PEB *>(pebAddress);
-	heap_ = peb->ProcessHeap;
+	myPEB_ = reinterpret_cast<PEB *>(pebAddress);
+	heap_ = myPEB_->ProcessHeap;
 
-	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(peb->LoaderData->InLoadOrderModuleList.Flink->Flink);
+	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink->Flink);
 	ntdllBase_ = reinterpret_cast<size_t>(module->BaseAddress);
 
 	//get exports
@@ -79,7 +81,11 @@ bool Win32NativeHelper::freeHeap(void *ptr)
 	return reinterpret_cast<RtlFreeHeapPtr>(ntdllBase_ + rtlFreeHeap_)(heap_, 0, ptr);
 }
 
-//TODO
+wchar_t *Win32NativeHelper::getCommandLine()
+{
+	return myPEB_->ProcessParameters->CommandLine.Buffer;
+}
+
 void* operator new(size_t num)
 {
 	return Win32NativeHelper::get()->allocateHeap(num);
@@ -98,6 +104,12 @@ void operator delete(void *ptr)
 void operator delete[](void *ptr)
 {
 	Win32NativeHelper::get()->freeHeap(ptr);
+}
+
+String getCommandLine()
+{
+	WString temp(Win32NativeHelper::get()->getCommandLine());
+	return WStringToString(temp);
 }
 
 extern "C"

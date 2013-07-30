@@ -1,21 +1,12 @@
 #include "Option.h"
 
 #include "File.h"
-#include "Util.h"
 
 Option::Option(int argc, char **argv)
 {
 	List<String> rawOptions;
 	for(int i = 1; i < argc; i ++)
 		rawOptions.push_back(String(argv[i]));
-	parseOptions(argc, rawOptions);
-}
-
-Option::Option(int argc, wchar_t **argv)
-{
-	List<String> rawOptions;
-	for(int i = 1; i < argc; i ++)
-		rawOptions.push_back(WStringToString(WString(argv[i])));
 	parseOptions(argc, rawOptions);
 }
 
