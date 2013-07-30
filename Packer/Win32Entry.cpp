@@ -44,6 +44,8 @@ void WindowsEntry()
 		}
 		if(quote == false && str[i] == ' ')
 		{
+			if(item.length() == 0)
+				continue;
 			argc ++;
 			items.push_back(std::move(item));
 			item = "";
