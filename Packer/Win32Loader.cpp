@@ -1,17 +1,25 @@
 #include "Win32Loader.h"
 
 #include "FormatBase.h"
+#include "Win32Runtime.h"
 #include <Windows.h>
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports)
+Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
 }
 
 uint8_t *Win32Loader::loadImage(const Image &image)
 {
+	if(image.fileName == "ntdll.dll") //ntdll.dll is always loaded
+	{
+		uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->getNtdll());
+		loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
+		loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
+		return baseAddress;
+	}
 	uint8_t *baseAddress;
 	baseAddress = reinterpret_cast<uint8_t *>(VirtualAlloc(nullptr, static_cast<uint32_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
@@ -103,8 +111,7 @@ void *Win32Loader::loadLibrary(const char *filename)
 			return loadImage(i);
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
-	Image image = format->serialize();
-	return loadImage(*imports_.push_back(image));
+	return loadImage(*imports_.push_back(format->serialize()));
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName)

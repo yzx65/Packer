@@ -86,6 +86,11 @@ wchar_t *Win32NativeHelper::getCommandLine()
 	return myPEB_->ProcessParameters->CommandLine.Buffer;
 }
 
+size_t Win32NativeHelper::getNtdll()
+{
+	return ntdllBase_;
+}
+
 void* operator new(size_t num)
 {
 	return Win32NativeHelper::get()->allocateHeap(num);

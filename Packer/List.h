@@ -132,16 +132,31 @@ public:
 		other.head_ = nullptr;
 	}
 
-	void push_back(const value_type &data)
+	template<typename InputIterator>
+	List(InputIterator s, InputIterator e)
+	{
+		head_ = new ListNodeBase();
+		head_->next = head_;
+		head_->prev = head_;
+
+		for(; s != e; s ++)
+			push_back(*s);
+	}
+
+	iterator push_back(const value_type &data)
 	{
 		ListNode *item = appendNode_();
 		item->data = data;
+
+		return iterator(item);
 	}
 
-	void push_back(value_type &&data)
+	iterator push_back(value_type &&data)
 	{
 		ListNode *item = appendNode_();
 		item->data = std::move(data);
+
+		return iterator(item);
 	}
 
 	template<typename InputIterator>

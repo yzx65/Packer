@@ -21,6 +21,7 @@ public:
 	void *allocateHeap(size_t dwBytes);
 	bool freeHeap(void *ptr);
 	wchar_t *getCommandLine();
+	size_t getNtdll();
 
 	static Win32NativeHelper *get();
 };

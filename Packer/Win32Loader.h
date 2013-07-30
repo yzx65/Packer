@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector.h"
+#include "List.h"
 #include "Map.h"
 #include "Image.h"
 
@@ -8,7 +9,7 @@ class Win32Loader
 {
 private:
 	const Image &image_;
-	Vector<Image> imports_;
+	List<Image> imports_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t> loadedLibraries_;
 	void *loadLibrary(const char *filename);
