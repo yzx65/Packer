@@ -167,6 +167,11 @@ public:
 		return compare(operand.c_str()) == 0;
 	}
 
+	bool operator ==(const char *operand) const
+	{
+		return compare(operand) == 0;
+	}
+
 	bool operator <(const StringBase &operand) const
 	{
 		return compare(operand.c_str()) < 0;
