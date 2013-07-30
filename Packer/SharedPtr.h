@@ -131,6 +131,11 @@ public:
 	{
 		return item_;
 	}
+
+	PointerType *get()
+	{
+		return item_;
+	}
 };
 
 //VC11 doesn't support variadic templates.. damn

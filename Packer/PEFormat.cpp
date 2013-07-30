@@ -356,7 +356,7 @@ void *PEFormat::getDataDirectories()
 SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, SharedPtr<FormatBase> hint)
 {
 	List<String> searchPaths;
-	if(hint->getFilePath().length())
+	if(hint.get() && hint->getFilePath().length())
 		searchPaths.push_back(hint->getFilePath());
 #ifdef _WIN32
 	WString temp;
