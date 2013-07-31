@@ -159,3 +159,23 @@ inline WString StringToWString(const String &input)
 
 	return result;
 }
+
+template<typename IteratorType, typename Comparator>
+typename IteratorType binarySearch(IteratorType begin, IteratorType end, Comparator comparator)
+{
+	int s = 0;
+	int e = end - begin;
+
+	while(s <= e)
+	{
+		int m = (s + e) / 2;
+		int cmp = comparator(begin + m);
+		if(cmp < 0)
+			e = m - 1;
+		else if(cmp > 0)
+			s = m + 1;
+		else
+			return begin + m;
+	}
+	return end;
+}

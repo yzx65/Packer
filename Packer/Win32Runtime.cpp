@@ -91,6 +91,11 @@ size_t Win32NativeHelper::getNtdll()
 	return ntdllBase_;
 }
 
+API_SET_HEADER *Win32NativeHelper::getApiSet()
+{
+	return myPEB_->ApiSet;
+}
+
 void* operator new(size_t num)
 {
 	return Win32NativeHelper::get()->allocateHeap(num);

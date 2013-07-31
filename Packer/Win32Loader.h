@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Vector.h"
+#include "String.h"
 #include "List.h"
 #include "Map.h"
 #include "Image.h"
@@ -12,7 +13,7 @@ private:
 	List<Image> imports_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t> loadedLibraries_;
-	void *loadLibrary(const char *filename);
+	void *loadLibrary(const String &filename);
 	uint64_t getFunctionAddress(void *library, const char *functionName);
 	uint8_t *loadImage(const Image &image);
 public:

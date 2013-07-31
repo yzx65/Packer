@@ -4,6 +4,8 @@
 
 struct _PEB;
 typedef struct _PEB PEB;
+struct _api_set_header;
+typedef struct _api_set_header API_SET_HEADER;
 class Win32NativeHelper
 {
 private:
@@ -18,6 +20,7 @@ private:
 	void init();
 	void initNtdllImport(size_t exportDirectoryAddress);
 public:
+	API_SET_HEADER *getApiSet();
 	void *allocateHeap(size_t dwBytes);
 	bool freeHeap(void *ptr);
 	wchar_t *getCommandLine();

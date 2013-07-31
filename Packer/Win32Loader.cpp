@@ -2,6 +2,8 @@
 
 #include "FormatBase.h"
 #include "Win32Runtime.h"
+#include "Win32Structure.h"
+#include "Util.h"
 #include <Windows.h>
 
 Win32Loader *loaderInstance_;
@@ -43,7 +45,7 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 
 	for(auto &i : image.imports)
 	{
-		void *library = loadLibrary(i.libraryName.c_str());
+		void *library = loadLibrary(i.libraryName);
 		for(auto &j : i.functions)
 		{
 			if(image.info.architecture == ArchitectureWin32)
@@ -101,8 +103,37 @@ void Win32Loader::execute()
 	uint8_t *baseAddress = loadImage(image_);
 }
 
-void *Win32Loader::loadLibrary(const char *filename)
+void *Win32Loader::loadLibrary(const String &filename)
 {
+	API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
+	if(filename[0] == 'a' && filename[1] == 'p' && filename[2] == 'i' && filename[3] == '-')
+	{
+		String temp = filename;
+		temp.resize(temp.length() - 4); //minus .dll
+		auto item = binarySearch(apiSet->Entries, apiSet->Entries + apiSet->NumberOfEntries, 
+			[&](const API_SET_ENTRY *entry) -> int
+			{
+				wchar_t *name = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + entry->Name);
+				size_t i = 0;
+				for(; i < entry->NameLength / sizeof(wchar_t); i ++)
+					if(static_cast<char>(name[i]) != temp[i + 4])
+						return temp[i + 4] - static_cast<char>(name[i]);
+				return temp[i + 4] - static_cast<char>(name[i]);
+			});
+		if(item != apiSet->Entries + apiSet->NumberOfEntries)
+		{
+			API_SET_HOST_DESCRIPTOR *descriptor = reinterpret_cast<API_SET_HOST_DESCRIPTOR *>(reinterpret_cast<uint8_t *>(apiSet) + item->HostDescriptor);
+			for(size_t i = 0; i < descriptor->NumberOfHosts; i ++)
+			{
+				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
+				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
+				void *library = loadLibrary(WStringToString(moduleName));
+				if(library)
+					return library;
+			}
+			return nullptr;
+		}
+	}
 	auto it = loadedLibraries_.find(String(filename));
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(*it);
@@ -111,6 +142,8 @@ void *Win32Loader::loadLibrary(const char *filename)
 			return loadImage(i);
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
+	if(!format.get())
+		return nullptr;
 	return loadImage(*imports_.push_back(format->serialize()));
 }
 
@@ -119,23 +152,10 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
 	{
-		int s = 0;
-		int e = (*it)->exports.size();
-
-		while(true)
-		{
-			int m = (s + e) / 2;
-			int cmp = (*it)->exports[m].name.compare(functionName);
-			if(cmp < 0)
-			{
-				s = 0;
-				e = m - 1;
-			}
-			else if(cmp > 0)
-				s = m + 1;
-			else
-				return (*it)->exports[m].address + reinterpret_cast<uint64_t>(library);
-		}
+		auto item = binarySearch((*it)->exports.begin(), (*it)->exports.begin() + (*it)->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
+		if(item == (*it)->exports.end() + (*it)->nameExportLen)
+			return 0;
+		return item->address + reinterpret_cast<uint64_t>(library);
 	}
 	return 0;
 }

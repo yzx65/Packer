@@ -44,7 +44,7 @@ public:
 	void assign(IteratorType start, IteratorType end)
 	{
 		size_t length = end - start;
-		resize(length + 1);
+		Vector<CharacterType>::resize(length + 1);
 
 		size_t i = 0;
 		for(IteratorType it = start; it != end; it ++, i ++)
@@ -55,7 +55,7 @@ public:
 	void assign(const CharacterType *string)
 	{
 		size_t length = length_(string);
-		resize(length + 1);
+		Vector<CharacterType>::resize(length + 1);
 		Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
 	}
 
@@ -76,7 +76,7 @@ public:
 		if(size())
 		{
 			Vector<CharacterType>::insert(length(), operand);
-			resize(size() - 1);
+			Vector<CharacterType>::resize(size() - 1);
 		}
 		else
 			assign(operand.begin(), operand.end());
@@ -94,7 +94,8 @@ public:
 
 	void resize(size_t size)
 	{
-		return Vector<CharacterType>::resize(size);
+		Vector<CharacterType>::resize(size + 1);
+		get()[size] = 0;
 	}
 
 	size_t length() const

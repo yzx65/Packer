@@ -15,6 +15,7 @@ private:
 	List<ExtendedData> extendedData_;
 	List<ExportFunction> exports_;
 	ImageInfo info_;
+	size_t nameExportLen_;
 
 	String fileName_;
 	String filePath_;
@@ -25,6 +26,7 @@ private:
 	uint8_t *getDataPointerOfRVA(uint32_t rva);
 	void loadSectionData(int numberOfSections, uint8_t *data, size_t offset, bool fromLoaded);
 	void processExtra(uint8_t *data, size_t headerSize);
+	String PEFormat::checkExportForwarder(uint64_t address);
 public:
 	PEFormat(uint8_t *data, bool fromLoaded = false, bool fullLoad = true);
 	~PEFormat();

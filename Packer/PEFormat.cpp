@@ -253,6 +253,11 @@ void PEFormat::processImport(uint8_t *descriptor_)
 	}
 }
 
+String PEFormat::checkExportForwarder(uint64_t address)
+{
+	return "";
+}
+
 void PEFormat::processExport(uint8_t *directory_)
 {
 	IMAGE_EXPORT_DIRECTORY *directory = reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(directory_);
@@ -276,6 +281,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		entry.address = addressOfFunctions[entry.ordinal];
 		checker[entry.ordinal] = true;
 		entry.ordinal += directory->Base;
+		entry.forward = checkExportForwarder(entry.address);
 
 		exports_.push_back(entry);
 	}
@@ -288,10 +294,12 @@ void PEFormat::processExport(uint8_t *directory_)
 		ExportFunction entry;
 		entry.ordinal = i + directory->Base;
 		entry.address = addressOfFunctions[i];
+		entry.forward = checkExportForwarder(entry.address);
 
 		exports_.push_back(entry);
 	}
 	delete [] checker;
+	nameExportLen_ = directory->NumberOfNames;
 }
 
 void PEFormat::setFileName(const String &fileName)
@@ -334,6 +342,7 @@ Image PEFormat::serialize()
 	image.relocations.assign(relocations_.begin(), relocations_.end());
 	image.extendedData.assign(extendedData_.begin(), extendedData_.end());
 	image.exports.assign(exports_.begin(), exports_.end());
+	image.nameExportLen = nameExportLen_;
 
 	return std::move(image);
 }

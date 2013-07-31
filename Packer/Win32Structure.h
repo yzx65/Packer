@@ -89,15 +89,29 @@ typedef void (*PPEBLOCKROUTINE)(
 	PVOID PebLock
 	);
 
+typedef struct _api_set_host {
+	DWORD           ImportModuleName;
+	WORD            ImportModuleNameLength;
+	DWORD           HostModuleName;
+	WORD            HostModuleNameLength;
+} API_SET_HOST;
 
-typedef struct _PEB_FREE_BLOCK {
+typedef struct _api_set_host_descriptor {
+	DWORD           NumberOfHosts;
+	API_SET_HOST    Hosts[1];
+} API_SET_HOST_DESCRIPTOR;
 
-	_PEB_FREE_BLOCK *Next;
+typedef struct _api_set_entry {
+	DWORD           Name;
+	WORD            NameLength;
+	DWORD           HostDescriptor;
+} API_SET_ENTRY;
 
-	ULONG Size;
-
-
-} PEB_FREE_BLOCK, *PPEB_FREE_BLOCK;
+typedef struct _api_set_header {
+	DWORD           unknown1;
+	DWORD           NumberOfEntries;
+	API_SET_ENTRY   Entries[1];
+} API_SET_HEADER;	
 
 typedef struct _PEB {
 
@@ -118,7 +132,7 @@ typedef struct _PEB {
 	PVOID KernelCallbackTable;
 	PVOID EventLogSection;
 	PVOID EventLog;
-	PPEB_FREE_BLOCK FreeList;
+	API_SET_HEADER *ApiSet;
 	ULONG TlsExpansionCounter;
 	PVOID TlsBitmap;
 	ULONG TlsBitmapBits[0x2];

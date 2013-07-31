@@ -118,6 +118,7 @@ struct ExportFunction
 	uint16_t ordinal;
 	String name;
 	uint64_t address;
+	String forward;
 };
 
 struct Image
@@ -127,7 +128,7 @@ struct Image
 		info(operand.info), sections(std::move(operand.sections)), 
 		imports(std::move(operand.imports)), relocations(std::move(operand.relocations)),
 		extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)),
-		exports(std::move(operand.exports)) {}
+		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen) {}
 	const Image &operator =(Image &&operand)
 	{
 		info = std::move(operand.info);
@@ -137,11 +138,13 @@ struct Image
 		extendedData = std::move(operand.extendedData);
 		fileName = std::move(operand.fileName);
 		exports = std::move(operand.exports);
+		nameExportLen = operand.nameExportLen;
 
 		return *this;
 	}
 	ImageInfo info;
 	String fileName;
+	size_t nameExportLen;
 	Vector<ExportFunction> exports;
 	Vector<Section> sections;
 	Vector<Import> imports;
