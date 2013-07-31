@@ -255,6 +255,12 @@ void PEFormat::processImport(uint8_t *descriptor_)
 
 String PEFormat::checkExportForwarder(uint64_t address)
 {
+	IMAGE_DATA_DIRECTORY *dataDirectories = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(dataDirectories_);
+	if(address >= dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress && 
+		address < dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress + dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].Size)
+		for(auto &i : sections_)
+			if(address >= i.baseAddress && address < i.baseAddress + i.size)
+				return String(reinterpret_cast<char *>(&i.data[static_cast<uint32_t>(address - i.baseAddress)]));
 	return "";
 }
 

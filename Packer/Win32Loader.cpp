@@ -50,12 +50,12 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		{
 			if(image.info.architecture == ArchitectureWin32)
 			{
-				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name.c_str()));
+				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name));
 				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
 			}
 			else
 			{
-				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name.c_str()));
+				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name));
 				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = functionAddress;
 			}
 		}
@@ -123,7 +123,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 		if(item != apiSet->Entries + apiSet->NumberOfEntries)
 		{
 			API_SET_HOST_DESCRIPTOR *descriptor = reinterpret_cast<API_SET_HOST_DESCRIPTOR *>(reinterpret_cast<uint8_t *>(apiSet) + item->HostDescriptor);
-			for(size_t i = 0; i < descriptor->NumberOfHosts; i ++)
+			for(size_t i = descriptor->NumberOfHosts - 1; i >= 0 ; i --)
 			{
 				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
 				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
@@ -147,7 +147,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 	return loadImage(*imports_.push_back(format->serialize()));
 }
 
-uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName)
+uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName)
 {
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
@@ -155,6 +155,14 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const char *functionName
 		auto item = binarySearch((*it)->exports.begin(), (*it)->exports.begin() + (*it)->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
 		if(item == (*it)->exports.end() + (*it)->nameExportLen)
 			return 0;
+		if(item->forward.length())
+		{
+			int point = item->forward.find('.');
+			String dllName = item->forward.substr(0, point);
+			String functionName = item->forward.substr(point + 1);
+
+			return getFunctionAddress(loadLibrary(dllName + ".dll"), functionName);
+		}
 		return item->address + reinterpret_cast<uint64_t>(library);
 	}
 	return 0;

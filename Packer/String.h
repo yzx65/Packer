@@ -163,6 +163,15 @@ public:
 		return operand[i] - get()[i];
 	}
 
+	int compare(const String &operand) const
+	{
+		size_t i;
+		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
+			if(operand[i] != get()[i])
+				return operand[i] - get()[i];
+		return operand[i] - get()[i];
+	}
+
 	bool operator ==(const StringBase &operand) const
 	{
 		return compare(operand.c_str()) == 0;
