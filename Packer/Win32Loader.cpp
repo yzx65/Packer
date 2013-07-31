@@ -115,7 +115,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 			{
 				wchar_t *name = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + entry->Name);
 				size_t i = 0;
-				for(; i < entry->NameLength / sizeof(wchar_t); i ++)
+				for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
 					if(static_cast<char>(name[i]) != temp[i + 4])
 						return temp[i + 4] - static_cast<char>(name[i]);
 				return temp[i + 4] - static_cast<char>(name[i]);
