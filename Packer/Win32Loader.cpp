@@ -15,7 +15,7 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 
 uint8_t *Win32Loader::loadImage(const Image &image)
 {
-	if(image.fileName == "ntdll.dll") //ntdll.dll is always loaded
+	if(image.fileName.icompare("ntdll.dll") == 0) //ntdll.dll is always loaded
 	{
 		uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->getNtdll());
 		loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));

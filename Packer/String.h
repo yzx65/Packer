@@ -165,11 +165,26 @@ public:
 
 	int compare(const String &operand) const
 	{
+		return compare(operand.c_str());
+	}
+
+	static CharacterType to_lower(CharacterType x)
+	{
+		return (x >= CharacterType('A') && x <= CharacterType('Z') ? x - (CharacterType('A') - CharacterType('a')) : x);
+	}
+
+	int icompare(const CharacterType *operand) const
+	{
 		size_t i;
 		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
-			if(operand[i] != get()[i])
-				return operand[i] - get()[i];
-		return operand[i] - get()[i];
+			if(to_lower(operand[i]) != to_lower(get()[i]))
+				return to_lower(operand[i]) - to_lower(get()[i]);
+		return to_lower(operand[i]) - to_lower(get()[i]);
+	}
+
+	int icompare(const String &operand) const
+	{
+		return icompare(operand.c_str());;
 	}
 
 	bool operator ==(const StringBase &operand) const

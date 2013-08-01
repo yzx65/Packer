@@ -355,12 +355,9 @@ Image PEFormat::serialize()
 
 bool PEFormat::isSystemLibrary(const String &filename)
 {
-	String lowered;
-	for(auto &i : filename)
-		lowered.push_back((i >= 'A' && i <= 'Z' ? i - ('A' - 'a') : i));
 	const char *systemFiles[] = {"kernel32.dll", "user32.dll", nullptr};
 	for(int i = 0; systemFiles[i] != nullptr; i ++)
-		if(lowered.compare(systemFiles[i]) == 0)
+		if(filename.icompare(systemFiles[i]) == 0)
 			return true;
 	return false;
 }
