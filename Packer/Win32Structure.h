@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-//Undocumented win32 structures
+//win32 structures
 
 typedef struct _UNICODE_STRING {
 	uint16_t Length;
@@ -10,6 +10,23 @@ typedef struct _UNICODE_STRING {
 } UNICODE_STRING;
 typedef UNICODE_STRING *PUNICODE_STRING;
 typedef const UNICODE_STRING *PCUNICODE_STRING;
+
+typedef struct _OBJECT_ATTRIBUTES {
+	uint32_t           Length;
+	void *          RootDirectory;
+	PUNICODE_STRING ObjectName;
+	uint32_t           Attributes;
+	void *           SecurityDescriptor;
+	void *           SecurityQualityOfService;
+}  OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
+
+typedef struct _IO_STATUS_BLOCK {
+	union {
+		uint32_t Status;
+		void *    Pointer;
+	};
+	uint32_t *Information;
+} IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
 
 typedef union _LARGE_INTEGER {
 	struct {
@@ -21,7 +38,17 @@ typedef union _LARGE_INTEGER {
 		uint32_t HighPart;
 	} u;
 	uint64_t QuadPart;
-} LARGE_INTEGER;
+} LARGE_INTEGER, *PLARGE_INTEGER;
+
+typedef struct _FILE_NETWORK_OPEN_INFORMATION {
+	LARGE_INTEGER CreationTime;
+	LARGE_INTEGER LastAccessTime;
+	LARGE_INTEGER LastWriteTime;
+	LARGE_INTEGER ChangeTime;
+	LARGE_INTEGER AllocationSize;
+	LARGE_INTEGER EndOfFile;
+	uint32_t         FileAttributes;
+} FILE_NETWORK_OPEN_INFORMATION, *PFILE_NETWORK_OPEN_INFORMATION;
 
 typedef struct _LIST_ENTRY {
 	struct _LIST_ENTRY *Flink;
@@ -187,3 +214,81 @@ typedef struct _PEB {
 	uint32_t SessionId;
 
 } PEB, *PPEB;
+
+#define DELETE                           (0x00010000L)
+#define READ_CONTROL                     (0x00020000L)
+#define WRITE_DAC                        (0x00040000L)
+#define WRITE_OWNER                      (0x00080000L)
+#define SYNCHRONIZE                      (0x00100000L)
+
+#define STANDARD_RIGHTS_REQUIRED         (0x000F0000L)
+
+#define STANDARD_RIGHTS_READ             (READ_CONTROL)
+#define STANDARD_RIGHTS_WRITE            (READ_CONTROL)
+#define STANDARD_RIGHTS_EXECUTE          (READ_CONTROL)
+
+#define STANDARD_RIGHTS_ALL              (0x001F0000L)
+
+#define SPECIFIC_RIGHTS_ALL              (0x0000FFFFL)
+
+
+#define FILE_READ_DATA            ( 0x0001 )    // file & pipe
+#define FILE_LIST_DIRECTORY       ( 0x0001 )    // directory
+
+#define FILE_WRITE_DATA           ( 0x0002 )    // file & pipe
+#define FILE_ADD_FILE             ( 0x0002 )    // directory
+
+#define FILE_APPEND_DATA          ( 0x0004 )    // file
+#define FILE_ADD_SUBDIRECTORY     ( 0x0004 )    // directory
+#define FILE_CREATE_PIPE_INSTANCE ( 0x0004 )    // named pipe
+
+
+#define FILE_READ_EA              ( 0x0008 )    // file & directory
+
+#define FILE_WRITE_EA             ( 0x0010 )    // file & directory
+
+#define FILE_EXECUTE              ( 0x0020 )    // file
+#define FILE_TRAVERSE             ( 0x0020 )    // directory
+
+#define FILE_DELETE_CHILD         ( 0x0040 )    // directory
+
+#define FILE_READ_ATTRIBUTES      ( 0x0080 )    // all
+
+#define FILE_WRITE_ATTRIBUTES     ( 0x0100 )    // all
+
+#define FILE_ALL_ACCESS (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x1FF)
+
+#define FILE_GENERIC_READ         (STANDARD_RIGHTS_READ     |\
+	FILE_READ_DATA           |\
+	FILE_READ_ATTRIBUTES     |\
+	FILE_READ_EA             |\
+	SYNCHRONIZE)
+
+
+#define FILE_GENERIC_WRITE        (STANDARD_RIGHTS_WRITE    |\
+	FILE_WRITE_DATA          |\
+	FILE_WRITE_ATTRIBUTES    |\
+	FILE_WRITE_EA            |\
+	FILE_APPEND_DATA         |\
+	SYNCHRONIZE)
+
+
+#define FILE_GENERIC_EXECUTE      (STANDARD_RIGHTS_EXECUTE  |\
+	FILE_READ_ATTRIBUTES     |\
+	FILE_EXECUTE             |\
+	SYNCHRONIZE)
+
+#define MEM_COMMIT                  0x1000      
+#define MEM_RESERVE                 0x2000      
+#define MEM_DECOMMIT                0x4000      
+#define MEM_RELEASE                 0x8000      
+
+#define OBJ_INHERIT             0x00000002L
+#define OBJ_PERMANENT           0x00000010L
+#define OBJ_EXCLUSIVE           0x00000020L
+#define OBJ_CASE_INSENSITIVE    0x00000040L
+#define OBJ_OPENIF              0x00000080L
+#define OBJ_OPENLINK            0x00000100L
+#define OBJ_KERNEL_HANDLE       0x00000200L
+#define OBJ_FORCE_ACCESS_CHECK  0x00000400L
+#define OBJ_VALID_ATTRIBUTES    0x000007F2L

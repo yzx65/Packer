@@ -2,19 +2,18 @@
 
 #include "Util.h"
 
-#include <windows.h>
+#include "Win32Runtime.h"
 
 void Win32File::open(const String &filename)
 {
 	WString wFileName = StringToWString(filename);
-	fileHandle_ = CreateFile(wFileName.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+	fileHandle_ = Win32NativeHelper::get()->createFile(GENERIC_READ, wFileName.c_str(), wFileName.length(), 0, FILE_SHARE_READ, FILE_OPEN, 0);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
 
 	if(wFileName[1] != L':') //relative
 	{
-		wchar_t temp[MAX_PATH + 1];
-		GetCurrentDirectory(MAX_PATH, temp);
+		wchar_t *temp = Win32NativeHelper::get()->getCurrentDirectory();
 		fileName_ = filename;
 		filePath_ = WStringToString(WString(temp));
 	}
@@ -30,15 +29,15 @@ void Win32File::open(const String &filename)
 
 void Win32File::close() 
 {
-	CloseHandle(fileHandle_);
+	Win32NativeHelper::get()->closeHandle(fileHandle_);
 }
 
 uint8_t *Win32File::map()
 {
 	if(mapAddress_)
 		return mapAddress_;
-	mapHandle_ = CreateFileMapping(fileHandle_, NULL, PAGE_READONLY, 0, 0, NULL);
-	mapAddress_ = static_cast<uint8_t *>(MapViewOfFile(mapHandle_, FILE_MAP_READ, 0, 0, 0));
+	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, 0, NULL, 0);
+	mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, 0, nullptr));
 	return mapAddress_;
 }
 
@@ -46,8 +45,8 @@ void Win32File::unmap()
 {
 	if(!mapAddress_)
 		return;
-	UnmapViewOfFile(static_cast<LPVOID>(mapAddress_));
-	CloseHandle(mapHandle_);
+	Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
+	Win32NativeHelper::get()->closeHandle(mapHandle_);
 	mapHandle_ = mapAddress_ = nullptr;
 }
 
@@ -68,7 +67,8 @@ String File::combinePath(const String &directory, const String &filename)
 
 bool File::isPathExists(const String &path)
 {
-	if(GetFileAttributes(StringToWString(path).c_str()) == INVALID_FILE_ATTRIBUTES)
+	WString widePath = StringToWString(path);
+	if(Win32NativeHelper::get()->getFileAttributes(widePath.c_str(), widePath.length()) == INVALID_FILE_ATTRIBUTES)
 		return false;
 	return true;
 }
