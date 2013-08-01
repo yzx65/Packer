@@ -373,7 +373,11 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, SharedPtr<F
 				equal = currentLength;
 			currentLength ++;
 		}
-		if(equal >= 3 && start[0] == L'P' && start[1] == L'A' && start[2] == L'T' && start[3] == L'H')
+		if(equal >= 3 && WString::to_lower(start[0]) == L'p'
+			 && WString::to_lower(start[1]) == L'a'
+			  && WString::to_lower(start[2]) == L't'
+			   && WString::to_lower(start[3]) == L'h'
+			    && start[4] == L'=')
 		{
 			path.assign(start + equal + 2);
 			break;
