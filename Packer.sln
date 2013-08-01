@@ -5,6 +5,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packer", "Packer\Packer.vcx
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PETest", "PETest\PETest.vcxproj", "{37C23896-C95D-43B8-B809-907689B51CC6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PEStub", "PEStub\PEStub.vcxproj", "{77E70A42-9756-4707-87BB-2D79964D90BB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -19,6 +21,10 @@ Global
 		{37C23896-C95D-43B8-B809-907689B51CC6}.Debug|Win32.Build.0 = Debug|Win32
 		{37C23896-C95D-43B8-B809-907689B51CC6}.Release|Win32.ActiveCfg = Release|Win32
 		{37C23896-C95D-43B8-B809-907689B51CC6}.Release|Win32.Build.0 = Release|Win32
+		{77E70A42-9756-4707-87BB-2D79964D90BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{77E70A42-9756-4707-87BB-2D79964D90BB}.Debug|Win32.Build.0 = Debug|Win32
+		{77E70A42-9756-4707-87BB-2D79964D90BB}.Release|Win32.ActiveCfg = Release|Win32
+		{77E70A42-9756-4707-87BB-2D79964D90BB}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
