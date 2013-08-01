@@ -113,38 +113,32 @@ void PEFormat::processExtra(uint8_t *data, size_t headerSize)
 
 void PEFormat::loadSectionData(int numberOfSections, uint8_t *data, size_t offset, bool fromLoaded)
 {
-	List<IMAGE_SECTION_HEADER> sectionHeaders;
+	IMAGE_SECTION_HEADER *sectionHeaders = structureAtOffset(data, offset);
 	for(int i = 0; i < numberOfSections; i ++)
 	{
-		IMAGE_SECTION_HEADER *sectionHeader = structureAtOffset(data, offset);
-		sectionHeaders.push_back(std::move(*sectionHeader));
-		offset += sizeof(IMAGE_SECTION_HEADER);
-	}
-	for(auto &sectionHeader : sectionHeaders)
-	{
 		Section section;
-		section.baseAddress = sectionHeader.VirtualAddress;
-		section.name.assign(reinterpret_cast<const char *>(sectionHeader.Name));
-		section.size = sectionHeader.VirtualSize;
+		section.baseAddress = sectionHeaders[i].VirtualAddress;
+		section.name.assign(reinterpret_cast<const char *>(sectionHeaders[i].Name));
+		section.size = sectionHeaders[i].VirtualSize;
 		section.flag = 0;
 
-		if(sectionHeader.Characteristics & IMAGE_SCN_CNT_CODE)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_CNT_CODE)
 			section.flag |= SectionFlagCode;
-		if(sectionHeader.Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
 			section.flag |= SectionFlagData;
-		if(sectionHeader.Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
 			section.flag |= SectionFlagData;
-		if(sectionHeader.Characteristics & IMAGE_SCN_MEM_READ)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_READ)
 			section.flag |= SectionFlagRead;
-		if(sectionHeader.Characteristics & IMAGE_SCN_MEM_WRITE)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_WRITE)
 			section.flag |= SectionFlagWrite;
-		if(sectionHeader.Characteristics & IMAGE_SCN_MEM_EXECUTE)
+		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_EXECUTE)
 			section.flag |= SectionFlagExecute;
 
 		if(!fromLoaded)
-			section.data.assign(data + sectionHeader.PointerToRawData, sectionHeader.SizeOfRawData);
+			section.data.assign(data + sectionHeaders[i].PointerToRawData, sectionHeaders[i].SizeOfRawData);
 		else
-			section.data.assign(data + sectionHeader.VirtualAddress, sectionHeader.SizeOfRawData);
+			section.data.assign(data + sectionHeaders[i].VirtualAddress, sectionHeaders[i].SizeOfRawData);
 
 		sections_.push_back(std::move(section));
 	}

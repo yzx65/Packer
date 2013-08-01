@@ -342,11 +342,4 @@ extern "C"
 	{
 		return 0;
 	}
-
-	void *memset(void *dst, int val, size_t size)
-	{
-		for(size_t i = 0; i < size; i ++)
-			*(reinterpret_cast<uint8_t *>(dst) + i) = static_cast<uint8_t>(val);
-		return dst;
-	}
 }
