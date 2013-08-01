@@ -295,6 +295,11 @@ wchar_t *Win32NativeHelper::getCurrentDirectory()
 	return myPEB_->ProcessParameters->CurrentDirectoryPath.Buffer;
 }
 
+wchar_t *Win32NativeHelper::getEnvironments()
+{
+	return reinterpret_cast<wchar_t *>(myPEB_->ProcessParameters->Environment);
+}
+
 size_t Win32NativeHelper::getNtdll()
 {
 	return ntdllBase_;

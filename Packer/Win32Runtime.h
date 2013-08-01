@@ -40,6 +40,7 @@ public:
 	uint32_t getFileAttributes(const wchar_t *filePath, size_t filePathLen);
 	wchar_t *getCommandLine();
 	wchar_t *getCurrentDirectory();
+	wchar_t *getEnvironments();
 	size_t getNtdll();
 
 	static Win32NativeHelper *get();

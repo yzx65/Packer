@@ -5,14 +5,7 @@
 #include "Util.h"
 
 #ifdef _WIN32
-//We can't just include windows.h because of structure name in PEHeader.h is same as one in windows.h.
-extern "C" {
-	int __stdcall GetEnvironmentVariableW(
-		_In_opt_   const wchar_t * lpName,
-		_Out_opt_  wchar_t * lpBuffer,
-		_In_       unsigned int nSize
-		);
-}
+#include "Win32Runtime.h" //for path search.
 #endif
 
 //Helper
@@ -373,16 +366,32 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, SharedPtr<F
 	if(hint.get() && hint->getFilePath().length())
 		searchPaths.push_back(hint->getFilePath());
 #ifdef _WIN32
-	WString temp;
-	temp.resize(32768);
-	GetEnvironmentVariableW(L"Path", &temp[0], 32768);
+	wchar_t *environmentBlock = Win32NativeHelper::get()->getEnvironments();
+	WString path;
+	while(*environmentBlock)
+	{
+		size_t equal = 0;
+		size_t currentLength = 0;
+		wchar_t *start = environmentBlock;
+		while(*environmentBlock ++) 
+		{
+			if(*environmentBlock == L'=')
+				equal = currentLength;
+			currentLength ++;
+		}
+		if(equal >= 3 && start[0] == L'P' && start[1] == L'A' && start[2] == L'T' && start[3] == L'H')
+		{
+			path.assign(start + equal + 2);
+			break;
+		}
+	}
 	int s = 0, e = 0;
 	while(true)
 	{
-		e = temp.find(L';', e + 1);
+		e = path.find(L';', e + 1);
 		if(e == -1)
 			break;
-		searchPaths.push_back(WStringToString(temp.substr(s, e - s)));
+		searchPaths.push_back(WStringToString(path.substr(s, e - s)));
 		s = e + 1;
 	}
 #endif
