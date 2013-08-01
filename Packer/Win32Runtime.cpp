@@ -2,10 +2,13 @@
 
 #include <cstdint>
 
+#include "PEHeader.h"
 #include "Win32Structure.h"
 #include "PEFormat.h"
 #include "String.h"
 #include "Util.h"
+
+#include <intrin.h>
 
 Win32NativeHelper g_helper;
 
@@ -41,6 +44,10 @@ void Win32NativeHelper::initNtdllImport(size_t exportDirectoryAddress)
 				rtlAllocateHeap_ = static_cast<size_t>(address);
 			else if(compareString(name, "RtlFreeHeap") == 0)
 				rtlFreeHeap_ = static_cast<size_t>(address);
+			else if(compareString(name, "NtAllocateVirtualMemory") == 0)
+				ntAllocateVirtualMemory_ = static_cast<size_t>(address);
+			else if(compareString(name, "NtProtectVirtualMemory") == 0)
+				ntProtectVirtualMemory_ = static_cast<size_t>(address);
 		}
 	}
 }
@@ -79,6 +86,22 @@ bool Win32NativeHelper::freeHeap(void *ptr)
 	typedef bool (__stdcall *RtlFreeHeapPtr)(void *hHeap, uint32_t dwFlags, void *ptr);
 
 	return reinterpret_cast<RtlFreeHeapPtr>(ntdllBase_ + rtlFreeHeap_)(heap_, 0, ptr);
+}
+
+void *Win32NativeHelper::allocateVirtual(size_t RegionSize, size_t AllocationType, size_t Protect)
+{
+	typedef uint32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
+	
+	void *result = nullptr;
+	reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntdllBase_ + ntAllocateVirtualMemory_)(reinterpret_cast<void *>(-1), &result, 0, &RegionSize, AllocationType, Protect);
+	return result;
+}
+
+void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection)
+{
+	typedef uint32_t (__stdcall *NtProtectVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t *NumberOfBytesToProtect, size_t NewAccessProtection, size_t *OldAccessProtection);
+
+	reinterpret_cast<NtProtectVirtualMemoryPtr>(ntdllBase_ + ntProtectVirtualMemory_)(reinterpret_cast<void *>(-1), &BaseAddress, &NumberOfBytes, NewAccessProtection, OldAccessProtection);
 }
 
 wchar_t *Win32NativeHelper::getCommandLine()

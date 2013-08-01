@@ -1,40 +1,56 @@
 #pragma once
 
+#include <cstdint>
 //Undocumented win32 structures
 
-#include <windows.h>
-
 typedef struct _UNICODE_STRING {
-	USHORT Length;
-	USHORT MaximumLength;
-	PWSTR  Buffer;
+	uint16_t Length;
+	uint16_t MaximumLength;
+	wchar_t *  Buffer;
 } UNICODE_STRING;
 typedef UNICODE_STRING *PUNICODE_STRING;
 typedef const UNICODE_STRING *PCUNICODE_STRING;
+
+typedef union _LARGE_INTEGER {
+	struct {
+		uint32_t LowPart;
+		uint32_t HighPart;
+	};
+	struct {
+		uint32_t LowPart;
+		uint32_t HighPart;
+	} u;
+	uint64_t QuadPart;
+} LARGE_INTEGER;
+
+typedef struct _LIST_ENTRY {
+	struct _LIST_ENTRY *Flink;
+	struct _LIST_ENTRY *Blink;
+} LIST_ENTRY, *PLIST_ENTRY;
 
 typedef struct _LDR_MODULE {
 
 	LIST_ENTRY InLoadOrderModuleList;
 	LIST_ENTRY InMemoryOrderModuleList;
 	LIST_ENTRY InInitializationOrderModuleList;
-	PVOID BaseAddress;
-	PVOID EntryPoint;
-	ULONG SizeOfImage;
+	void * BaseAddress;
+	void * EntryPoint;
+	uint32_t SizeOfImage;
 	UNICODE_STRING FullDllName;
 	UNICODE_STRING BaseDllName;
-	ULONG Flags;
-	SHORT LoadCount;
-	SHORT TlsIndex;
+	uint32_t Flags;
+	int16_t LoadCount;
+	int16_t TlsIndex;
 	LIST_ENTRY HashTableEntry;
-	ULONG TimeDateStamp;
+	uint32_t TimeDateStamp;
 
 } LDR_MODULE, *PLDR_MODULE;
 
 typedef struct _PEB_LDR_DATA {
 
-	ULONG Length;
-	BOOLEAN Initialized;
-	PVOID SsHandle;
+	uint32_t Length;
+	int8_t Initialized;
+	void * SsHandle;
 	LIST_ENTRY InLoadOrderModuleList;
 	LIST_ENTRY InMemoryOrderModuleList;
 	LIST_ENTRY InInitializationOrderModuleList;
@@ -43,39 +59,39 @@ typedef struct _PEB_LDR_DATA {
 
 typedef struct _RTL_DRIVE_LETTER_CURDIR {
 
-	USHORT Flags;
-	USHORT Length;
-	ULONG TimeStamp;
+	uint16_t Flags;
+	uint16_t Length;
+	uint32_t TimeStamp;
 	UNICODE_STRING DosPath;
 
 } RTL_DRIVE_LETTER_CURDIR, *PRTL_DRIVE_LETTER_CURDIR;
 
 typedef struct _RTL_USER_PROCESS_PARAMETERS {
 
-	ULONG MaximumLength;
-	ULONG Length;
-	ULONG Flags;
-	ULONG DebugFlags;
-	PVOID ConsoleHandle;
-	ULONG ConsoleFlags;
-	HANDLE StdInputHandle;
-	HANDLE StdOutputHandle;
-	HANDLE StdErrorHandle;
+	uint32_t MaximumLength;
+	uint32_t Length;
+	uint32_t Flags;
+	uint32_t DebugFlags;
+	void * ConsoleHandle;
+	uint32_t ConsoleFlags;
+	void * StdInputHandle;
+	void * StdOutputHandle;
+	void * StdErrorHandle;
 	UNICODE_STRING CurrentDirectoryPath;
-	HANDLE CurrentDirectoryHandle;
+	void * CurrentDirectoryHandle;
 	UNICODE_STRING DllPath;
 	UNICODE_STRING ImagePathName;
 	UNICODE_STRING CommandLine;
-	PVOID Environment;
-	ULONG StartingPositionLeft;
-	ULONG StartingPositionTop;
-	ULONG Width;
-	ULONG Height;
-	ULONG CharWidth;
-	ULONG CharHeight;
-	ULONG ConsoleTextAttributes;
-	ULONG WindowFlags;
-	ULONG ShowWindowFlags;
+	void * Environment;
+	uint32_t StartingPositionLeft;
+	uint32_t StartingPositionTop;
+	uint32_t Width;
+	uint32_t Height;
+	uint32_t CharWidth;
+	uint32_t CharHeight;
+	uint32_t ConsoleTextAttributes;
+	uint32_t WindowFlags;
+	uint32_t ShowWindowFlags;
 	UNICODE_STRING WindowTitle;
 	UNICODE_STRING DesktopName;
 	UNICODE_STRING ShellInfo;
@@ -86,88 +102,88 @@ typedef struct _RTL_USER_PROCESS_PARAMETERS {
 } RTL_USER_PROCESS_PARAMETERS, *PRTL_USER_PROCESS_PARAMETERS;
 
 typedef void (*PPEBLOCKROUTINE)(
-	PVOID PebLock
+	void * PebLock
 	);
 
 typedef struct _api_set_host {
-	DWORD           ImportModuleName;
-	WORD            ImportModuleNameLength;
-	DWORD           HostModuleName;
-	WORD            HostModuleNameLength;
+	uint32_t           ImportModuleName;
+	uint16_t            ImportModuleNameLength;
+	uint32_t           HostModuleName;
+	uint16_t            HostModuleNameLength;
 } API_SET_HOST;
 
 typedef struct _api_set_host_descriptor {
-	DWORD           NumberOfHosts;
+	uint32_t           NumberOfHosts;
 	API_SET_HOST    Hosts[1];
 } API_SET_HOST_DESCRIPTOR;
 
 typedef struct _api_set_entry {
-	DWORD           Name;
-	WORD            NameLength;
-	DWORD           HostDescriptor;
+	uint32_t           Name;
+	uint16_t            NameLength;
+	uint32_t           HostDescriptor;
 } API_SET_ENTRY;
 
 typedef struct _api_set_header {
-	DWORD           unknown1;
-	DWORD           NumberOfEntries;
+	uint32_t           unknown1;
+	uint32_t           NumberOfEntries;
 	API_SET_ENTRY   Entries[1];
 } API_SET_HEADER;	
 
 typedef struct _PEB {
 
-	BOOLEAN InheritedAddressSpace;
-	BOOLEAN ReadImageFileExecOptions;
-	BOOLEAN BeingDebugged;
-	BOOLEAN Spare;
-	HANDLE Mutant;
-	PVOID ImageBaseAddress;
+	int8_t InheritedAddressSpace;
+	int8_t ReadImageFileExecOptions;
+	int8_t BeingDebugged;
+	int8_t Spare;
+	void * Mutant;
+	void * ImageBaseAddress;
 	PPEB_LDR_DATA LoaderData;
 	PRTL_USER_PROCESS_PARAMETERS ProcessParameters;
-	PVOID SubSystemData;
-	PVOID ProcessHeap;
-	PVOID FastPebLock;
+	void * SubSystemData;
+	void * ProcessHeap;
+	void * FastPebLock;
 	PPEBLOCKROUTINE FastPebLockRoutine;
 	PPEBLOCKROUTINE FastPebUnlockRoutine;
-	ULONG EnvironmentUpdateCount;
-	PVOID KernelCallbackTable;
-	PVOID EventLogSection;
-	PVOID EventLog;
+	uint32_t EnvironmentUpdateCount;
+	void * KernelCallbackTable;
+	void * EventLogSection;
+	void * EventLog;
 	API_SET_HEADER *ApiSet;
-	ULONG TlsExpansionCounter;
-	PVOID TlsBitmap;
-	ULONG TlsBitmapBits[0x2];
-	PVOID ReadOnlySharedMemoryBase;
-	PVOID ReadOnlySharedMemoryHeap;
-	PVOID ReadOnlyStaticServerData;
-	PVOID AnsiCodePageData;
-	PVOID OemCodePageData;
-	PVOID UnicodeCaseTableData;
-	ULONG NumberOfProcessors;
-	ULONG NtGlobalFlag;
-	BYTE Spare2[0x4];
+	uint32_t TlsExpansionCounter;
+	void * TlsBitmap;
+	uint32_t TlsBitmapBits[0x2];
+	void * ReadOnlySharedMemoryBase;
+	void * ReadOnlySharedMemoryHeap;
+	void * ReadOnlyStaticServerData;
+	void * AnsiCodePageData;
+	void * OemCodePageData;
+	void * UnicodeCaseTableData;
+	uint32_t NumberOfProcessors;
+	uint32_t NtGlobalFlag;
+	uint8_t Spare2[0x4];
 	LARGE_INTEGER CriticalSectionTimeout;
-	ULONG HeapSegmentReserve;
-	ULONG HeapSegmentCommit;
-	ULONG HeapDeCommitTotalFreeThreshold;
-	ULONG HeapDeCommitFreeBlockThreshold;
-	ULONG NumberOfHeaps;
-	ULONG MaximumNumberOfHeaps;
-	PVOID *ProcessHeaps;
-	PVOID GdiSharedHandleTable;
-	PVOID ProcessStarterHelper;
-	PVOID GdiDCAttributeList;
-	PVOID LoaderLock;
-	ULONG OSMajorVersion;
-	ULONG OSMinorVersion;
-	ULONG OSBuildNumber;
-	ULONG OSPlatformId;
-	ULONG ImageSubSystem;
-	ULONG ImageSubSystemMajorVersion;
-	ULONG ImageSubSystemMinorVersion;
-	ULONG GdiHandleBuffer[0x22];
-	ULONG PostProcessInitRoutine;
-	ULONG TlsExpansionBitmap;
-	BYTE TlsExpansionBitmapBits[0x80];
-	ULONG SessionId;
+	uint32_t HeapSegmentReserve;
+	uint32_t HeapSegmentCommit;
+	uint32_t HeapDeCommitTotalFreeThreshold;
+	uint32_t HeapDeCommitFreeBlockThreshold;
+	uint32_t NumberOfHeaps;
+	uint32_t MaximumNumberOfHeaps;
+	void * *ProcessHeaps;
+	void * GdiSharedHandleTable;
+	void * ProcessStarterHelper;
+	void * GdiDCAttributeList;
+	void * LoaderLock;
+	uint32_t OSMajorVersion;
+	uint32_t OSMinorVersion;
+	uint32_t OSBuildNumber;
+	uint32_t OSPlatformId;
+	uint32_t ImageSubSystem;
+	uint32_t ImageSubSystemMajorVersion;
+	uint32_t ImageSubSystemMinorVersion;
+	uint32_t GdiHandleBuffer[0x22];
+	uint32_t PostProcessInitRoutine;
+	uint32_t TlsExpansionBitmap;
+	uint8_t TlsExpansionBitmapBits[0x80];
+	uint32_t SessionId;
 
 } PEB, *PPEB;

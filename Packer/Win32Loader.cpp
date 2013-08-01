@@ -4,7 +4,11 @@
 #include "Win32Runtime.h"
 #include "Win32Structure.h"
 #include "Util.h"
-#include <Windows.h>
+
+#define DLL_PROCESS_ATTACH   1    
+#define DLL_THREAD_ATTACH    2    
+#define DLL_THREAD_DETACH    3    
+#define DLL_PROCESS_DETACH   0  
 
 Win32Loader *loaderInstance_;
 
@@ -23,7 +27,7 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		return baseAddress;
 	}
 	uint8_t *baseAddress;
-	baseAddress = reinterpret_cast<uint8_t *>(VirtualAlloc(nullptr, static_cast<uint32_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+	baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
 	for(auto &i : image.extendedData)
 		for(size_t j = 0; j < i.data.size(); j ++)
@@ -63,7 +67,7 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 
 	for(auto &i : image.sections)
 	{
-		DWORD unused, protect = 0;
+		uint32_t unused, protect = 0;
 		if(i.flag & SectionFlagRead)
 			protect = PAGE_READONLY;
 		if(i.flag & SectionFlagWrite)
@@ -76,16 +80,16 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 				protect = PAGE_EXECUTE_READ;
 		}
 
-		VirtualProtect(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
+		Win32NativeHelper::get()->protectVirtual(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
 
 	if(image.info.entryPoint)
 	{
 		if(image.info.flag & ImageFlagLibrary)
 		{
-			typedef int (__stdcall *DllEntryPointType)(HINSTANCE, int, LPVOID);
+			typedef int (__stdcall *DllEntryPointType)(void *, int, void *);
 			DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image.info.entryPoint);
-			entryPoint(reinterpret_cast<HINSTANCE>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<LPVOID>(1));  //lpReserved is non-null for static loads
+			entryPoint(reinterpret_cast<void *>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));  //lpReserved is non-null for static loads
 		}
 		else
 		{
