@@ -184,7 +184,7 @@ public:
 
 	int icompare(const String &operand) const
 	{
-		return icompare(operand.c_str());;
+		return icompare(operand.c_str());
 	}
 
 	bool operator ==(const StringBase &operand) const
@@ -224,3 +224,13 @@ public:
 
 typedef StringBase<char> String;
 typedef StringBase<wchar_t> WString;
+
+template<typename ValueType>
+class CaseInsensitiveStringComparator
+{
+public:
+	bool operator ()(const ValueType &a, const ValueType &b)
+	{
+		return a.icompare(b) < 0;
+	}
+};

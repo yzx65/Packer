@@ -2,7 +2,17 @@
 
 #include "Runtime.h"
 
-template<typename KeyType, typename ValueType>
+template<typename ValueType>
+class DefaultComparator
+{
+public:
+	bool operator ()(const ValueType &a, const ValueType &b)
+	{
+		return a < b;
+	}
+};
+
+template<typename KeyType, typename ValueType, typename Comparator = DefaultComparator<KeyType>>
 class Map
 {
 private:
@@ -62,7 +72,7 @@ private:
 		MapNode *item = head_;
 		while(true)
 		{
-			if(item->key < key)
+			if(Comparator()(item->key, key))
 			{
 				if(item->right)
 				{
@@ -91,7 +101,7 @@ private:
 		MapNode *item = head_;
 		while(item->key != key)
 		{
-			if(item->key < key)
+			if(Comparator()(item->key, key))
 			{
 				if(item->right)
 				{

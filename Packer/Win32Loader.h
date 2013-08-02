@@ -12,7 +12,7 @@ private:
 	const Image &image_;
 	List<Image> imports_;
 	Map<uint64_t, const Image *> loadedImages_;
-	Map<String, uint64_t> loadedLibraries_;
+	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	void *loadLibrary(const String &filename);
 	uint64_t getFunctionAddress(void *library, const String &functionName);
 	uint8_t *loadImage(const Image &image);
