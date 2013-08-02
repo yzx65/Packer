@@ -106,6 +106,17 @@ public:
 			data_[i] = *it;
 	}
 
+	template<typename IteratorType>
+	void assign_move(IteratorType start, IteratorType end)
+	{
+		size_t length = end - start;
+		resize(length);
+
+		size_t i = 0;
+		for(IteratorType it = start; it != end; it ++, i ++)
+			data_[i] = std::move(*it);
+	}
+
 	iterator push_back(ValueType data)
 	{
 		reserve(size_ + 1);

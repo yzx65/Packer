@@ -106,12 +106,13 @@ struct Import
 struct ExportFunction
 {
 	ExportFunction() {}
-	ExportFunction(ExportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), address(operand.address) {}
+	ExportFunction(ExportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), address(operand.address), forward(std::move(operand.forward)) {}
 	const ExportFunction &operator =(ExportFunction &&operand)
 	{
 		ordinal = operand.ordinal;
 		name = std::move(operand.name);
 		address = operand.address;
+		forward = std::move(operand.forward);
 
 		return *this;
 	}

@@ -330,14 +330,14 @@ Image PEFormat::serialize()
 	Image image;
 	image.fileName = getFileName();
 	image.info = info_;
-	image.imports.assign(imports_.begin(), imports_.end());
-	image.sections.assign(sections_.begin(), sections_.end());
-	image.relocations.assign(relocations_.begin(), relocations_.end());
-	image.extendedData.assign(extendedData_.begin(), extendedData_.end());
-	image.exports.assign(exports_.begin(), exports_.end());
+	image.imports.assign_move(imports_.begin(), imports_.end());
+	image.sections.assign_move(sections_.begin(), sections_.end());
+	image.relocations.assign_move(relocations_.begin(), relocations_.end());
+	image.extendedData.assign_move(extendedData_.begin(), extendedData_.end());
+	image.exports.assign_move(exports_.begin(), exports_.end());
 	image.nameExportLen = nameExportLen_;
 
-	return std::move(image);
+	return image;
 }
 
 bool PEFormat::isSystemLibrary(const String &filename)
