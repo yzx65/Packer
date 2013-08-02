@@ -109,9 +109,16 @@ void Win32Loader::execute()
 
 void *Win32Loader::loadLibrary(const String &filename)
 {
-	API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
+	auto it = loadedLibraries_.find(String(filename));
+	if(it != loadedLibraries_.end())
+		return reinterpret_cast<void *>(*it);
+	for(auto &i : imports_)
+		if(i.fileName == filename)
+			return loadImage(i);
+
 	if(filename[0] == 'a' && filename[1] == 'p' && filename[2] == 'i' && filename[3] == '-')
 	{
+		API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
 		String temp = filename;
 		temp.resize(temp.length() - 4); //minus .dll
 		auto item = binarySearch(apiSet->Entries, apiSet->Entries + apiSet->NumberOfEntries, 
@@ -132,18 +139,13 @@ void *Win32Loader::loadLibrary(const String &filename)
 				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
 				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
 				void *library = loadLibrary(WStringToString(moduleName));
+				loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
 				if(library)
 					return library;
 			}
 			return nullptr;
 		}
 	}
-	auto it = loadedLibraries_.find(String(filename));
-	if(it != loadedLibraries_.end())
-		return reinterpret_cast<void *>(*it);
-	for(auto &i : imports_)
-		if(i.fileName == filename)
-			return loadImage(i);
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
 	if(!format.get())
