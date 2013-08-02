@@ -147,8 +147,8 @@ struct Image
 	String fileName;
 	size_t nameExportLen;
 	Vector<ExportFunction> exports;
-	Vector<Section> sections;
-	Vector<Import> imports;
-	Vector<uint64_t> relocations;
-	Vector<ExtendedData> extendedData;
+	List<Section> sections;
+	List<Import> imports;
+	List<uint64_t> relocations;
+	List<ExtendedData> extendedData;
 };

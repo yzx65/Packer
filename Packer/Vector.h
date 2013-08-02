@@ -117,10 +117,19 @@ public:
 			data_[i] = std::move(*it);
 	}
 
-	iterator push_back(ValueType data)
+	iterator push_back(const ValueType &data)
 	{
 		reserve(size_ + 1);
 		data_[size_] = data;
+		size_ ++;
+
+		return &data_[size_ - 1];
+	}
+
+	iterator push_back(ValueType &&data)
+	{
+		reserve(size_ + 1);
+		data_[size_] = std::move(data);
 		size_ ++;
 
 		return &data_[size_ - 1];

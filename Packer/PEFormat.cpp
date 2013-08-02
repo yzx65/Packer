@@ -330,10 +330,10 @@ Image PEFormat::serialize()
 	Image image;
 	image.fileName = getFileName();
 	image.info = info_;
-	image.imports.assign_move(imports_.begin(), imports_.end());
-	image.sections.assign_move(sections_.begin(), sections_.end());
-	image.relocations.assign_move(relocations_.begin(), relocations_.end());
-	image.extendedData.assign_move(extendedData_.begin(), extendedData_.end());
+	image.imports = std::move(imports_);
+	image.sections = std::move(sections_);
+	image.relocations = std::move(relocations_);
+	image.extendedData = std::move(extendedData_);
 	image.exports.assign_move(exports_.begin(), exports_.end());
 	image.nameExportLen = nameExportLen_;
 

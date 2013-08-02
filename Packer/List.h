@@ -143,6 +143,14 @@ public:
 			push_back(*s);
 	}
 
+	const List &operator =(List &&operand)
+	{
+		head_ = operand.head_;
+		operand.head_ = nullptr;
+
+		return *this;
+	}
+
 	iterator push_back(const value_type &data)
 	{
 		ListNode *item = appendNode_();
@@ -179,14 +187,14 @@ public:
 	const_iterator begin() const
 	{
 		if(!head_)
-			return iterator(nullptr);
+			return const_iterator(nullptr);
 		return const_iterator(head_->next);
 	}
 
 	const_iterator end() const
 	{
 		if(!head_)
-			return iterator(nullptr);
+			return const_iterator(nullptr);
 		return const_iterator(head_);
 	}
 
