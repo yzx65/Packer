@@ -18,12 +18,12 @@ class Map
 private:
 	struct MapNode
 	{
-		MapNode(const KeyType &key_, const ValueType &value) : left(nullptr), right(nullptr), key(key_), data(value) {}
-		MapNode(const KeyType &key_, ValueType &&value) : left(nullptr), right(nullptr), key(key_), data(std::move(value)) {}
+		MapNode(const KeyType &key_, const ValueType &value) : left(nullptr), right(nullptr), key(key_), value(value) {}
+		MapNode(const KeyType &key_, ValueType &&value) : left(nullptr), right(nullptr), key(key_), value(std::move(value)) {}
 		MapNode *left;
 		MapNode *right;
 		KeyType key;
-		ValueType data;
+		ValueType value;
 	};
 	MapNode *head_;
 
@@ -32,17 +32,18 @@ private:
 	{
 	private:
 		NodeType *node_;
+		Map *map_;
 	public:
-		MapIterator(NodeType *node) : node_(node) {}
+		MapIterator(NodeType *node, Map *map) : node_(node), map_(map) {}
 
-		ValueType &operator *()
+		MapNode &operator *()
 		{
-			return node_->data;
+			return *node_;
 		}
 
-		ValueType *operator ->()
+		MapNode *operator ->()
 		{
-			return node_->data;
+			return node_;
 		}
 
 		bool operator ==(const MapIterator &operand)
@@ -53,6 +54,12 @@ private:
 		bool operator !=(const MapIterator &operand)
 		{
 			return node_ != operand.node_;
+		}
+
+		MapIterator &operator ++()
+		{
+			*this = map_->upper_bound(node_->key);
+			return *this;
 		}
 	};
 public:
@@ -67,7 +74,7 @@ private:
 		if(!head_)
 		{
 			head_ = new MapNode(key, value);
-			return iterator(nullptr);
+			return iterator(nullptr, this);
 		}
 		MapNode *item = head_;
 		while(true)
@@ -92,7 +99,7 @@ private:
 			}
 			break;
 		}
-		return iterator(item);
+		return iterator(item, this);
 	}
 	
 	template<typename IteratorType, typename KeyType>
@@ -109,7 +116,7 @@ private:
 					continue;
 				}
 				else
-					return IteratorType(nullptr);
+					return IteratorType(nullptr, this);
 			}
 			else
 			{
@@ -119,10 +126,34 @@ private:
 					continue;
 				}
 				else
-					return IteratorType(nullptr);
+					return IteratorType(nullptr, this);
 			}
 		}
-		return IteratorType(item);
+		return IteratorType(item, this);
+	}
+
+	//find lowest value in tree bigger than key.
+	MapNode *find_upper_bound_(const KeyType &key, MapNode *node, MapNode *lowest)
+	{
+		if(Comparator()(node->key, lowest->key) && (Comparator()(node->key, key) || Comparator()(key, node->key)) && Comparator()(key, node->key)) // node < lowest && node != key && node > key
+			lowest = node;
+		
+		MapNode *left = nullptr;
+		MapNode *right = nullptr;
+		if(node->left)
+			left = find_upper_bound_(key, node->left, lowest);
+		if(node->right)
+			right = find_upper_bound_(key, node->right, lowest);
+		if(!left && !right)
+			return lowest;
+		if(!left)
+			return right;
+		if(!right)
+			return left;
+		if(Comparator()(left->key, right->key))
+			return left;
+		else
+			return right;
 	}
 public:
 
@@ -144,8 +175,23 @@ public:
 	{
 		iterator it = find(key);
 		if(it == end())
-			return *insert(key, ValueType());
-		return *it;
+			return insert(key, ValueType())->value;
+		return it->value;
+	}
+
+	iterator upper_bound(const KeyType &key)
+	{
+		MapNode *highest = head_;
+		while(true)
+		{
+			if(highest->right)
+				highest = highest->right;
+			else
+				break;
+		}
+		if(key == highest->key)
+			return iterator(nullptr, this);
+		return iterator(find_upper_bound_(key, head_, highest), this);
 	}
 
 	iterator find(const KeyType &key)
@@ -155,7 +201,7 @@ public:
 
 	iterator end()
 	{
-		return iterator(nullptr);
+		return iterator(nullptr, this);
 	}
 
 	iterator begin()
@@ -165,8 +211,9 @@ public:
 		{
 			if(item->left)
 				item = item->left;
-			break;
+			else
+				break;
 		}
-		return iterator(item);
+		return iterator(item, this);
 	}
 };

@@ -12,6 +12,12 @@
 
 Win32Loader *loaderInstance_;
 
+void installHook_x86(uint8_t *destination, uint32_t newFunction)
+{
+	*destination = 0xE9;
+	*reinterpret_cast<uint32_t *>(destination + 1) = (newFunction - (reinterpret_cast<uint32_t>(destination) + 5));
+}
+
 Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
@@ -65,6 +71,20 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		}
 	}
 
+	if(image.fileName.icompare("kernel32.dll") == 0)
+	{
+		for(auto &i : image.exports)
+		{
+			//place a hook for loadlibrary/getmodulehandle
+			if(i.name.icompare("LoadLibraryExW") == 0)
+				if(image.info.architecture == ArchitectureWin32)
+					installHook_x86(baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExProxy));
+			if(i.name.icompare("GetModuleHandleExW") == 0)
+				if(image.info.architecture == ArchitectureWin32)
+					installHook_x86(baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExProxy));
+		}
+	}
+
 	for(auto &i : image.sections)
 	{
 		uint32_t unused, protect = 0;
@@ -111,7 +131,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 {
 	auto it = loadedLibraries_.find(String(filename));
 	if(it != loadedLibraries_.end())
-		return reinterpret_cast<void *>(*it);
+		return reinterpret_cast<void *>(it->value);
 	for(auto &i : imports_)
 		if(i.fileName == filename)
 			return loadImage(i);
@@ -128,8 +148,8 @@ void *Win32Loader::loadLibrary(const String &filename)
 				size_t i = 0;
 				for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
 					if(static_cast<char>(name[i]) != temp[i + 4])
-						return temp[i + 4] - static_cast<char>(name[i]);
-				return temp[i + 4] - static_cast<char>(name[i]);
+						return static_cast<char>(name[i]) - temp[i + 4];
+				return static_cast<char>(name[i]) - temp[i + 4];
 			});
 		if(item != apiSet->Entries + apiSet->NumberOfEntries)
 		{
@@ -158,8 +178,9 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
 	{
-		auto item = binarySearch((*it)->exports.begin(), (*it)->exports.begin() + (*it)->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
-		if(item == (*it)->exports.end() + (*it)->nameExportLen)
+		const Image *image = it->value;
+		auto item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
+		if(item == image->exports.end() + image->nameExportLen)
 			return 0;
 		if(item->forward.length())
 		{
@@ -170,6 +191,25 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 			return getFunctionAddress(loadLibrary(dllName + ".dll"), functionName);
 		}
 		return item->address + reinterpret_cast<uint64_t>(library);
+	}
+	return 0;
+}
+
+void * __stdcall Win32Loader::LoadLibraryExProxy(wchar_t *libraryName, void *, uint32_t)
+{
+	return loaderInstance_->loadLibrary(WStringToString(WString(libraryName)));
+}
+
+uint32_t __stdcall Win32Loader::GetModuleHandleExProxy(uint32_t, wchar_t *filename_, void **result)
+{
+	String filename(WStringToString(WString(filename_)));
+	for(auto &i : loaderInstance_->loadedLibraries_)
+	{
+		if(i.key.icompare(filename) == 0)
+		{
+			*result = reinterpret_cast<void *>(i.value);
+			return 1;
+		}
 	}
 	return 0;
 }

@@ -159,8 +159,8 @@ public:
 		size_t i;
 		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
 			if(operand[i] != get()[i])
-				return operand[i] - get()[i];
-		return operand[i] - get()[i];
+				return get()[i] - operand[i];
+		return get()[i] - operand[i];
 	}
 
 	int compare(const String &operand) const
@@ -178,8 +178,8 @@ public:
 		size_t i;
 		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
 			if(to_lower(operand[i]) != to_lower(get()[i]))
-				return to_lower(operand[i]) - to_lower(get()[i]);
-		return to_lower(operand[i]) - to_lower(get()[i]);
+				return to_lower(get()[i]) - to_lower(operand[i]);
+		return to_lower(get()[i]) - to_lower(operand[i]);
 	}
 
 	int icompare(const String &operand) const

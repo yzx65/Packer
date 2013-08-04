@@ -170,9 +170,9 @@ typename IteratorType binarySearch(IteratorType begin, IteratorType end, Compara
 	{
 		int m = (s + e) / 2;
 		int cmp = comparator(begin + m);
-		if(cmp < 0)
+		if(cmp > 0)
 			e = m - 1;
-		else if(cmp > 0)
+		else if(cmp < 0)
 			s = m + 1;
 		else
 			return begin + m;

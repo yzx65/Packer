@@ -7,15 +7,15 @@
 void Win32File::open(const String &filename)
 {
 	WString wFileName = StringToWString(filename);
-	fileHandle_ = Win32NativeHelper::get()->createFile(GENERIC_READ, wFileName.c_str(), wFileName.length(), 0, FILE_SHARE_READ, FILE_OPEN, 0);
-	if(fileHandle_ == INVALID_HANDLE_VALUE)
-		return;
+	WString fullPath;
 
 	if(wFileName[1] != L':') //relative
 	{
-		wchar_t *temp = Win32NativeHelper::get()->getCurrentDirectory();
+		WString currentDirectory(Win32NativeHelper::get()->getCurrentDirectory());
+		
 		fileName_ = filename;
-		filePath_ = WStringToString(WString(temp));
+		filePath_ = WStringToString(currentDirectory);
+		fullPath = currentDirectory + wFileName;
 	}
 	else
 	{
@@ -24,7 +24,12 @@ void Win32File::open(const String &filename)
 		WString fileName = wFileName.substr(pathSeparatorPos + 1);
 		filePath_ = WStringToString(path);
 		fileName_ = WStringToString(fileName);
+		fullPath = wFileName;
 	}
+
+	fileHandle_ = Win32NativeHelper::get()->createFile(GENERIC_READ, fullPath.c_str(), fullPath.length(), 0, FILE_SHARE_READ, FILE_OPEN, 0);
+	if(fileHandle_ == INVALID_HANDLE_VALUE)
+		return;
 }
 
 void Win32File::close() 

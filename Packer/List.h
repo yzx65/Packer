@@ -38,18 +38,17 @@ private:
 			return item_ != operand.item_;
 		}
 
-		ListIterator operator ++()
+		ListIterator operator ++(int)
 		{
 			ListIterator result(item_->next);
 			item_ = item_->next;
 			return result;
 		}
 
-		ListIterator operator ++(int)
+		ListIterator &operator ++()
 		{
-			ListIterator result(item_);
 			item_ = item_->next;
-			return result;
+			return *this;
 		}
 
 		ValueType *operator ->()
