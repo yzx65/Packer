@@ -29,7 +29,7 @@ inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad)
+PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad) : nameExportLen_(0)
 {
 	IMAGE_DOS_HEADER *dosHeader;
 	uint32_t *ntSignature;

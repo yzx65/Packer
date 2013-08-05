@@ -191,7 +191,7 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 	{
 		const Image *image = it->value;
 		auto item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
-		if(item == image->exports.end() + image->nameExportLen)
+		if(item == image->exports.begin() + image->nameExportLen)
 			return 0;
 		if(item->forward.length())
 		{
