@@ -65,12 +65,12 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		{
 			if(image.info.architecture == ArchitectureWin32)
 			{
-				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name));
+				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name, j.ordinal));
 				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
 			}
 			else
 			{
-				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name));
+				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name, j.ordinal));
 				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = functionAddress;
 			}
 		}
@@ -184,15 +184,23 @@ void *Win32Loader::loadLibrary(const String &filename)
 	return baseAddress;
 }
 
-uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName)
+uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName, int ordinal)
 {
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
 	{
 		const Image *image = it->value;
-		auto item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
+		auto item = image->exports.begin() + image->nameExportLen;
+		if(functionName.length())
+			item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
 		if(item == image->exports.begin() + image->nameExportLen)
+		{
+			if(ordinal != -1)
+				for(auto i = image->exports.begin() + image->nameExportLen; i != image->exports.end(); i ++)
+					if(i->ordinal == ordinal)
+						return i->address + reinterpret_cast<uint64_t>(library);
 			return 0;
+		}
 		if(item->forward.length())
 		{
 			int point = item->forward.find('.');

@@ -15,7 +15,7 @@ private:
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	void *loadLibrary(const String &filename);
-	uint64_t getFunctionAddress(void *library, const String &functionName);
+	uint64_t getFunctionAddress(void *library, const String &functionName, int ordinal = -1	);
 	uint8_t *loadImage(const Image &image, bool executable = false);
 
 	static void * __stdcall LoadLibraryAProxy(const char *libraryName);
