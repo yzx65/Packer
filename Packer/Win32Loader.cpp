@@ -13,15 +13,6 @@
 
 Win32Loader *loaderInstance_;
 
-void installHook(ArchitectureType architecture, uint8_t *destination, uint32_t newFunction)
-{
-	if(architecture == ArchitectureWin32)
-	{
-		*destination = 0xE9;
-		*reinterpret_cast<uint32_t *>(destination + 1) = (newFunction - (reinterpret_cast<uint32_t>(destination) + 5));
-	}
-}
-
 Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
@@ -64,42 +55,44 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		void *library = loadLibrary(i.libraryName);
 		for(auto &j : i.functions)
 		{
+			uint64_t function = getFunctionAddress(library, j.name, j.ordinal);
+			if(i.libraryName.icompare("kernel32.dll") == 0 || i.libraryName.icompare("kernelbase.dll") == 0)
+			{
+				if(j.name.icompare("LoadLibraryExW") == 0)
+					function = reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
+				if(j.name.icompare("LoadLibraryExA") == 0)
+					function = reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
+				if(j.name.icompare("LoadLibraryW") == 0)
+					function = reinterpret_cast<uint64_t>(LoadLibraryWProxy);
+				if(j.name.icompare("LoadLibraryA") == 0)
+					function = reinterpret_cast<uint64_t>(LoadLibraryAProxy);
+				if(j.name.icompare("GetModuleHandleExW") == 0)
+					function = reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
+				if(j.name.icompare("GetModuleHandleExA") == 0)
+					function = reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
+				if(j.name.icompare("GetModuleHandleW") == 0)
+					function = reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
+				if(j.name.icompare("GetModuleHandleA") == 0)
+					function = reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
+				if(j.name.icompare("GetProcAddress") == 0)
+					function = reinterpret_cast<uint64_t>(GetProcAddressProxy);
+			}
+			else if(i.libraryName.icompare("ntdll.dll") == 0)
+			{
+				if(j.name.icompare("LdrAddRefDll") == 0)
+					function = reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
+			}
+
 			if(image.info.architecture == ArchitectureWin32)
 			{
-				uint32_t functionAddress = static_cast<uint32_t>(getFunctionAddress(library, j.name, j.ordinal));
+				uint32_t functionAddress = static_cast<uint32_t>(function);
 				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
 			}
 			else
 			{
-				uint64_t functionAddress = static_cast<uint64_t>(getFunctionAddress(library, j.name, j.ordinal));
+				uint64_t functionAddress = static_cast<uint64_t>(function);
 				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = functionAddress;
 			}
-		}
-	}
-
-	if(image.fileName.icompare("kernel32.dll") == 0 || image.fileName.icompare("kernelbase.dll") == 0)
-	{
-		for(auto &i : image.exports)
-		{
-			//place a hook for loadlibrary/getmodulehandle
-			if(i.name.icompare("LoadLibraryExW") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExWProxy));
-			if(i.name.icompare("LoadLibraryExA") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExAProxy));
-			if(i.name.icompare("LoadLibraryW") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryWProxy));
-			if(i.name.icompare("LoadLibraryA") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryAProxy));
-			if(i.name.icompare("GetModuleHandleExW") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExWProxy));
-			if(i.name.icompare("GetModuleHandleExA") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExAProxy));
-			if(i.name.icompare("GetModuleHandleW") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleWProxy));
-			if(i.name.icompare("GetModuleHandleA") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleAProxy));
-			if(i.name.icompare("GetProcAddress") == 0)
-				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetProcAddressProxy));
 		}
 	}
 
@@ -199,15 +192,19 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 	if(it != loadedImages_.end())
 	{
 		const Image *image = it->value;
-		auto item = image->exports.begin() + image->nameExportLen;
+		auto item = static_cast<ExportFunction *>(nullptr);
 		if(functionName.length())
+		{
 			item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
-		if(item == image->exports.begin() + image->nameExportLen)
+			if(item == image->exports.begin() + image->nameExportLen)
+				item = nullptr;
+		}
+		if(item == nullptr)
 			if(ordinal != -1)
-				for(auto i = image->exports.begin() + image->nameExportLen; i != image->exports.end(); i ++)
-					if(i->ordinal == ordinal)
-						item = i;
-		if(item == image->exports.begin() + image->nameExportLen)
+				for(auto &i : image->exports)
+					if(i.ordinal == ordinal)
+						item = &i;
+		if(item == nullptr)
 			return 0;
 		if(item->forward.length())
 		{
@@ -286,4 +283,9 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionName)
 {
 	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(functionName)));
+}
+
+uint32_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
+{
+	return 0;
 }
