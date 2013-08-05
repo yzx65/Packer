@@ -279,7 +279,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		exports_.push_back(entry);
 	}
 
-	for(size_t i = 0; i < directory->NumberOfNames; i ++)
+	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
 	{
 		if(checker[i] == true)
 			continue;
