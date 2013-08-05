@@ -203,13 +203,12 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 		if(functionName.length())
 			item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
 		if(item == image->exports.begin() + image->nameExportLen)
-		{
 			if(ordinal != -1)
 				for(auto i = image->exports.begin() + image->nameExportLen; i != image->exports.end(); i ++)
 					if(i->ordinal == ordinal)
-						return i->address + reinterpret_cast<uint64_t>(library);
+						item = i;
+		if(item == image->exports.begin() + image->nameExportLen)
 			return 0;
-		}
 		if(item->forward.length())
 		{
 			int point = item->forward.find('.');
