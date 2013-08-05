@@ -4,6 +4,7 @@
 #include "Win32Runtime.h"
 #include "Win32Structure.h"
 #include "Util.h"
+#include "File.h"
 
 #define DLL_PROCESS_ATTACH   1    
 #define DLL_THREAD_ATTACH    2    
@@ -272,11 +273,11 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 		return 1;
 	}
 	String filename(WStringToString(WString(filename_)));
-	for(auto &i : loaderInstance_->loadedLibraries_)
+	for(auto &i : loaderInstance_->loadedImages_)
 	{
-		if(i.key.icompare(filename) == 0)
+		if(i.value->fileName.icompare(filename) == 0 || File::combinePath(i.value->filePath, i.value->fileName).icompare(filename) == 0)
 		{
-			*result = reinterpret_cast<void *>(i.value);
+			*result = reinterpret_cast<void *>(i.key);
 			return 1;
 		}
 	}

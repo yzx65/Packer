@@ -355,8 +355,22 @@ void *PEFormat::getDataDirectories()
 	return dataDirectories_;
 }
 
+SharedPtr<FormatBase> loadImport(const String &path)
+{
+	SharedPtr<File> file = File::open(path);
+	uint8_t *map = file->map();
+	SharedPtr<FormatBase> result = MakeShared<PEFormat>(map);
+	result->setFileName(file->getFileName());
+	result->setFilePath(file->getFilePath());
+	file->unmap();
+	return result;
+}
+
 SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint)
 {
+	if(File::isPathExists(filename))
+		return ::loadImport(filename);
+
 	List<String> searchPaths;
 	if(hint.length())
 		searchPaths.push_back(hint);
@@ -398,15 +412,7 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 	{
 		String path = File::combinePath(i, filename);
 		if(File::isPathExists(path))
-		{
-			SharedPtr<File> file = File::open(path);
-			uint8_t *map = file->map();
-			SharedPtr<FormatBase> result = MakeShared<PEFormat>(map);
-			result->setFileName(file->getFileName());
-			result->setFilePath(file->getFilePath());
-			file->unmap();
-			return result;
-		}
+			return loadImport(path);
 	}
 	return SharedPtr<FormatBase>(nullptr);
 }
