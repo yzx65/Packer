@@ -26,6 +26,7 @@ private:
 	static void * __stdcall GetModuleHandleWProxy(const wchar_t *fileName);
 	static uint32_t __stdcall GetModuleHandleExAProxy(uint32_t, const char *filename_, void **result);
 	static uint32_t __stdcall GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result);
+	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
 public:
 	Win32Loader(const Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}

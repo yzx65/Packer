@@ -97,6 +97,8 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleWProxy));
 			if(i.name.icompare("GetModuleHandleA") == 0)
 				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleAProxy));
+			if(i.name.icompare("GetProcAddress") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetProcAddressProxy));
 		}
 	}
 
@@ -118,15 +120,28 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		Win32NativeHelper::get()->protectVirtual(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
 
+	if(image.info.entryPoint)
+	{
+		if((image.info.flag & ImageFlagLibrary))
+		{
+			typedef int (__stdcall *DllEntryPointType)(void *, int, void *);
+			DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image.info.entryPoint);
+			entryPoint(reinterpret_cast<void *>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));  //lpReserved is non-null for static loads
+		}
+		else
+		{
+			typedef int (__stdcall *EntryPointType)();
+			EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image.info.entryPoint);
+			entryPoint();
+		}
+	}
+
 	return baseAddress;
 }
 
 void Win32Loader::execute()
 {
-	uint8_t *baseAddress = loadImage(image_, true);
-	typedef int (__stdcall *EntryPointType)();
-	EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image_.info.entryPoint);
-	entryPoint();
+	loadImage(image_, true);
 }
 
 void *Win32Loader::loadLibrary(const String &filename)
@@ -134,6 +149,8 @@ void *Win32Loader::loadLibrary(const String &filename)
 	auto it = loadedLibraries_.find(String(filename));
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
+
+	Image *image = nullptr;
 	for(auto &i : imports_)
 		if(i.fileName.icompare(filename) == 0)
 			return loadImage(i);
@@ -172,16 +189,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename), image_.filePath);
 	if(!format.get())
 		return nullptr;
-	auto image = imports_.push_back(format->serialize());
-	uint8_t *baseAddress = loadImage(*image);
-	if(image->info.flag & ImageFlagLibrary && image->info.entryPoint)
-	{
-		typedef int (__stdcall *DllEntryPointType)(void *, int, void *);
-		DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image->info.entryPoint);
-		entryPoint(reinterpret_cast<void *>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));  //lpReserved is non-null for static loads
-	}
-
-	return baseAddress;
+	return loadImage(*imports_.push_back(format->serialize()));
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName, int ordinal)
@@ -272,4 +280,9 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 		}
 	}
 	return 0;
+}
+
+void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionName)
+{
+	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(functionName)));
 }
