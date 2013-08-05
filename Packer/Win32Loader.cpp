@@ -265,6 +265,7 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExAProxy(uint32_t a1, const char 
 
 uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result)
 {
+	*result = 0;
 	if(filename_ == nullptr)
 	{
 		*result = reinterpret_cast<void *>(loaderInstance_->mainBase);
