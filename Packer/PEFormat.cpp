@@ -279,6 +279,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		exports_.push_back(entry);
 	}
 
+	nameExportLen_ = exports_.size();
 	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
 	{
 		if(checker[i] == true)
@@ -292,7 +293,6 @@ void PEFormat::processExport(uint8_t *directory_)
 		exports_.push_back(entry);
 	}
 	delete [] checker;
-	nameExportLen_ = directory->NumberOfNames;
 }
 
 void PEFormat::setFileName(const String &fileName)
