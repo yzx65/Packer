@@ -36,7 +36,7 @@ List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 
 		if(input->isSystemLibrary(fileName))
 			continue;
-		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input);
+		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input->getFilePath());
 		loadedFiles_.push_back(import->getFileName());
 		result.push_back(import);
 

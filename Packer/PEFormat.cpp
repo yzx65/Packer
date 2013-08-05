@@ -329,6 +329,7 @@ Image PEFormat::serialize()
 {
 	Image image;
 	image.fileName = getFileName();
+	image.filePath = getFilePath();
 	image.info = info_;
 	image.imports = std::move(imports_);
 	image.sections = std::move(sections_);
@@ -354,11 +355,11 @@ void *PEFormat::getDataDirectories()
 	return dataDirectories_;
 }
 
-SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, SharedPtr<FormatBase> hint)
+SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint)
 {
 	List<String> searchPaths;
-	if(hint.get() && hint->getFilePath().length())
-		searchPaths.push_back(hint->getFilePath());
+	if(hint.length())
+		searchPaths.push_back(hint);
 #ifdef _WIN32
 	wchar_t *environmentBlock = Win32NativeHelper::get()->getEnvironments();
 	WString path;

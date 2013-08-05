@@ -20,5 +20,5 @@ public:
 
 	virtual bool isSystemLibrary(const String &filename) = 0;
 
-	static SharedPtr<FormatBase> loadImport(const String &filename, SharedPtr<FormatBase> hint = SharedPtr<FormatBase>(nullptr));
+	static SharedPtr<FormatBase> loadImport(const String &filename, const String &hint = String(""));
 };

@@ -129,7 +129,8 @@ struct Image
 		info(operand.info), sections(std::move(operand.sections)), 
 		imports(std::move(operand.imports)), relocations(std::move(operand.relocations)),
 		extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)),
-		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen) {}
+		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen),
+		filePath(std::move(operand.filePath)) {}
 	const Image &operator =(Image &&operand)
 	{
 		info = std::move(operand.info);
@@ -138,6 +139,7 @@ struct Image
 		relocations = std::move(operand.relocations);
 		extendedData = std::move(operand.extendedData);
 		fileName = std::move(operand.fileName);
+		filePath = std::move(operand.filePath);
 		exports = std::move(operand.exports);
 		nameExportLen = operand.nameExportLen;
 
@@ -145,6 +147,7 @@ struct Image
 	}
 	ImageInfo info;
 	String fileName;
+	String filePath;
 	size_t nameExportLen;
 	Vector<ExportFunction> exports;
 	List<Section> sections;

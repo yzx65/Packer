@@ -106,7 +106,7 @@ private:
 	IteratorType find_(const KeyType &key)
 	{
 		MapNode *item = head_;
-		while(item->key != key)
+		while(Comparator()(item->key, key) || Comparator()(key, item->key)) //item->key >= key and key >= item->key => key == item->key
 		{
 			if(Comparator()(item->key, key))
 			{
@@ -189,7 +189,7 @@ public:
 			else
 				break;
 		}
-		if(key == highest->key)
+		if(!Comparator()(highest->key, key) && !Comparator()(key, highest->key))
 			return iterator(nullptr, this);
 		return iterator(find_upper_bound_(key, head_, highest), this);
 	}

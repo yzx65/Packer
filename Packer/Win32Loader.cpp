@@ -12,10 +12,13 @@
 
 Win32Loader *loaderInstance_;
 
-void installHook_x86(uint8_t *destination, uint32_t newFunction)
+void installHook(ArchitectureType architecture, uint8_t *destination, uint32_t newFunction)
 {
-	*destination = 0xE9;
-	*reinterpret_cast<uint32_t *>(destination + 1) = (newFunction - (reinterpret_cast<uint32_t>(destination) + 5));
+	if(architecture == ArchitectureWin32)
+	{
+		*destination = 0xE9;
+		*reinterpret_cast<uint32_t *>(destination + 1) = (newFunction - (reinterpret_cast<uint32_t>(destination) + 5));
+	}
 }
 
 Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
@@ -23,7 +26,7 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 	loaderInstance_ = this;
 }
 
-uint8_t *Win32Loader::loadImage(const Image &image)
+uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 {
 	if(image.fileName.icompare("ntdll.dll") == 0) //ntdll.dll is always loaded
 	{
@@ -52,6 +55,8 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 
 	loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
 	loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
+	if(executable)
+		mainBase = reinterpret_cast<uint64_t>(baseAddress);
 
 	for(auto &i : image.imports)
 	{
@@ -71,17 +76,27 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		}
 	}
 
-	if(image.fileName.icompare("kernel32.dll") == 0)
+	if(image.fileName.icompare("kernel32.dll") == 0 || image.fileName.icompare("kernelbase.dll") == 0)
 	{
 		for(auto &i : image.exports)
 		{
 			//place a hook for loadlibrary/getmodulehandle
 			if(i.name.icompare("LoadLibraryExW") == 0)
-				if(image.info.architecture == ArchitectureWin32)
-					installHook_x86(baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExProxy));
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExWProxy));
+			if(i.name.icompare("LoadLibraryExA") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryExAProxy));
+			if(i.name.icompare("LoadLibraryW") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryWProxy));
+			if(i.name.icompare("LoadLibraryA") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(LoadLibraryAProxy));
 			if(i.name.icompare("GetModuleHandleExW") == 0)
-				if(image.info.architecture == ArchitectureWin32)
-					installHook_x86(baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExProxy));
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExWProxy));
+			if(i.name.icompare("GetModuleHandleExA") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleExAProxy));
+			if(i.name.icompare("GetModuleHandleW") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleWProxy));
+			if(i.name.icompare("GetModuleHandleA") == 0)
+				installHook(image.info.architecture, baseAddress + i.address, reinterpret_cast<uint32_t>(GetModuleHandleAProxy));
 		}
 	}
 
@@ -103,28 +118,15 @@ uint8_t *Win32Loader::loadImage(const Image &image)
 		Win32NativeHelper::get()->protectVirtual(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
 
-	if(image.info.entryPoint)
-	{
-		if(image.info.flag & ImageFlagLibrary)
-		{
-			typedef int (__stdcall *DllEntryPointType)(void *, int, void *);
-			DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image.info.entryPoint);
-			entryPoint(reinterpret_cast<void *>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));  //lpReserved is non-null for static loads
-		}
-		else
-		{
-			typedef int (__stdcall *EntryPointType)();
-			EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image.info.entryPoint);
-			entryPoint();
-		}
-	}
-
 	return baseAddress;
 }
 
 void Win32Loader::execute()
 {
-	uint8_t *baseAddress = loadImage(image_);
+	uint8_t *baseAddress = loadImage(image_, true);
+	typedef int (__stdcall *EntryPointType)();
+	EntryPointType entryPoint = reinterpret_cast<EntryPointType>(baseAddress + image_.info.entryPoint);
+	entryPoint();
 }
 
 void *Win32Loader::loadLibrary(const String &filename)
@@ -133,7 +135,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
 	for(auto &i : imports_)
-		if(i.fileName == filename)
+		if(i.fileName.icompare(filename) == 0)
 			return loadImage(i);
 
 	if(filename[0] == 'a' && filename[1] == 'p' && filename[2] == 'i' && filename[3] == '-')
@@ -167,10 +169,19 @@ void *Win32Loader::loadLibrary(const String &filename)
 		}
 	}
 
-	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename));
+	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename), image_.filePath);
 	if(!format.get())
 		return nullptr;
-	return loadImage(*imports_.push_back(format->serialize()));
+	auto image = imports_.push_back(format->serialize());
+	uint8_t *baseAddress = loadImage(*image);
+	if(image->info.flag & ImageFlagLibrary && image->info.entryPoint)
+	{
+		typedef int (__stdcall *DllEntryPointType)(void *, int, void *);
+		DllEntryPointType entryPoint = reinterpret_cast<DllEntryPointType>(baseAddress + image->info.entryPoint);
+		entryPoint(reinterpret_cast<void *>(baseAddress), DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));  //lpReserved is non-null for static loads
+	}
+
+	return baseAddress;
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName)
@@ -195,13 +206,54 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 	return 0;
 }
 
-void * __stdcall Win32Loader::LoadLibraryExProxy(wchar_t *libraryName, void *, uint32_t)
+void * __stdcall Win32Loader::LoadLibraryAProxy(const char *libraryName)
+{
+	return LoadLibraryExAProxy(libraryName, nullptr, 0);
+}
+
+void * __stdcall Win32Loader::LoadLibraryWProxy(const wchar_t *libraryName)
+{
+	return LoadLibraryExWProxy(libraryName, nullptr, 0);
+}
+
+void * __stdcall Win32Loader::LoadLibraryExAProxy(const char *libraryName, void *a1, uint32_t a2)
+{
+	return LoadLibraryExWProxy(StringToWString(String(libraryName)).c_str(), a1, a2);
+}
+
+void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, void *, uint32_t)
 {
 	return loaderInstance_->loadLibrary(WStringToString(WString(libraryName)));
 }
 
-uint32_t __stdcall Win32Loader::GetModuleHandleExProxy(uint32_t, wchar_t *filename_, void **result)
+void * __stdcall Win32Loader::GetModuleHandleAProxy(const char *fileName)
 {
+	void *result;
+	GetModuleHandleExAProxy(0, fileName, &result);
+	return result;
+}
+
+void * __stdcall Win32Loader::GetModuleHandleWProxy(const wchar_t *fileName)
+{
+	void *result;
+	GetModuleHandleExWProxy(0, fileName, &result);
+	return result;
+}
+
+uint32_t __stdcall Win32Loader::GetModuleHandleExAProxy(uint32_t a1, const char *filename_, void **result)
+{
+	if(!filename_)
+		return GetModuleHandleExWProxy(a1, nullptr, result);
+	return GetModuleHandleExWProxy(a1, StringToWString(String(filename_)).c_str(), result);
+}
+
+uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result)
+{
+	if(filename_ == nullptr)
+	{
+		*result = reinterpret_cast<void *>(loaderInstance_->mainBase);
+		return 1;
+	}
 	String filename(WStringToString(WString(filename_)));
 	for(auto &i : loaderInstance_->loadedLibraries_)
 	{
