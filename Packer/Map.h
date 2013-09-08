@@ -18,10 +18,11 @@ class Map
 private:
 	struct MapNode
 	{
-		MapNode(const KeyType &key_, const ValueType &value) : left(nullptr), right(nullptr), key(key_), value(value) {}
-		MapNode(const KeyType &key_, ValueType &&value) : left(nullptr), right(nullptr), key(key_), value(std::move(value)) {}
+		MapNode(const KeyType &key_, const ValueType &value_, MapNode *parent_) : left(nullptr), right(nullptr), key(key_), value(value_), parent(parent_) {}
+		MapNode(const KeyType &key_, ValueType &&value_, MapNode *parent_) : left(nullptr), right(nullptr), key(key_), value(std::move(value_)), parent(parent_) {}
 		MapNode *left;
 		MapNode *right;
+		MapNode *parent;
 		KeyType key;
 		ValueType value;
 	};
@@ -73,7 +74,7 @@ private:
 	{
 		if(!head_)
 		{
-			head_ = new MapNode(key, value);
+			head_ = new MapNode(key, value, nullptr);
 			return iterator(nullptr, this);
 		}
 		MapNode *item = head_;
@@ -86,7 +87,7 @@ private:
 					item = item->right;
 					continue;
 				}
-				item->right = new MapNode(key, value);
+				item->right = new MapNode(key, value, item);
 			}
 			else
 			{
@@ -95,18 +96,18 @@ private:
 					item = item->left;
 					continue;
 				}
-				item->left = new MapNode(key, value);
+				item->left = new MapNode(key, value, item);
 			}
 			break;
 		}
 		return iterator(item, this);
 	}
 	
-	template<typename IteratorType, typename KeyType>
-	IteratorType find_(const KeyType &key)
+	template<typename KeyType>
+	MapNode *find_(const KeyType &key)
 	{
 		MapNode *item = head_;
-		while(Comparator()(item->key, key) || Comparator()(key, item->key)) //item->key >= key and key >= item->key => key == item->key
+		while(Comparator()(item->key, key) || Comparator()(key, item->key)) //item->key < key or key > item->key => key != item->key
 		{
 			if(Comparator()(item->key, key))
 			{
@@ -116,7 +117,7 @@ private:
 					continue;
 				}
 				else
-					return IteratorType(nullptr, this);
+					return nullptr;
 			}
 			else
 			{
@@ -126,34 +127,24 @@ private:
 					continue;
 				}
 				else
-					return IteratorType(nullptr, this);
+					return nullptr;
 			}
 		}
-		return IteratorType(item, this);
+		return item;
 	}
 
 	//find lowest value in tree bigger than key.
-	MapNode *find_upper_bound_(const KeyType &key, MapNode *node, MapNode *lowest)
+	MapNode *upper_bound_(MapNode *current, MapNode *lowest, MapNode *bound)
 	{
-		if(Comparator()(node->key, lowest->key) && (Comparator()(node->key, key) || Comparator()(key, node->key)) && Comparator()(key, node->key)) // node < lowest && node != key && node > key
-			lowest = node;
-		
-		MapNode *left = nullptr;
-		MapNode *right = nullptr;
-		if(node->left)
-			left = find_upper_bound_(key, node->left, lowest);
-		if(node->right)
-			right = find_upper_bound_(key, node->right, lowest);
-		if(!left && !right)
+		if(!Comparator()(bound->key, current->key)) //!(bound->key < current->key) => bound->key >= current->key
 			return lowest;
-		if(!left)
-			return right;
-		if(!right)
-			return left;
-		if(Comparator()(left->key, right->key))
-			return left;
-		else
-			return right;
+		if(Comparator()(current->key, lowest->key)) //current->key < lowest->key
+			lowest = current;
+		if(current->left)
+			lowest = upper_bound_(current->left, lowest, bound);
+		if(current->right)
+			lowest = upper_bound_(current->right, lowest, bound);
+		return lowest;
 	}
 public:
 
@@ -181,22 +172,23 @@ public:
 
 	iterator upper_bound(const KeyType &key)
 	{
-		MapNode *highest = head_;
-		while(true)
-		{
-			if(highest->right)
-				highest = highest->right;
-			else
-				break;
-		}
-		if(!Comparator()(highest->key, key) && !Comparator()(key, highest->key))
+		MapNode *node = find_(key);
+		if(!node)
 			return iterator(nullptr, this);
-		return iterator(find_upper_bound_(key, head_, highest), this);
+		if(!node->parent && !node->right)
+			//this is root node and highest node
+			return iterator(nullptr, this);
+		
+		if(node->right) //right node is always lower than parent node.
+			return iterator(upper_bound_(node->right, node->right, node), this);
+		else if(!Comparator()(node->parent->key, node->key)) //!(node->parent->key < node->key) => node->parent->key >= node->key
+			return iterator(node->parent, this);
+		return iterator(nullptr, this);
 	}
 
 	iterator find(const KeyType &key)
 	{
-		return find_<iterator>(key);
+		return iterator(find_(key), this);
 	}
 
 	iterator end()
