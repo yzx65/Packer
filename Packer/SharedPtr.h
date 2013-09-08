@@ -47,10 +47,25 @@ template<typename PointerType>
 class SharedPtr
 {
 	friend class SharedPtr;
+	template<typename PointerType>
+	friend class EnableSharedFromThis;
 private:
 	PointerType *item_;
 	Impl::RefCounter *refCounter_;
 	Impl::DeleterBase *deleter_;
+	SharedPtr(PointerType *item, Impl::RefCounter *refCounter, Impl::DeleterBase *deleter)
+	{
+		reset(item, refCounter, deleter);
+	}
+
+	void EnableShared(const void *) {} //not inherited
+
+	template<typename EnableSharedPointerType>
+	void EnableShared(EnableSharedPointerType *item, typename EnableSharedPointerType::_EnableSharedType * = nullptr)
+	{
+		item_->originalRefCounter_ = refCounter_;
+		item_->originalDeleter_ = deleter_;
+	}
 public:
 	SharedPtr(PointerType *item) : item_(nullptr), refCounter_(nullptr), deleter_(nullptr)
 	{
@@ -124,7 +139,10 @@ public:
 		refCounter_ = refCounter;
 		deleter_ = deleter;
 		if(item_)
+		{
 			refCounter->addRef();
+			EnableShared(item);
+		}
 	}
 
 	PointerType *operator ->()
@@ -135,6 +153,24 @@ public:
 	PointerType *get()
 	{
 		return item_;
+	}
+};
+
+template<typename PointerType>
+class EnableSharedFromThis
+{
+	template<typename PointerType>
+	friend class SharedPtr;
+private:
+	Impl::RefCounter *originalRefCounter_;
+	Impl::DeleterBase *originalDeleter_;
+public:
+	typedef PointerType _EnableSharedType;
+	EnableSharedFromThis() : originalRefCounter_(nullptr), originalDeleter_(nullptr) {}
+
+	SharedPtr<PointerType> sharedFromThis()
+	{
+		return SharedPtr<PointerType>(static_cast<PointerType *>(this), originalRefCounter_, originalDeleter_);
 	}
 };
 
