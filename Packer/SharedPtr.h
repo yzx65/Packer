@@ -53,7 +53,7 @@ private:
 	PointerType *item_;
 	Impl::RefCounter *refCounter_;
 	Impl::DeleterBase *deleter_;
-	SharedPtr(PointerType *item, Impl::RefCounter *refCounter, Impl::DeleterBase *deleter)
+	SharedPtr(PointerType *item, Impl::RefCounter *refCounter, Impl::DeleterBase *deleter) : item_(nullptr), refCounter_(nullptr), deleter_(nullptr)
 	{
 		reset(item, refCounter, deleter);
 	}
@@ -146,6 +146,11 @@ public:
 	}
 
 	PointerType *operator ->()
+	{
+		return item_;
+	}
+
+	const PointerType * const operator ->() const
 	{
 		return item_;
 	}
