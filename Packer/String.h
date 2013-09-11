@@ -197,6 +197,18 @@ public:
 		return compare(operand) == 0;
 	}
 
+	const StringBase &operator =(const StringBase &operand)
+	{
+		Vector<CharacterType>::operator =(operand);
+		return *this;
+	}
+
+	const StringBase &operator =(StringBase &&operand)
+	{
+		Vector<CharacterType>::operator =(std::move(operand));
+		return *this;
+	}
+
 	bool operator <(const StringBase &operand) const
 	{
 		return compare(operand.c_str()) < 0;
