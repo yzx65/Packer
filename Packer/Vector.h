@@ -54,6 +54,12 @@ public:
 		operand.data_ = nullptr;
 	}
 
+	template<typename IteratorType>
+	Vector(IteratorType start, IteratorType end) : alloc_(0), size_(0), data_(nullptr)
+	{
+		assign(start, end);
+	}
+
 	const Vector &operator =(const Vector &operand)
 	{
 		assign(operand.data_, operand.size_);
