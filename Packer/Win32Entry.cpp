@@ -1,11 +1,10 @@
-#include <Windows.h>
-
 #include "PackerMain.h"
-#include "Runtime.h"
+#include "Win32Runtime.h"
+#include "Util.h"
 
 void WindowsEntry()
 {
-	String str = getCommandLine();
+	String str = WStringToString(Win32NativeHelper::get()->getCommandLine());
 
 	int argc = 0;
 	char **argv;

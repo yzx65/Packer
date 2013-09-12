@@ -330,12 +330,6 @@ void operator delete[](void *ptr)
 	heapFree(ptr);
 }
 
-String getCommandLine()
-{
-	WString temp(Win32NativeHelper::get()->getCommandLine());
-	return WStringToString(temp);
-}
-
 extern "C"
 {
 	int _purecall()

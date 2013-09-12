@@ -165,7 +165,7 @@ public:
 		return get()[i] - operand[i];
 	}
 
-	int compare(const String &operand) const
+	int compare(const StringBase &operand) const
 	{
 		return compare(operand.c_str());
 	}
@@ -186,7 +186,7 @@ public:
 		return to_lower(get()[i]) - to_lower(operand[i]);
 	}
 
-	int icompare(const String &operand) const
+	int icompare(const StringBase &operand) const
 	{
 		return icompare(operand.c_str());
 	}
