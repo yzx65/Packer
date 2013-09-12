@@ -124,7 +124,7 @@ public:
 		return Vector<CharacterType>::end();
 	}
 
-	StringBase substr(size_t start, int len = -1)
+	StringBase substr(size_t start, int len = -1) const
 	{
 		if(len == -1)
 			len = length();
