@@ -4,6 +4,7 @@
 
 class Win32File : public File
 {
+	friend class Win32FileView;
 private:
 	void *fileHandle_;
 	void *mapHandle_;
@@ -13,21 +14,14 @@ private:
 	String fileName_;
 	String filePath_;
 public:
-	Win32File(const String &filename) : mapHandle_(nullptr), mapAddress_(nullptr)
-	{
-		open(filename);
-	}
-	virtual ~Win32File()
-	{
-		unmap();
-		close();
-	}
+	Win32File(const String &filename);
+	virtual ~Win32File();
 
 	virtual String getFileName();
 	virtual String getFilePath();
+	virtual void *getHandle();
 
-	virtual uint8_t *map();
-	virtual void unmap();
+	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size);
 };
 
 SharedPtr<File> File::open(const String &filename)

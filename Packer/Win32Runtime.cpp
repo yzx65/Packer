@@ -13,12 +13,6 @@
 //utilites
 #define NtCurrentProcess() reinterpret_cast<void *>(-1)
 
-int compareString(const char *a, const char *b)
-{
-	while(*a && *b && *a == *b) *a++, *b++;
-	return *a - *b;
-}
-
 void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataSize, size_t length = 0)
 {
 	if(length == 0)
@@ -49,6 +43,27 @@ void addPrefixToPath(UNICODE_STRING *string, const wchar_t *path, size_t pathSiz
 //helper implementation
 Win32NativeHelper g_helper;
 
+uint8_t tempHeap[655350]; //temporary heap during initialization.
+uint32_t tempHeapPtr = 0;
+
+void *heapAlloc(size_t size)
+{
+	if(!g_helper.isInitialized())
+	{
+		void *result = tempHeap + tempHeapPtr;
+		tempHeapPtr += size;
+		return result;
+	}
+	return Win32NativeHelper::get()->allocateHeap(size);
+}
+
+void heapFree(void *ptr)
+{
+	if(!g_helper.isInitialized())
+		return;
+	Win32NativeHelper::get()->freeHeap(ptr);
+}
+
 Win32NativeHelper *Win32NativeHelper::get()
 {
 	if(g_helper.init_ == false)
@@ -56,43 +71,25 @@ Win32NativeHelper *Win32NativeHelper::get()
 	return &g_helper;
 }
 
-void Win32NativeHelper::initNtdllImport(size_t exportDirectoryAddress)
+void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 {
-	IMAGE_EXPORT_DIRECTORY *directory = reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(exportDirectoryAddress);
-
-	uint32_t *addressOfFunctions = reinterpret_cast<uint32_t *>(ntdllBase_ + directory->AddressOfFunctions);
-	uint32_t *addressOfNames = reinterpret_cast<uint32_t *>(ntdllBase_ + directory->AddressOfNames);
-	uint16_t *ordinals = reinterpret_cast<uint16_t *>(ntdllBase_ + directory->AddressOfNameOrdinals);
-	for(size_t i = 0; i < directory->NumberOfNames; i ++)
+	auto &exportList = ntdll.getExports();
+	Vector<ExportFunction> exports(exportList.begin(), exportList.end());
+	auto findItem = [&](const char *name) -> size_t
 	{
-		uint16_t ordinal = ordinals[i];
-		size_t address = addressOfFunctions[ordinal];
-		if(addressOfNames && addressOfNames[i])
-		{
-			const char *name = reinterpret_cast<const char *>(ntdllBase_ + addressOfNames[i]);
+		return static_cast<size_t>(binarySearch(exports.begin(), exports.end(), [&](const ExportFunction *a) -> int { return a->name.icompare(name); })->address + ntdllBase_);
+	};
 
-			if(compareString(name, "RtlAllocateHeap") == 0)
-				rtlAllocateHeap_ = address + ntdllBase_;
-			else if(compareString(name, "RtlFreeHeap") == 0)
-				rtlFreeHeap_ = address + ntdllBase_;
-			else if(compareString(name, "NtAllocateVirtualMemory") == 0)
-				ntAllocateVirtualMemory_ = address + ntdllBase_;
-			else if(compareString(name, "NtProtectVirtualMemory") == 0)
-				ntProtectVirtualMemory_ = address + ntdllBase_;
-			else if(compareString(name, "NtCreateFile") == 0)
-				ntCreateFile_ = address + ntdllBase_;
-			else if(compareString(name, "NtClose") == 0)
-				ntClose_ = address + ntdllBase_;
-			else if(compareString(name, "NtCreateSection") == 0)
-				ntCreateSection_ = address + ntdllBase_;
-			else if(compareString(name, "NtMapViewOfSection") == 0)
-				ntMapViewOfSection_ = address + ntdllBase_;
-			else if(compareString(name, "NtUnmapViewOfSection") == 0)
-				ntUnmapViewOfSection_ = address + ntdllBase_;
-			else if(compareString(name, "NtQueryFullAttributesFile") == 0)
-				ntQueryFullAttributesFile_ = address + ntdllBase_;
-		}
-	}
+	rtlAllocateHeap_ = findItem("RtlAllocateHeap");
+	rtlFreeHeap_ = findItem("RtlFreeHeap");
+	ntAllocateVirtualMemory_ = findItem("NtAllocateVirtualMemory");
+	ntProtectVirtualMemory_ = findItem("NtProtectVirtualMemory");
+	ntCreateFile_ = findItem("NtCreateFile");
+	ntClose_ = findItem("NtClose");
+	ntCreateSection_ = findItem("NtCreateSection");
+	ntMapViewOfSection_ = findItem("NtMapViewOfSection");
+	ntUnmapViewOfSection_ = findItem("NtUnmapViewOfSection");
+	ntQueryFullAttributesFile_ = findItem("NtQueryFullAttributesFile");
 }
 
 void Win32NativeHelper::init()
@@ -109,10 +106,10 @@ void Win32NativeHelper::init()
 	ntdllBase_ = reinterpret_cast<size_t>(module->BaseAddress);
 
 	//get exports
-	PEFormat format(reinterpret_cast<uint8_t *>(module->BaseAddress), true, false);
-	IMAGE_DATA_DIRECTORY *dataDirectories = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(format.getDataDirectories());
+	PEFormat format;
+	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(module->BaseAddress)), true);
 
-	initNtdllImport(ntdllBase_ + dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress);
+	initNtdllImport(format);
 	init_ = true;
 }
 
@@ -125,6 +122,8 @@ void *Win32NativeHelper::allocateHeap(size_t dwBytes)
 
 bool Win32NativeHelper::freeHeap(void *ptr)
 {
+	if(ptr > tempHeap && ptr < tempHeap + tempHeapPtr)
+		return true;
 	typedef bool (__stdcall *RtlFreeHeapPtr)(void *hHeap, uint32_t dwFlags, void *ptr);
 
 	return reinterpret_cast<RtlFreeHeapPtr>(rtlFreeHeap_)(myPEB_->ProcessHeap, 0, ptr);
@@ -185,7 +184,7 @@ void Win32NativeHelper::closeHandle(void *handle)
 	reinterpret_cast<NtClosePtr>(ntClose_)(handle);
 }
 
-void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint32_t dwMaximumSizeHigh, uint32_t dwMaximumSizeLow, wchar_t *lpName, size_t NameLength)
+void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint64_t sectionSize, wchar_t *lpName, size_t NameLength)
 {
 	typedef int32_t (__stdcall *NtCreateSectionPtr)(void **SectionHandle, uint32_t DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PLARGE_INTEGER MaximumSize, size_t SectionPageProtection, size_t AllocationAttributes, void *FileHandle);
 
@@ -208,26 +207,18 @@ void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint32_t 
 	attributes.SecurityDescriptor = nullptr;
 	attributes.SecurityQualityOfService = nullptr;
 
-	if(dwMaximumSizeLow || dwMaximumSizeHigh)
+	if(sectionSize)
 	{
 		size = &localSize;
-		localSize.HighPart = dwMaximumSizeHigh;
-		localSize.LowPart = dwMaximumSizeLow;
+		localSize.QuadPart = sectionSize;
 	}
 
-	if(flProtect == PAGE_READWRITE)
-		desiredAccess |= SECTION_MAP_WRITE;
-	else if(flProtect == PAGE_EXECUTE_READWRITE)
-		desiredAccess |= SECTION_MAP_WRITE | SECTION_MAP_EXECUTE;
-	else if(flProtect == PAGE_EXECUTE_READ)
-		desiredAccess |= SECTION_MAP_EXECUTE;
-
-	reinterpret_cast<NtCreateSectionPtr>(ntCreateSection_)(&result, desiredAccess, &attributes, size, flProtect, allocationAttributes, file);
+	reinterpret_cast<NtCreateSectionPtr>(ntCreateSection_)(&result, SECTION_ALL_ACCESS, &attributes, size, flProtect, allocationAttributes, file);
 
 	return result;
 }
 
-void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint32_t dwFileOffsetHigh, uint32_t dwFileOffsetLow, size_t dwNumberOfBytesToMap, void *lpBaseAddress)
+void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, void *lpBaseAddress)
 {
 	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
 
@@ -236,8 +227,7 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 	size_t viewSize;
 	size_t protect;
 
-	sectionOffset.LowPart = dwFileOffsetLow;
-	sectionOffset.HighPart = dwFileOffsetHigh;
+	sectionOffset.QuadPart = offset;
 	viewSize = dwNumberOfBytesToMap;
 	if(dwDesiredAccess == FILE_MAP_COPY)
 		protect = PAGE_WRITECOPY;
@@ -310,24 +300,34 @@ API_SET_HEADER *Win32NativeHelper::getApiSet()
 	return myPEB_->ApiSet;
 }
 
+bool Win32NativeHelper::isInitialized()
+{
+	return init_;
+}
+
+PEB *Win32NativeHelper::getPEB()
+{
+	return myPEB_;
+}
+
 void* operator new(size_t num)
 {
-	return Win32NativeHelper::get()->allocateHeap(num);
+	return heapAlloc(num);
 }
 
 void* operator new[](size_t num)
 {
-	return Win32NativeHelper::get()->allocateHeap(num);
+	return heapAlloc(num);
 }
 
 void operator delete(void *ptr)
 {
-	Win32NativeHelper::get()->freeHeap(ptr);
+	heapFree(ptr);
 }
 
 void operator delete[](void *ptr)
 {
-	Win32NativeHelper::get()->freeHeap(ptr);
+	heapFree(ptr);
 }
 
 String getCommandLine()

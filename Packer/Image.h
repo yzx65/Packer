@@ -5,6 +5,7 @@
 #include "Runtime.h"
 #include "Vector.h"
 #include "String.h"
+#include "DataSource.h"
 
 enum ArchitectureType
 {
@@ -35,21 +36,6 @@ enum SectionFlag
 	SectionFlagExecute = 16,
 };
 
-struct ExtendedData //resource, header, ...
-{
-	ExtendedData() {}
-	ExtendedData(ExtendedData &&operand) : baseAddress(operand.baseAddress), data(std::move(operand.data)) {}
-	const ExtendedData &operator =(ExtendedData &&operand)
-	{
-		baseAddress = operand.baseAddress;
-		data = std::move(operand.data);
-
-		return *this;
-	}
-	uint64_t baseAddress;
-	Vector<uint8_t> data;
-};
-
 struct Section
 {
 	Section() {}
@@ -67,7 +53,7 @@ struct Section
 	String name;
 	uint64_t baseAddress;
 	uint64_t size;
-	Vector<uint8_t> data;
+	SharedPtr<DataView> data;
 	uint32_t flag;
 };
 
@@ -128,19 +114,19 @@ struct Image
 	Image(Image &&operand) : 
 		info(operand.info), sections(std::move(operand.sections)), 
 		imports(std::move(operand.imports)), relocations(std::move(operand.relocations)),
-		extendedData(std::move(operand.extendedData)), fileName(std::move(operand.fileName)),
-		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen),
-		filePath(std::move(operand.filePath)) {}
+		fileName(std::move(operand.fileName)), filePath(std::move(operand.filePath)), 
+		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen), 
+		header(std::move(operand.header)){}
 	const Image &operator =(Image &&operand)
 	{
 		info = std::move(operand.info);
 		sections = std::move(operand.sections);
 		imports = std::move(operand.imports);
 		relocations = std::move(operand.relocations);
-		extendedData = std::move(operand.extendedData);
 		fileName = std::move(operand.fileName);
 		filePath = std::move(operand.filePath);
 		exports = std::move(operand.exports);
+		header = std::move(operand.header);
 		nameExportLen = operand.nameExportLen;
 
 		return *this;
@@ -153,5 +139,5 @@ struct Image
 	List<Section> sections;
 	List<Import> imports;
 	List<uint64_t> relocations;
-	List<ExtendedData> extendedData;
+	SharedPtr<DataView> header;
 };

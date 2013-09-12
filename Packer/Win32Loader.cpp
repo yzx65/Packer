@@ -13,12 +13,12 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
+Win32Loader::Win32Loader(Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
 }
 
-uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
+uint8_t *Win32Loader::loadImage(Image &image, bool executable)
 {
 	if(image.fileName.icompare("ntdll.dll") == 0) //ntdll.dll is always loaded
 	{
@@ -27,23 +27,19 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
 		return baseAddress;
 	}
-	uint8_t *baseAddress;
-	baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 
-	for(auto &i : image.extendedData)
-		for(size_t j = 0; j < i.data.size(); j ++)
-			(baseAddress + i.baseAddress)[j] = i.data[j];
+	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	copyMemory(baseAddress, image.header->get(), image.header->getSize());
 
 	for(auto &i : image.sections)
-		for(size_t j = 0; j < i.data.size(); j ++)
-			(baseAddress + i.baseAddress)[j] = i.data[j];
+		copyMemory(baseAddress + i.baseAddress, i.data->get(), i.data->getSize());
 
-	int64_t diff = reinterpret_cast<int64_t>(baseAddress) - static_cast<int64_t>(image.info.baseAddress);
-	for(auto &i : image.relocations)
+	int64_t diff = -static_cast<int64_t>(image.info.baseAddress) + reinterpret_cast<int64_t>(baseAddress);
+	for(auto &j : image.relocations)
 		if(image.info.architecture == ArchitectureWin32)
-			*reinterpret_cast<int32_t *>(baseAddress + i) += static_cast<int32_t>(diff);
+			*reinterpret_cast<int32_t *>(baseAddress + j) += static_cast<int32_t>(diff);
 		else
-			*reinterpret_cast<int64_t *>(baseAddress + i) += diff;
+			*reinterpret_cast<int64_t *>(baseAddress + j) += static_cast<int64_t>(diff);
 
 	loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
 	loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
@@ -56,43 +52,10 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		for(auto &j : i.functions)
 		{
 			uint64_t function = getFunctionAddress(library, j.name, j.ordinal);
-			if(i.libraryName.icompare("kernel32.dll") == 0 || i.libraryName.icompare("kernelbase.dll") == 0)
-			{
-				if(j.name.icompare("LoadLibraryExW") == 0)
-					function = reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
-				if(j.name.icompare("LoadLibraryExA") == 0)
-					function = reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
-				if(j.name.icompare("LoadLibraryW") == 0)
-					function = reinterpret_cast<uint64_t>(LoadLibraryWProxy);
-				if(j.name.icompare("LoadLibraryA") == 0)
-					function = reinterpret_cast<uint64_t>(LoadLibraryAProxy);
-				if(j.name.icompare("GetModuleHandleExW") == 0)
-					function = reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
-				if(j.name.icompare("GetModuleHandleExA") == 0)
-					function = reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
-				if(j.name.icompare("GetModuleHandleW") == 0)
-					function = reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
-				if(j.name.icompare("GetModuleHandleA") == 0)
-					function = reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
-				if(j.name.icompare("GetProcAddress") == 0)
-					function = reinterpret_cast<uint64_t>(GetProcAddressProxy);
-			}
-			else if(i.libraryName.icompare("ntdll.dll") == 0)
-			{
-				if(j.name.icompare("LdrAddRefDll") == 0)
-					function = reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
-			}
-
 			if(image.info.architecture == ArchitectureWin32)
-			{
-				uint32_t functionAddress = static_cast<uint32_t>(function);
-				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = functionAddress;
-			}
+				*reinterpret_cast<uint32_t *>(j.iat + baseAddress) = static_cast<uint32_t>(function);
 			else
-			{
-				uint64_t functionAddress = static_cast<uint64_t>(function);
-				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = functionAddress;
-			}
+				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = static_cast<uint64_t>(function);
 		}
 	}
 
@@ -192,6 +155,33 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 	if(it != loadedImages_.end())
 	{
 		const Image *image = it->value;
+		if(image->fileName.icompare("kernel32.dll") == 0 || image->fileName.icompare("kernelbase.dll") == 0)
+		{
+			if(functionName.icompare("LoadLibraryExW") == 0)
+				return reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
+			if(functionName.icompare("LoadLibraryExA") == 0)
+				return reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
+			if(functionName.icompare("LoadLibraryW") == 0)
+				return reinterpret_cast<uint64_t>(LoadLibraryWProxy);
+			if(functionName.icompare("LoadLibraryA") == 0)
+				return reinterpret_cast<uint64_t>(LoadLibraryAProxy);
+			if(functionName.icompare("GetModuleHandleExW") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
+			if(functionName.icompare("GetModuleHandleExA") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
+			if(functionName.icompare("GetModuleHandleW") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
+			if(functionName.icompare("GetModuleHandleA") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
+			if(functionName.icompare("GetProcAddress") == 0)
+				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
+		}
+		else if(image->fileName.icompare("ntdll.dll") == 0)
+		{
+			if(functionName.icompare("LdrAddRefDll") == 0)
+				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
+		}
+
 		auto item = static_cast<ExportFunction *>(nullptr);
 		if(functionName.length())
 		{

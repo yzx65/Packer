@@ -95,5 +95,8 @@
     <ClInclude Include="Win32Structure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DataSource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

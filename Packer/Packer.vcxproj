@@ -102,6 +102,7 @@
     <ClCompile Include="Win32Runtime.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DataSource.h" />
     <ClInclude Include="Map.h" />
     <ClInclude Include="Runtime.h" />
     <ClInclude Include="SharedPtr.h" />

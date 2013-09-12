@@ -50,16 +50,17 @@ List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 void PackerMain::processFile(SharedPtr<File> file)
 {
 	SharedPtr<FormatBase> input;
-	uint8_t *fileData = file->map();
-	if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
 	{
-		input = MakeShared<PEFormat>(fileData);
-		input->setFileName(file->getFileName());
-		input->setFilePath(file->getFilePath());
+		SharedPtr<DataView> view = file->getView(0, 0);
+		uint8_t *fileData = view->get();
+		if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
+			input = MakeShared<PEFormat>();
+		else
+			return;
 	}
-	else
-		return;
-
+	input->load(file, false);
+	input->setFileName(file->getFileName());
+	input->setFilePath(file->getFilePath());
 	loadedFiles_.push_back(input->getFileName());
 	List<SharedPtr<FormatBase>> imports = loadImport(input);
 	

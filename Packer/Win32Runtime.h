@@ -6,6 +6,7 @@ struct _PEB;
 typedef struct _PEB PEB;
 struct _api_set_header;
 typedef struct _api_set_header API_SET_HEADER;
+class PEFormat;
 class Win32NativeHelper
 {
 private:
@@ -25,7 +26,7 @@ private:
 	size_t ntQueryFullAttributesFile_;
 
 	void init();
-	void initNtdllImport(size_t exportDirectoryAddress);
+	void initNtdllImport(const PEFormat &ntdll);
 public:
 	API_SET_HEADER *getApiSet();
 	void *allocateHeap(size_t dwBytes);
@@ -34,14 +35,16 @@ public:
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions);
 	void closeHandle(void *handle);
-	void *createSection(void *file, uint32_t flProtect, uint32_t dwMaximumSizeHigh, uint32_t dwMaximumSizeLow, wchar_t *lpName, size_t NameLength);
-	void *mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint32_t dwFileOffsetHigh, uint32_t dwFileOffsetLow, size_t dwNumberOfBytesToMap, void *lpBaseAddress);
+	void *createSection(void *file, uint32_t flProtect, uint64_t sectionSize, wchar_t *lpName, size_t NameLength);
+	void *mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, void *lpBaseAddress);
 	void unmapViewOfSection(void *lpBaseAddress);
 	uint32_t getFileAttributes(const wchar_t *filePath, size_t filePathLen);
 	wchar_t *getCommandLine();
 	wchar_t *getCurrentDirectory();
 	wchar_t *getEnvironments();
 	size_t getNtdll();
+	bool isInitialized();
+	PEB *getPEB();
 
 	static Win32NativeHelper *get();
 };

@@ -4,6 +4,16 @@
 
 #include "Win32Runtime.h"
 
+Win32File::Win32File(const String &filename)
+{
+	open(filename);
+}
+
+Win32File::~Win32File()
+{
+	close();
+}
+
 void Win32File::open(const String &filename)
 {
 	WString wFileName = StringToWString(filename);
@@ -30,29 +40,15 @@ void Win32File::open(const String &filename)
 	fileHandle_ = Win32NativeHelper::get()->createFile(GENERIC_READ, fullPath.c_str(), fullPath.length(), 0, FILE_SHARE_READ, FILE_OPEN, 0);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
+	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, nullptr, 0);
+	mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, nullptr));
 }
 
 void Win32File::close() 
 {
-	Win32NativeHelper::get()->closeHandle(fileHandle_);
-}
-
-uint8_t *Win32File::map()
-{
-	if(mapAddress_)
-		return mapAddress_;
-	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, 0, NULL, 0);
-	mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, 0, nullptr));
-	return mapAddress_;
-}
-
-void Win32File::unmap()
-{
-	if(!mapAddress_)
-		return;
 	Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
 	Win32NativeHelper::get()->closeHandle(mapHandle_);
-	mapHandle_ = mapAddress_ = nullptr;
+	Win32NativeHelper::get()->closeHandle(fileHandle_);
 }
 
 String Win32File::getFileName()
@@ -63,6 +59,16 @@ String Win32File::getFileName()
 String Win32File::getFilePath()
 {
 	return filePath_;
+}
+
+void *Win32File::getHandle()
+{
+	return fileHandle_;
+}
+
+SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
+{
+	return MakeShared<DataView>(sharedFromThis(), mapAddress_ + offset, size);
 }
 
 String File::combinePath(const String &directory, const String &filename)

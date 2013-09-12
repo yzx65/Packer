@@ -8,45 +8,53 @@
 #include "Win32Runtime.h" //for path search.
 #endif
 
-//Helper
-class structureAtOffset
-{
-private:
-	uint8_t *data_;
-	size_t offset_;
-public:
-	structureAtOffset(uint8_t *data, size_t offset) : data_(data), offset_(offset) {}
-
-	template<typename T>
-	operator T()
-	{
-		return reinterpret_cast<T>(data_ + offset_);
-	}
-};
 template<typename T>
 inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 {
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad) : nameExportLen_(0)
+PEFormat::PEFormat() : nameExportLen_(0)
+{
+	
+}
+
+PEFormat::~PEFormat()
+{
+
+}
+
+bool PEFormat::load(SharedPtr<DataSource> source, bool fromMemory)
+{
+	size_t headerSize = loadHeader(source, fromMemory);
+	if(headerSize == 0)
+		return false;
+	header_ = source->getView(0, headerSize);
+	
+	return true;
+}
+
+size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 {
 	IMAGE_DOS_HEADER *dosHeader;
 	uint32_t *ntSignature;
 	IMAGE_FILE_HEADER *fileHeader;
 	IMAGE_OPTIONAL_HEADER_BASE *optionalHeaderBase;
-	uint32_t headerSize;
+	IMAGE_DATA_DIRECTORY *dataDirectory = nullptr;
 	size_t offset;
+	size_t headerSize;
+	SharedPtr<DataView> view = source->getView(0, 0);
+	uint8_t *data = view->get();
 
-	dosHeader = structureAtOffset(data, 0);
+	dosHeader = getStructureAtOffset<IMAGE_DOS_HEADER>(data, 0);
 	if(!dosHeader->e_lfanew)
-		return; //not PE
+		return 0; //not PE
 
-	ntSignature = structureAtOffset(data, dosHeader->e_lfanew);
+	ntSignature = getStructureAtOffset<uint32_t>(data, dosHeader->e_lfanew);
 	if(*ntSignature != IMAGE_NT_SIGNATURE)
-		return; //not PE
-	fileHeader = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t));
-	optionalHeaderBase = structureAtOffset(data, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER));
+		return 0; //not PE
+	fileHeader = getStructureAtOffset<IMAGE_FILE_HEADER>(data, dosHeader->e_lfanew + sizeof(uint32_t));
+	optionalHeaderBase = getStructureAtOffset<IMAGE_OPTIONAL_HEADER_BASE>(data, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER));
 
 	offset = dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER_BASE);
 	info_.entryPoint = optionalHeaderBase->AddressOfEntryPoint;
@@ -56,8 +64,8 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad) : nameExportLe
 
 	if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR32_MAGIC)
 	{
-		IMAGE_OPTIONAL_HEADER32 *optionalHeader = structureAtOffset(data, offset);
-		dataDirectories_ = optionalHeader->DataDirectory;
+		IMAGE_OPTIONAL_HEADER32 *optionalHeader = getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(data, offset);
+		dataDirectory = optionalHeader->DataDirectory;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		info_.architecture = ArchitectureWin32;
@@ -66,8 +74,8 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad) : nameExportLe
 	}
 	else if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 	{
-		IMAGE_OPTIONAL_HEADER64 *optionalHeader = structureAtOffset(data, offset);
-		dataDirectories_ = optionalHeader->DataDirectory;
+		IMAGE_OPTIONAL_HEADER64 *optionalHeader = getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(data, offset);
+		dataDirectory = optionalHeader->DataDirectory;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		headerSize = optionalHeader->SizeOfHeaders;
@@ -75,46 +83,11 @@ PEFormat::PEFormat(uint8_t *data, bool fromLoaded, bool fullLoad) : nameExportLe
 		offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
 
-	if(fullLoad)
-	{
-		loadSectionData(fileHeader->NumberOfSections, data, offset, fromLoaded);
-		processExtra(data, headerSize);
-	}
-}
+	exportTableBase_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
+	exportTableSize_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
 
-PEFormat::~PEFormat()
-{
-
-}
-
-void PEFormat::processExtra(uint8_t *data, size_t headerSize)
-{
-	IMAGE_DATA_DIRECTORY *dataDirectories = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(dataDirectories_);
-	processImport(getDataPointerOfRVA(dataDirectories[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
-	processExport(getDataPointerOfRVA(dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
-	processRelocation(getDataPointerOfRVA(dataDirectories[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress));
-
-	//copy header
-	ExtendedData extendedData;
-	extendedData.baseAddress = 0;
-	extendedData.data.assign(data, headerSize);
-
-	extendedData_.push_back(std::move(extendedData));
-
-	if(dataDirectories[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size)
-	{
-		ExtendedData extendedData;
-		extendedData.baseAddress = dataDirectories[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress;
-		extendedData.data.assign(getDataPointerOfRVA(dataDirectories[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress), dataDirectories[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
-
-		extendedData_.push_back(std::move(extendedData));
-	}
-}
-
-void PEFormat::loadSectionData(int numberOfSections, uint8_t *data, size_t offset, bool fromLoaded)
-{
-	IMAGE_SECTION_HEADER *sectionHeaders = structureAtOffset(data, offset);
-	for(int i = 0; i < numberOfSections; i ++)
+	IMAGE_SECTION_HEADER *sectionHeaders = getStructureAtOffset<IMAGE_SECTION_HEADER>(data, offset);
+	for(int i = 0; i < fileHeader->NumberOfSections; i ++)
 	{
 		Section section;
 		section.baseAddress = sectionHeaders[i].VirtualAddress;
@@ -135,20 +108,26 @@ void PEFormat::loadSectionData(int numberOfSections, uint8_t *data, size_t offse
 		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_EXECUTE)
 			section.flag |= SectionFlagExecute;
 
-		if(!fromLoaded)
-			section.data.assign(data + sectionHeaders[i].PointerToRawData, sectionHeaders[i].SizeOfRawData);
+		if(!fromMemory)
+			section.data = source->getView(sectionHeaders[i].PointerToRawData, sectionHeaders[i].SizeOfRawData);
 		else
-			section.data.assign(data + sectionHeaders[i].VirtualAddress, sectionHeaders[i].SizeOfRawData);
+			section.data = source->getView(sectionHeaders[i].VirtualAddress, sectionHeaders[i].SizeOfRawData);
 
 		sections_.push_back(std::move(section));
 	}
+
+	processImport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
+	processExport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
+	processRelocation(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress));
+
+	return headerSize;
 }
 
 uint8_t *PEFormat::getDataPointerOfRVA(uint32_t rva)
 {
 	for(auto &section : sections_)
 		if(rva >= section.baseAddress && rva < section.baseAddress + section.size)
-			return &section.data[static_cast<size_t>(rva - section.baseAddress)];
+			return section.data->get() + rva - section.baseAddress;
 	return nullptr;
 }
 
@@ -242,13 +221,11 @@ void PEFormat::processImport(uint8_t *descriptor_)
 
 String PEFormat::checkExportForwarder(uint64_t address)
 {
-	IMAGE_DATA_DIRECTORY *dataDirectories = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(dataDirectories_);
-	if(address >= dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress && 
-		address < dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress + dataDirectories[IMAGE_DIRECTORY_ENTRY_EXPORT].Size)
+	if(address >= exportTableBase_ && address < exportTableBase_ + exportTableSize_)
 		for(auto &i : sections_)
 			if(address >= i.baseAddress && address < i.baseAddress + i.size)
-				return String(reinterpret_cast<char *>(&i.data[static_cast<uint32_t>(address - i.baseAddress)]));
-	return "";
+				return String(reinterpret_cast<const char *>(i.data->get() + static_cast<uint32_t>(address - i.baseAddress)));
+	return String();
 }
 
 void PEFormat::processExport(uint8_t *directory_)
@@ -276,7 +253,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		entry.ordinal += directory->Base;
 		entry.forward = checkExportForwarder(entry.address);
 
-		exports_.push_back(entry);
+		exports_.push_back(std::move(entry));
 	}
 
 	nameExportLen_ = exports_.size();
@@ -290,7 +267,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		entry.address = addressOfFunctions[i];
 		entry.forward = checkExportForwarder(entry.address);
 
-		exports_.push_back(entry);
+		exports_.push_back(std::move(entry));
 	}
 	delete [] checker;
 }
@@ -305,22 +282,22 @@ void PEFormat::setFilePath(const String &filePath)
 	filePath_ = filePath;
 }
 
-String PEFormat::getFileName()
+const String &PEFormat::getFileName() const
 {
 	return fileName_;
 }
 
-String PEFormat::getFilePath()
+const String &PEFormat::getFilePath() const
 {
 	return filePath_;
 }
 
-List<Import> PEFormat::getImports()
+const List<Import> &PEFormat::getImports() const
 {
 	return imports_;
 }
 
-List<ExportFunction> PEFormat::getExports()
+const List<ExportFunction> &PEFormat::getExports() const
 {
 	return exports_;
 }
@@ -334,7 +311,7 @@ Image PEFormat::serialize()
 	image.imports = std::move(imports_);
 	image.sections = std::move(sections_);
 	image.relocations = std::move(relocations_);
-	image.extendedData = std::move(extendedData_);
+	image.header = std::move(header_);
 	image.exports.assign_move(exports_.begin(), exports_.end());
 	image.nameExportLen = nameExportLen_;
 
@@ -350,19 +327,13 @@ bool PEFormat::isSystemLibrary(const String &filename)
 	return false;
 }
 
-void *PEFormat::getDataDirectories()
-{
-	return dataDirectories_;
-}
-
 SharedPtr<FormatBase> loadImport(const String &path)
 {
 	SharedPtr<File> file = File::open(path);
-	uint8_t *map = file->map();
-	SharedPtr<FormatBase> result = MakeShared<PEFormat>(map);
+	SharedPtr<FormatBase> result = MakeShared<PEFormat>();
+	result->load(file, false);
 	result->setFileName(file->getFileName());
 	result->setFilePath(file->getFilePath());
-	file->unmap();
 	return result;
 }
 
@@ -388,11 +359,12 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 				equal = currentLength;
 			currentLength ++;
 		}
-		if(equal >= 3 && WString::to_lower(start[0]) == L'p'
-			 && WString::to_lower(start[1]) == L'a'
-			  && WString::to_lower(start[2]) == L't'
-			   && WString::to_lower(start[3]) == L'h'
-			    && start[4] == L'=')
+		if(equal >= 3 && 
+			WString::to_lower(start[0]) == L'p' &&
+			WString::to_lower(start[1]) == L'a' &&
+			WString::to_lower(start[2]) == L't' &&
+			WString::to_lower(start[3]) == L'h' &&
+			start[4] == L'=')
 		{
 			path.assign(start + equal + 2);
 			break;
