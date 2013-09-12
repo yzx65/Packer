@@ -156,6 +156,8 @@ public:
 
 	int compare(const CharacterType *operand) const
 	{
+		if(!get())
+			return 1;
 		size_t i;
 		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
 			if(operand[i] != get()[i])
@@ -175,6 +177,8 @@ public:
 
 	int icompare(const CharacterType *operand) const
 	{
+		if(!get())
+			return 1;
 		size_t i;
 		for(i = 0; operand[i] != 0 && get()[i] != 0; i ++)
 			if(to_lower(operand[i]) != to_lower(get()[i]))
