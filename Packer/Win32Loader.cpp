@@ -270,7 +270,9 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 	String filename(WStringToString(WString(filename_)));
 	for(auto &i : loaderInstance_->loadedImages_)
 	{
-		if(i.value->fileName.icompare(filename) == 0 || File::combinePath(i.value->filePath, i.value->fileName).icompare(filename) == 0)
+		if(i.value->fileName.icompare(filename) == 0 || 
+			File::combinePath(i.value->filePath, i.value->fileName).icompare(filename) == 0 || 
+			i.value->fileName.substr(0, i.value->fileName.length() - 4).icompare(filename) == 0)
 		{
 			*result = reinterpret_cast<void *>(i.key);
 			return 1;
