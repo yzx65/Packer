@@ -181,8 +181,14 @@ public:
 		
 		if(node->right) //right node is always lower than parent node.
 			return iterator(upper_bound_(node->right, node->right, node), this);
-		else if(!Comparator()(node->parent->key, node->key)) //!(node->parent->key < node->key) => node->parent->key >= node->key
-			return iterator(node->parent, this);
+
+		MapNode *search = node->parent;
+		while(search)
+		{
+			if(!Comparator()(search->key, node->key))//!(search->key < node->key) => search->key >= node->key
+				return iterator(search, this);
+			search = search->parent;
+		}
 		return iterator(nullptr, this);
 	}
 
