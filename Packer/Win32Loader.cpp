@@ -59,6 +59,15 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 		}
 	}
 
+	//security cookie
+	if(image.info.platformData)
+	{
+		if(image.info.architecture == ArchitectureWin32)
+			*reinterpret_cast<uint32_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
+		else
+			*reinterpret_cast<uint64_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
+	}
+
 	for(auto &i : image.sections)
 	{
 		uint32_t unused, protect = 0;

@@ -406,3 +406,50 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
 	uint32_t   AddressOfNames;         // RVA from base of image
 	uint32_t   AddressOfNameOrdinals;  // RVA from base of image
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
+
+
+typedef struct {
+	uint32_t   Size;
+	uint32_t   TimeDateStamp;
+	uint16_t    MajorVersion;
+	uint16_t    MinorVersion;
+	uint32_t   GlobalFlagsClear;
+	uint32_t   GlobalFlagsSet;
+	uint32_t   CriticalSectionDefaultTimeout;
+	uint32_t   DeCommitFreeBlockThreshold;
+	uint32_t   DeCommitTotalFreeThreshold;
+	uint32_t   LockPrefixTable;            // VA
+	uint32_t   MaximumAllocationSize;
+	uint32_t   VirtualMemoryThreshold;
+	uint32_t   ProcessHeapFlags;
+	uint32_t   ProcessAffinityMask;
+	uint16_t    CSDVersion;
+	uint16_t    Reserved1;
+	uint32_t   EditList;                   // VA
+	uint32_t   SecurityCookie;             // VA
+	uint32_t   SEHandlerTable;             // VA
+	uint32_t   SEHandlerCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
+
+typedef struct {
+	uint32_t      Size;
+	uint32_t      TimeDateStamp;
+	uint16_t       MajorVersion;
+	uint16_t       MinorVersion;
+	uint32_t      GlobalFlagsClear;
+	uint32_t      GlobalFlagsSet;
+	uint32_t      CriticalSectionDefaultTimeout;
+	uint64_t  DeCommitFreeBlockThreshold;
+	uint64_t  DeCommitTotalFreeThreshold;
+	uint64_t  LockPrefixTable;         // VA
+	uint64_t  MaximumAllocationSize;
+	uint64_t  VirtualMemoryThreshold;
+	uint64_t  ProcessAffinityMask;
+	uint32_t      ProcessHeapFlags;
+	uint16_t       CSDVersion;
+	uint16_t       Reserved1;
+	uint64_t  EditList;                // VA
+	uint64_t  SecurityCookie;          // VA
+	uint64_t  SEHandlerTable;          // VA
+	uint64_t  SEHandlerCount;
+} IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;

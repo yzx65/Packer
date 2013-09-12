@@ -120,6 +120,17 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	processExport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
 	processRelocation(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress));
 
+	uint8_t *loadConfig = getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress);
+	if(loadConfig)
+	{
+		if(info_.architecture == ArchitectureWin32)
+			info_.platformData = reinterpret_cast<IMAGE_LOAD_CONFIG_DIRECTORY32 *>(loadConfig)->SecurityCookie;
+		else
+			info_.platformData = reinterpret_cast<IMAGE_LOAD_CONFIG_DIRECTORY64 *>(loadConfig)->SecurityCookie;
+	}
+	else
+		info_.platformData = 0;
+
 	return headerSize;
 }
 
