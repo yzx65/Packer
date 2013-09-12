@@ -127,7 +127,7 @@ public:
 	StringBase substr(size_t start, int len = -1) const
 	{
 		if(len == -1)
-			len = length();
+			len = length() - start;
 		return StringBase(begin() + start, begin() + start + len);
 	}
 
