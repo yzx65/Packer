@@ -44,7 +44,7 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 	loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
 	loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
 	if(executable)
-		mainBase = reinterpret_cast<uint64_t>(baseAddress);
+		Win32NativeHelper::get()->getPEB()->ImageBaseAddress = reinterpret_cast<void *>(baseAddress);
 
 	for(auto &i : image.imports)
 	{
@@ -264,7 +264,7 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 	*result = 0;
 	if(filename_ == nullptr)
 	{
-		*result = reinterpret_cast<void *>(loaderInstance_->mainBase);
+		*result = reinterpret_cast<void *>(Win32NativeHelper::get()->getPEB()->ImageBaseAddress);
 		return 1;
 	}
 	String filename(WStringToString(WString(filename_)));

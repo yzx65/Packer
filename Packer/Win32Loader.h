@@ -9,7 +9,6 @@
 class Win32Loader
 {
 private:
-	uint64_t mainBase;
 	const Image &image_;
 	List<Image> imports_;
 	Map<uint64_t, const Image *> loadedImages_;
