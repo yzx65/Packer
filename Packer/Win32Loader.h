@@ -10,13 +10,13 @@ class Win32Loader
 {
 private:
 	uint64_t mainBase;
-	Image &image_;
+	const Image &image_;
 	List<Image> imports_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	void *loadLibrary(const String &filename);
 	uint64_t getFunctionAddress(void *library, const String &functionName, int ordinal = -1	);
-	uint8_t *loadImage(Image &image, bool executable = false);
+	uint8_t *loadImage(const Image &image, bool executable = false);
 
 	static void * __stdcall LoadLibraryAProxy(const char *libraryName);
 	static void * __stdcall LoadLibraryWProxy(const wchar_t *libraryName);
@@ -29,7 +29,7 @@ private:
 	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
 	static uint32_t __stdcall LdrAddRefDllProxy(uint32_t flags, void *library);
 public:
-	Win32Loader(Image &image, Vector<Image> &&imports);
+	Win32Loader(const Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}
 
 	void execute();

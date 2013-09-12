@@ -13,12 +13,12 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
+Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
 }
 
-uint8_t *Win32Loader::loadImage(Image &image, bool executable)
+uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 {
 	if(image.fileName.icompare("ntdll.dll") == 0) //ntdll.dll is always loaded
 	{

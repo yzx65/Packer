@@ -14,12 +14,12 @@ public:
 	DataView(SharedPtr<DataSource> source, uint8_t *baseAddress, size_t size) : source_(source), baseAddress_(baseAddress), size_(size) {}
 	virtual ~DataView() {}
 
-	uint8_t *get()
+	uint8_t *get() const
 	{
 		return baseAddress_;
 	}
 
-	size_t getSize()
+	size_t getSize() const
 	{
 		return size_;
 	}
