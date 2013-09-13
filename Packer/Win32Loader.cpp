@@ -109,6 +109,24 @@ void *Win32Loader::loadLibrary(const String &filename)
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
 
+	//check if already loaded
+	auto images = Win32NativeHelper::get()->getLoadedImages();
+	WString wstrName(StringToWString(filename));
+	for(auto it = images.begin(); it != images.end(); it ++)
+	{
+		if(wstrName.icompare(it->fileName) == 0)
+		{
+			uint8_t *baseAddress = it->baseAddress;
+			PEFormat format;
+			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
+			format.setFileName(filename);
+			auto it = imports_.push_back(format.serialize());
+			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
+			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
+			return baseAddress;
+		}
+	}
+
 	Image *image = nullptr;
 	for(auto &i : imports_)
 		if(i.fileName.icompare(filename) == 0)
@@ -142,24 +160,6 @@ void *Win32Loader::loadLibrary(const String &filename)
 					return library;
 			}
 			return nullptr;
-		}
-	}
-
-	//check if already loaded
-	auto images = Win32NativeHelper::get()->getLoadedImages();
-	WString wstrName(StringToWString(filename));
-	for(auto it = images.begin(); it != images.end(); it ++)
-	{
-		if(wstrName.icompare(it->fileName) == 0)
-		{
-			uint8_t *baseAddress = it->baseAddress;
-			PEFormat format;
-			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
-			format.setFileName(filename);
-			auto it = imports_.push_back(format.serialize());
-			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
-			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
-			return baseAddress;
 		}
 	}
 
