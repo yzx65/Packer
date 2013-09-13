@@ -391,13 +391,13 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 		s = e + 1;
 	}
 #endif
-	String newFileName = filename;
-
-	if(newFileName.substr(newFileName.length() - 4).icompare(".dll") != 0)
-		newFileName.append(".dll");
 	for(auto &i : searchPaths)
 	{
-		String path = File::combinePath(i, newFileName);
+		String path = File::combinePath(i, filename);
+		if(File::isPathExists(path))
+			return loadImport(path);
+		if(path.substr(path.length() - 4).icompare(".dll") != 0)
+			path.append(".dll");
 		if(File::isPathExists(path))
 			return loadImport(path);
 	}
