@@ -155,6 +155,7 @@ void *Win32Loader::loadLibrary(const String &filename)
 			uint8_t *baseAddress = it->baseAddress;
 			PEFormat format;
 			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
+			format.setFileName(filename);
 			auto it = imports_.push_back(format.serialize());
 			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
 			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
