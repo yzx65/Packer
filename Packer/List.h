@@ -98,17 +98,7 @@ public:
 
 	~List()
 	{
-		if(head_)
-		{
-			ListNodeBase *item = head_->next;
-			while(item->next != head_)
-			{
-				ListNode *item_ = static_cast<ListNode *>(item);
-				item = item->next;
-				delete item_;
-			}
-			delete head_;
-		}
+		clear();
 	}
 
 	List(const List &other)
@@ -140,6 +130,21 @@ public:
 
 		for(; s != e; s ++)
 			push_back(*s);
+	}
+
+	void clear()
+	{
+		if(head_)
+		{
+			ListNodeBase *item = head_->next;
+			while(item->next != head_)
+			{
+				ListNode *item_ = static_cast<ListNode *>(item);
+				item = item->next;
+				delete item_;
+			}
+			delete head_;
+		}
 	}
 
 	const List &operator =(List &&operand)

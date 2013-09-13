@@ -146,10 +146,28 @@ private:
 			lowest = upper_bound_(current->right, lowest, bound);
 		return lowest;
 	}
+	void clear_(MapNode *node)
+	{
+		if(!node)
+			return;
+		clear_(node->left);
+		clear_(node->right);
+		delete node;
+	}
 public:
 
 	Map() : head_(nullptr)
 	{
+	}
+
+	~Map()
+	{
+		clear();
+	}
+
+	void clear()
+	{
+		clear_(head_);
 	}
 
 	iterator insert(const KeyType &key, const ValueType &value)
