@@ -127,11 +127,6 @@ void *Win32Loader::loadLibrary(const String &filename)
 		}
 	}
 
-	Image *image = nullptr;
-	for(auto &i : imports_)
-		if(i.fileName.icompare(filename) == 0)
-			return loadImage(i);
-
 	if(filename[0] == 'a' && filename[1] == 'p' && filename[2] == 'i' && filename[3] == '-')
 	{
 		API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
@@ -162,6 +157,12 @@ void *Win32Loader::loadLibrary(const String &filename)
 			return nullptr;
 		}
 	}
+
+	Image *image = nullptr;
+	for(auto &i : imports_)
+		if(i.fileName.icompare(filename) == 0)
+			return loadImage(i);
+
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath);
 	if(!format.get())
