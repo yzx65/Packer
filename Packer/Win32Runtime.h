@@ -1,12 +1,20 @@
 #pragma once
 
 #include <cstdint>
+#include "List.h"
 
 struct _PEB;
 typedef struct _PEB PEB;
 struct _api_set_header;
 typedef struct _api_set_header API_SET_HEADER;
 class PEFormat;
+
+struct Win32LoadedImage
+{
+	const wchar_t *fileName;
+	uint8_t *baseAddress;
+};
+
 class Win32NativeHelper
 {
 private:
@@ -42,9 +50,9 @@ public:
 	wchar_t *getCommandLine();
 	wchar_t *getCurrentDirectory();
 	wchar_t *getEnvironments();
-	size_t getNtdll();
 	bool isInitialized();
 	PEB *getPEB();
+	List<Win32LoadedImage> getLoadedImages();
 
 	static Win32NativeHelper *get();
 };

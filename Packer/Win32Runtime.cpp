@@ -290,11 +290,6 @@ wchar_t *Win32NativeHelper::getEnvironments()
 	return reinterpret_cast<wchar_t *>(myPEB_->ProcessParameters->Environment);
 }
 
-size_t Win32NativeHelper::getNtdll()
-{
-	return ntdllBase_;
-}
-
 API_SET_HEADER *Win32NativeHelper::getApiSet()
 {
 	return myPEB_->ApiSet;
@@ -308,6 +303,21 @@ bool Win32NativeHelper::isInitialized()
 PEB *Win32NativeHelper::getPEB()
 {
 	return myPEB_;
+}
+
+List<Win32LoadedImage> Win32NativeHelper::getLoadedImages()
+{
+	LDR_MODULE *node = reinterpret_cast<LDR_MODULE *>(getPEB()->LoaderData->InLoadOrderModuleList.Flink->Flink);
+	List<Win32LoadedImage> result;
+	while(node->BaseAddress)
+	{
+		Win32LoadedImage image;
+		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
+		image.fileName = node->BaseDllName.Buffer;
+		result.push_back(image);
+		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
+	}
+	return result;
 }
 
 void* operator new(size_t num)

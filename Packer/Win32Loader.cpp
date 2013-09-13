@@ -5,6 +5,7 @@
 #include "Win32Structure.h"
 #include "Util.h"
 #include "File.h"
+#include "PEFormat.h"
 
 #define DLL_PROCESS_ATTACH   1    
 #define DLL_THREAD_ATTACH    2    
@@ -20,14 +21,6 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 
 uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 {
-	if(image.fileName.icompare("ntdll.dll") == 0) //ntdll.dll is always loaded
-	{
-		uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->getNtdll());
-		loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
-		loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
-		return baseAddress;
-	}
-
 	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	copyMemory(baseAddress, image.header->get(), image.header->getSize());
 
@@ -112,7 +105,7 @@ void Win32Loader::execute()
 
 void *Win32Loader::loadLibrary(const String &filename)
 {
-	auto it = loadedLibraries_.find(String(filename));
+	auto it = loadedLibraries_.find(filename);
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
 
@@ -152,7 +145,24 @@ void *Win32Loader::loadLibrary(const String &filename)
 		}
 	}
 
-	SharedPtr<FormatBase> format = FormatBase::loadImport(String(filename), image_.filePath);
+	//check if already loaded
+	auto images = Win32NativeHelper::get()->getLoadedImages();
+	WString wstrName(StringToWString(filename));
+	for(auto it = images.begin(); it != images.end(); it ++)
+	{
+		if(wstrName.icompare(it->fileName) == 0)
+		{
+			uint8_t *baseAddress = it->baseAddress;
+			PEFormat format;
+			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
+			auto it = imports_.push_back(format.serialize());
+			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
+			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
+			return baseAddress;
+		}
+	}
+
+	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath);
 	if(!format.get())
 		return nullptr;
 	return loadImage(*imports_.push_back(format->serialize()));
