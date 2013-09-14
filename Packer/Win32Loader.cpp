@@ -333,6 +333,8 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t 
 
 void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionName)
 {
+	if(reinterpret_cast<size_t>(functionName) < 0x10000)
+		return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(), reinterpret_cast<size_t>(functionName)));
 	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(functionName)));
 }
 
