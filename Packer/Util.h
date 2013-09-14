@@ -190,3 +190,25 @@ inline void copyMemory(uint8_t *dest, uint8_t *src, size_t size)
 	for(; i < size; i ++)
 		*(dest + i) = *(src + i); //remaining
 }
+
+inline int StringToInt(const String &str)
+{
+	int value = 0;
+	size_t i = 0;
+	if(str[0] == '-')
+		i ++;
+	for(; i < str.length(); i ++)
+	{
+		if(str[i] <= '9' && str[i] >= '0')
+		{
+			value *= 10;
+			value += str[i] - '0';
+		}
+		else
+			break;
+	}
+	if(str[0] == '-')
+		return -value;
+
+	return value;
+}
