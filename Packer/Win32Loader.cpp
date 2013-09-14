@@ -19,7 +19,7 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 	loaderInstance_ = this;
 }
 
-uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
+uint8_t *Win32Loader::mapImage(const Image &image)
 {
 	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	copyMemory(baseAddress, image.header->get(), image.header->getSize());
@@ -36,9 +36,11 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 
 	loadedLibraries_.insert(String(image.fileName), reinterpret_cast<uint64_t>(baseAddress));
 	loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &image);
-	if(executable)
-		Win32NativeHelper::get()->getPEB()->ImageBaseAddress = reinterpret_cast<void *>(baseAddress);
+	return baseAddress;
+}
 
+void Win32Loader::processImports(uint8_t *baseAddress, const Image &image)
+{
 	for(auto &i : image.imports)
 	{
 		void *library = loadLibrary(i.libraryName);
@@ -51,16 +53,10 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 				*reinterpret_cast<uint64_t *>(j.iat + baseAddress) = static_cast<uint64_t>(function);
 		}
 	}
+}
 
-	//security cookie
-	if(image.info.platformData)
-	{
-		if(image.info.architecture == ArchitectureWin32)
-			*reinterpret_cast<uint32_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
-		else
-			*reinterpret_cast<uint64_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
-	}
-
+void Win32Loader::adjustPageProtection(uint8_t *baseAddress, const Image &image)
+{
 	for(auto &i : image.sections)
 	{
 		uint32_t unused, protect = 0;
@@ -78,7 +74,18 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 
 		Win32NativeHelper::get()->protectVirtual(baseAddress + i.baseAddress, static_cast<int32_t>(i.size), protect, &unused);
 	}
+}
 
+void Win32Loader::executeEntryPoint(uint8_t *baseAddress, const Image &image)
+{
+	//security cookie
+	if(image.info.platformData)
+	{	
+		if(image.info.architecture == ArchitectureWin32)
+			*reinterpret_cast<uint32_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
+		else
+			*reinterpret_cast<uint64_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
+	}
 	if(image.info.entryPoint)
 	{
 		if((image.info.flag & ImageFlagLibrary))
@@ -94,13 +101,38 @@ uint8_t *Win32Loader::loadImage(const Image &image, bool executable)
 			entryPoint();
 		}
 	}
+}
 
+void Win32Loader::executeEntryPointQueue()
+{
+	for(auto i = entryPointQueue_.begin(); i != entryPointQueue_.end(); )
+	{
+		auto oldi = i;
+		uint64_t baseAddress = *i;
+		i ++;
+		entryPointQueue_.remove(oldi);
+		executeEntryPoint(reinterpret_cast<uint8_t *>(baseAddress), *loadedImages_[baseAddress]);
+	}
+}
+
+uint8_t *Win32Loader::loadImage(const Image &image)
+{
+	uint8_t *baseAddress = mapImage(image);
+	processImports(baseAddress, image);
+	adjustPageProtection(baseAddress, image);
+	entryPointQueue_.push_back(reinterpret_cast<uint64_t>(baseAddress));
 	return baseAddress;
 }
 
 void Win32Loader::execute()
 {
-	loadImage(image_, true);
+	uint8_t *baseAddress = mapImage(image_);
+	Win32NativeHelper::get()->getPEB()->ImageBaseAddress = reinterpret_cast<void *>(baseAddress);
+	processImports(baseAddress, image_);
+	adjustPageProtection(baseAddress, image_);
+
+	executeEntryPointQueue();
+	executeEntryPoint(baseAddress, image_);
 }
 
 void *Win32Loader::loadLibrary(const String &filename)
@@ -163,7 +195,6 @@ void *Win32Loader::loadLibrary(const String &filename)
 		if(i.fileName.icompare(filename) == 0)
 			return loadImage(i);
 
-
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath);
 	if(!format.get())
 		return nullptr;
@@ -222,8 +253,11 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 			int point = item->forward.find('.');
 			String dllName = item->forward.substr(0, point);
 			String functionName = item->forward.substr(point + 1);
+			int ordinal = -1;
+			if(functionName[0] == '#')
+				ordinal = StringToInt(functionName.substr(1));
 
-			return getFunctionAddress(loadLibrary(dllName + ".dll"), functionName);
+			return getFunctionAddress(loadLibrary(dllName + ".dll"), functionName, ordinal);
 		}
 		return item->address + reinterpret_cast<uint64_t>(library);
 	}
@@ -247,7 +281,11 @@ void * __stdcall Win32Loader::LoadLibraryExAProxy(const char *libraryName, void 
 
 void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, void *, uint32_t)
 {
-	return loaderInstance_->loadLibrary(WStringToString(WString(libraryName)));
+	List<uint64_t> entryPointQueueTemp(std::move(loaderInstance_->entryPointQueue_));
+	void *result = loaderInstance_->loadLibrary(WStringToString(WString(libraryName)));
+	loaderInstance_->executeEntryPointQueue();
+	loaderInstance_->entryPointQueue_ = std::move(entryPointQueueTemp);
+	return result;
 }
 
 void * __stdcall Win32Loader::GetModuleHandleAProxy(const char *fileName)

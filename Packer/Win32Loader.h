@@ -11,11 +11,17 @@ class Win32Loader
 private:
 	const Image &image_;
 	List<Image> imports_;
+	List<uint64_t> entryPointQueue_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	void *loadLibrary(const String &filename);
 	uint64_t getFunctionAddress(void *library, const String &functionName, int ordinal = -1	);
-	uint8_t *loadImage(const Image &image, bool executable = false);
+	uint8_t *loadImage(const Image &image);
+	uint8_t *mapImage(const Image &image);
+	void processImports(uint8_t *baseAddress, const Image &image);
+	void adjustPageProtection(uint8_t *baseAddress, const Image &image);
+	void executeEntryPoint(uint8_t *baseAddress, const Image &image);
+	void executeEntryPointQueue();
 
 	static void * __stdcall LoadLibraryAProxy(const char *libraryName);
 	static void * __stdcall LoadLibraryWProxy(const wchar_t *libraryName);
