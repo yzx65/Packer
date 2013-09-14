@@ -6,6 +6,8 @@
 #include "Map.h"
 #include "Image.h"
 
+struct _UNICODE_STRING;
+typedef _UNICODE_STRING UNICODE_STRING;
 class Win32Loader
 {
 private:
@@ -33,6 +35,7 @@ private:
 	static uint32_t __stdcall GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result);
 	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
 	static uint32_t __stdcall LdrAddRefDllProxy(uint32_t flags, void *library);
+	static uint32_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t *dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
 public:
 	Win32Loader(const Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}

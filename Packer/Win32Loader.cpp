@@ -211,27 +211,29 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 		{
 			if(functionName.icompare("LoadLibraryExW") == 0)
 				return reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
-			if(functionName.icompare("LoadLibraryExA") == 0)
+			else if(functionName.icompare("LoadLibraryExA") == 0)
 				return reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
-			if(functionName.icompare("LoadLibraryW") == 0)
+			else if(functionName.icompare("LoadLibraryW") == 0)
 				return reinterpret_cast<uint64_t>(LoadLibraryWProxy);
-			if(functionName.icompare("LoadLibraryA") == 0)
+			else if(functionName.icompare("LoadLibraryA") == 0)
 				return reinterpret_cast<uint64_t>(LoadLibraryAProxy);
-			if(functionName.icompare("GetModuleHandleExW") == 0)
+			else if(functionName.icompare("GetModuleHandleExW") == 0)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
-			if(functionName.icompare("GetModuleHandleExA") == 0)
+			else if(functionName.icompare("GetModuleHandleExA") == 0)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
-			if(functionName.icompare("GetModuleHandleW") == 0)
+			else if(functionName.icompare("GetModuleHandleW") == 0)
 				return reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
-			if(functionName.icompare("GetModuleHandleA") == 0)
+			else if(functionName.icompare("GetModuleHandleA") == 0)
 				return reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
-			if(functionName.icompare("GetProcAddress") == 0)
+			else if(functionName.icompare("GetProcAddress") == 0)
 				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
 			if(functionName.icompare("LdrAddRefDll") == 0)
 				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
+			else if(functionName.icompare("LdrLoadDll") == 0)
+				return reinterpret_cast<uint64_t>(LdrLoadDllProxy);
 		}
 
 		auto item = static_cast<ExportFunction *>(nullptr);
@@ -281,10 +283,13 @@ void * __stdcall Win32Loader::LoadLibraryExAProxy(const char *libraryName, void 
 
 void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, void *, uint32_t)
 {
-	List<uint64_t> entryPointQueueTemp(std::move(loaderInstance_->entryPointQueue_));
-	void *result = loaderInstance_->loadLibrary(WStringToString(WString(libraryName)));
-	loaderInstance_->executeEntryPointQueue();
-	loaderInstance_->entryPointQueue_ = std::move(entryPointQueueTemp);
+	UNICODE_STRING str;
+	void *result;
+	str.Buffer = const_cast<wchar_t *>(libraryName);
+	str.Length = -1;
+	str.MaximumLength = -1;
+
+	LdrLoadDllProxy(nullptr, nullptr, &str, &result);
 	return result;
 }
 
@@ -340,5 +345,17 @@ void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionN
 
 uint32_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
 {
+	return 0;
+}
+
+uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t *dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress)
+{
+	List<uint64_t> entryPointQueueTemp(std::move(loaderInstance_->entryPointQueue_));
+	void *result = loaderInstance_->loadLibrary(WStringToString(WString(dllName->Buffer)));
+	loaderInstance_->executeEntryPointQueue();
+	loaderInstance_->entryPointQueue_ = std::move(entryPointQueueTemp);
+	if(baseAddress)
+		*baseAddress = result;
+
 	return 0;
 }
