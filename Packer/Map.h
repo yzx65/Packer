@@ -106,6 +106,8 @@ private:
 	template<typename KeyType>
 	MapNode *find_(const KeyType &key)
 	{
+		if(!head_)
+			return nullptr;
 		MapNode *item = head_;
 		while(Comparator()(item->key, key) || Comparator()(key, item->key)) //item->key < key or key > item->key => key != item->key
 		{
