@@ -129,11 +129,11 @@ bool Win32NativeHelper::freeHeap(void *ptr)
 	return reinterpret_cast<RtlFreeHeapPtr>(rtlFreeHeap_)(myPEB_->ProcessHeap, 0, ptr);
 }
 
-void *Win32NativeHelper::allocateVirtual(size_t RegionSize, size_t AllocationType, size_t Protect)
+void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
 {
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
 	
-	void *result = nullptr;
+	void *result = reinterpret_cast<void *>(desiredAddress);
 	reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), &result, 0, &RegionSize, AllocationType, Protect);
 	return result;
 }

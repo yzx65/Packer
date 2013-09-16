@@ -22,7 +22,7 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 
 uint8_t *Win32Loader::mapImage(const Image &image)
 {
-	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.baseAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	copyMemory(baseAddress, image.header->get(), image.header->getSize());
 
 	for(auto &i : image.sections)

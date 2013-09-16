@@ -39,7 +39,7 @@ public:
 	API_SET_HEADER *getApiSet();
 	void *allocateHeap(size_t dwBytes);
 	bool freeHeap(void *ptr);
-	void *allocateVirtual(size_t RegionSize, size_t AllocationType, size_t Protect);
+	void *allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions);
 	void closeHandle(void *handle);
