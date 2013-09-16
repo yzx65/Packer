@@ -138,7 +138,11 @@ void Win32Loader::execute()
 
 void *Win32Loader::loadLibrary(const String &filename)
 {
-	auto it = loadedLibraries_.find(filename);
+	String normalizedFilename = filename;
+	int pos;
+	if((pos = filename.rfind('\\')) != -1)
+		normalizedFilename = filename.substr(pos + 1);
+	auto it = loadedLibraries_.find(normalizedFilename);
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
 
