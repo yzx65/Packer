@@ -331,7 +331,9 @@ Image PEFormat::serialize()
 
 bool PEFormat::isSystemLibrary(const String &filename)
 {
-	const char *systemFiles[] = {"kernel32.dll", "user32.dll", nullptr};
+	if(filename.substr(0, 4).icompare("api-") == 0)
+		return true;
+	const char *systemFiles[] = {"kernel32.dll", "user32.dll", "gdi32.dll", "ntdll.dll", "kernelbase.dll", "shell32.dll", nullptr};
 	for(int i = 0; systemFiles[i] != nullptr; i ++)
 		if(filename.icompare(systemFiles[i]) == 0)
 			return true;
