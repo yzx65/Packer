@@ -341,18 +341,19 @@ void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, vo
 
 uint32_t __stdcall Win32Loader::GetModuleFileNameAProxy(void *hModule, char *lpFilename, uint32_t nSize)
 {
+	String path;
 	if(hModule == nullptr)
+		path = File::combinePath(loaderInstance_->image_.filePath, loaderInstance_->image_.fileName);
+	else
 	{
-		copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(loaderInstance_->image_.fileName.c_str()), loaderInstance_->image_.fileName.length());
-		return loaderInstance_->image_.fileName.length();
+		auto it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
+		if(it != loaderInstance_->loadedImages_.end())
+			path = File::combinePath(it->value->filePath, it->value->fileName);
 	}
-	auto it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
-	if(it != loaderInstance_->loadedImages_.end())
-	{
-		copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(it->value->fileName.c_str()), it->value->fileName.length());
-		return it->value->fileName.length();
-	}
-	return 0;
+	if(nSize < path.length())
+		return path.length();
+	copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(path.c_str()), path.length());
+	return path.length();
 }
 
 uint32_t __stdcall Win32Loader::GetModuleFileNameWProxy(void *hModule, wchar_t *lpFilename, uint32_t nSize)
