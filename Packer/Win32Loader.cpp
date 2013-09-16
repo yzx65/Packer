@@ -179,9 +179,9 @@ void *Win32Loader::loadLibrary(const String &filename)
 				wchar_t *name = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + entry->Name);
 				size_t i = 0;
 				for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
-					if(static_cast<char>(name[i]) != temp[i + 4])
-						return static_cast<char>(name[i]) - temp[i + 4];
-				return static_cast<char>(name[i]) - temp[i + 4];
+					if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(temp[i + 4]))
+						return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(temp[i + 4]);
+				return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(temp[i + 4]);
 			});
 		if(item != apiSet->Entries + apiSet->NumberOfEntries)
 		{
