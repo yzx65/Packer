@@ -183,8 +183,12 @@ void *Win32Loader::loadLibrary(const String &filename)
 			{
 				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
 				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
-				void *library = loadLibrary(WStringToString(moduleName));
-				loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
+				void *library;
+				if((library = GetModuleHandleWProxy(moduleName.c_str())) == 0)
+				{
+					library = loadLibrary(WStringToString(moduleName));
+					loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
+				}
 				if(library)
 					return library;
 			}
@@ -366,21 +370,24 @@ uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t *dll
 	return 0;
 }
 
-size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void * dllhook, void *syshook, size_t *addr, size_t flags)
+size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags)
 {
 	char *dllName = reinterpret_cast<char *>(base + desc->DllNameRVA);
 	size_t *iatTable = reinterpret_cast<size_t *>(base + desc->ImportAddressTableRVA);
 	size_t *nameTable = reinterpret_cast<size_t *>(base + desc->ImportNameTableRVA);
 	size_t *moduleHandle = reinterpret_cast<size_t *>(base + desc->ModuleHandleRVA);
 	
-	*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->GetModuleHandleAProxy(dllName));
 	if(!*moduleHandle)
-		*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->loadLibrary(String(dllName)));
+	{
+		*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->GetModuleHandleAProxy(dllName));
+		if(!*moduleHandle)
+			*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->loadLibrary(String(dllName)));
+	}
 
 	int i = 0;
 	while(true)
 	{
-		size_t *dest = reinterpret_cast<size_t *>(iatTable[i]);
+		uint8_t *dest = reinterpret_cast<uint8_t *>(iatTable[i]);
 		IMAGE_IMPORT_BY_NAME *nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(base + nameTable[i]);
 		i ++;
 
@@ -388,12 +395,14 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMA
 			break;
 		if(reinterpret_cast<size_t>(dest) != *addr)
 			continue;
-		uint64_t functionAddress = loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name));
+		size_t functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name)));
 
 		size_t old;
-		Win32NativeHelper::get()->protectVirtual(dest, 4, PAGE_READWRITE, &old);
-		*dest = static_cast<size_t>(functionAddress);
-		Win32NativeHelper::get()->protectVirtual(dest, 4, old, &old);
+		Win32NativeHelper::get()->protectVirtual(dest, 5, PAGE_READWRITE, &old);
+		*dest = 0xe9; //jmp
+		size_t rel = functionAddress - (reinterpret_cast<size_t>(dest) + 5);
+		*reinterpret_cast<size_t *>(dest + 1) = rel;
+		Win32NativeHelper::get()->protectVirtual(dest, 5, old, &old);
 
 		return static_cast<size_t>(functionAddress);
 	}
