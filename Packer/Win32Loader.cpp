@@ -388,7 +388,7 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMA
 	{
 		*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->GetModuleHandleAProxy(dllName));
 		if(!*moduleHandle)
-			*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->loadLibrary(String(dllName)));
+			*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->LoadLibraryAProxy(dllName));
 	}
 
 	int i = 0;
