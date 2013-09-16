@@ -55,8 +55,11 @@ public:
 	void assign(const CharacterType *string)
 	{
 		size_t length = length_(string);
-		Vector<CharacterType>::resize(length + 1);
-		Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
+		if(length)
+		{
+			Vector<CharacterType>::resize(length + 1);
+			Vector<CharacterType>::assign(const_cast<CharacterType *>(string), length + 1);
+		}
 	}
 
 	void push_back(CharacterType item)

@@ -43,7 +43,7 @@ void WindowsEntry()
 		}
 		if(quote == false && str[i] == ' ')
 		{
-			if(item[0] == '\0')
+			if(item.length() == 0)
 				continue;
 			argc ++;
 			items.push_back(std::move(item));
@@ -53,8 +53,11 @@ void WindowsEntry()
 
 		item.push_back(str[i]);
 	}
-	argc ++;
-	items.push_back(std::move(item));
+	if(item.length())
+	{
+		argc ++;
+		items.push_back(std::move(item));
+	}
 
 	argv = new char *[argc];
 	int c = 0;
