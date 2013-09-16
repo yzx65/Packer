@@ -136,7 +136,7 @@ public:
 		return const_cast<const CharacterType *>(get());
 	}
 
-	int find(CharacterType pattern, size_t start = 0)
+	int find(CharacterType pattern, size_t start = 0) const
 	{
 		for(size_t i = start; i < length(); i ++)
 			if(get()[i] == pattern)
@@ -144,11 +144,11 @@ public:
 		return -1;
 	}
 
-	int rfind(CharacterType pattern, int start = -1)
+	int rfind(CharacterType pattern, int start = -1) const
 	{
 		if(start == -1)
 			start = length();
-		for(size_t i = start - 1; i >= 0; i --)
+		for(int i = start - 1; i >= 0; i --)
 			if(get()[i] == pattern)
 				return i;
 		return -1;
