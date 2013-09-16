@@ -388,14 +388,19 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMA
 	while(true)
 	{
 		uint8_t *dest = reinterpret_cast<uint8_t *>(iatTable[i]);
-		IMAGE_IMPORT_BY_NAME *nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(base + nameTable[i]);
+		size_t nameOffset = nameTable[i];
+		IMAGE_IMPORT_BY_NAME *nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(base + nameOffset);
 		i ++;
 
 		if(!dest)
 			break;
 		if(reinterpret_cast<size_t>(dest) != *addr)
 			continue;
-		size_t functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name)));
+		size_t functionAddress;
+		if(nameOffset & IMAGE_ORDINAL_FLAG32)
+			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(), nameOffset & 0xffff));
+		else
+			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name)));
 
 		size_t old;
 		Win32NativeHelper::get()->protectVirtual(dest, 5, PAGE_READWRITE, &old);
