@@ -23,7 +23,7 @@ private:
 	String filePath_;
 
 	size_t loadHeader(SharedPtr<DataSource> source, bool fromMemory);
-	void processRelocation(uint8_t *info_);
+	void processRelocation(uint8_t *info_, size_t size);
 	void processImport(uint8_t *descriptor_);
 	void processExport(uint8_t *directory_);
 	uint8_t *getDataPointerOfRVA(uint32_t rva);

@@ -118,7 +118,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 
 	processImport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
 	processExport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
-	processRelocation(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress));
+	processRelocation(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress), dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
 
 	uint8_t *loadConfig = getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress);
 	if(loadConfig)
@@ -142,14 +142,14 @@ uint8_t *PEFormat::getDataPointerOfRVA(uint32_t rva)
 	return nullptr;
 }
 
-void PEFormat::processRelocation(uint8_t *info_)
+void PEFormat::processRelocation(uint8_t *info_, size_t size)
 {
 	IMAGE_BASE_RELOCATION *info = reinterpret_cast<IMAGE_BASE_RELOCATION *>(info_);
 	if(!info)
 		return;
 	while(true)
 	{
-		if(info->SizeOfBlock == 0)
+		if(reinterpret_cast<size_t>(info) >= reinterpret_cast<size_t>(info_) + size || info->SizeOfBlock == 0)
 			break;
 		uint16_t *ptr = reinterpret_cast<uint16_t *>(info + 1);
 		for(size_t i = 0; i < (info->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(uint16_t); i ++)
