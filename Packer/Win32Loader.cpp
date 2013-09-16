@@ -163,6 +163,31 @@ void *Win32Loader::loadLibrary(const String &filename)
 			auto it = imports_.push_back(format.serialize());
 			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
 			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
+
+			if(it->fileName.icompare("kernelbase.dll") == 0)
+			{
+				//We need to patch ResolveDelayLoadedAPI
+				for(auto i : it->imports)
+				{
+					if(i.libraryName.icompare("ntdll.dll") == 0)
+					{
+						for(auto j : i.functions)
+						{
+							if(j.name.icompare("LdrResolveDelayLoadedAPI") == 0)
+							{
+								size_t dest = reinterpret_cast<size_t>(baseAddress) + static_cast<size_t>(j.iat);
+								size_t old;
+
+								Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), PAGE_READWRITE, &old);
+								*reinterpret_cast<size_t *>(dest) = reinterpret_cast<size_t>(LdrResolveDelayLoadedAPIProxy);
+								Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), old, &old);
+								break;
+							}
+						}
+					}
+				}
+			}
+
 			return baseAddress;
 		}
 	}
