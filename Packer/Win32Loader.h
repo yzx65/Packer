@@ -8,6 +8,10 @@
 
 struct _UNICODE_STRING;
 typedef _UNICODE_STRING UNICODE_STRING;
+
+struct _IMAGE_DELAYLOAD_DESCRIPTOR;
+typedef _IMAGE_DELAYLOAD_DESCRIPTOR IMAGE_DELAYLOAD_DESCRIPTOR;
+typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
 class Win32Loader
 {
 private:
@@ -36,6 +40,7 @@ private:
 	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
 	static uint32_t __stdcall LdrAddRefDllProxy(uint32_t flags, void *library);
 	static uint32_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t *dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
+	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void * dllhook, void *syshook, size_t *addr, size_t flags);
 public:
 	Win32Loader(const Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}

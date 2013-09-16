@@ -6,6 +6,7 @@
 #include "Util.h"
 #include "File.h"
 #include "PEFormat.h"
+#include "PEHeader.h"
 
 #define DLL_PROCESS_ATTACH   1    
 #define DLL_THREAD_ATTACH    2    
@@ -227,6 +228,8 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 				return reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
 			else if(functionName.icompare("GetProcAddress") == 0)
 				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
+			else if(functionName.icompare("ResolveDelayLoadedAPI") == 0)
+				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
@@ -234,6 +237,8 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
 			else if(functionName.icompare("LdrLoadDll") == 0)
 				return reinterpret_cast<uint64_t>(LdrLoadDllProxy);
+			else if(functionName.icompare("LdrResolveDelayLoadedAPI") == 0)
+				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
 		}
 
 		auto item = static_cast<ExportFunction *>(nullptr);
@@ -356,6 +361,41 @@ uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t *dll
 	loaderInstance_->entryPointQueue_ = std::move(entryPointQueueTemp);
 	if(baseAddress)
 		*baseAddress = result;
+
+	return 0;
+}
+
+size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void * dllhook, void *syshook, size_t *addr, size_t flags)
+{
+	char *dllName = reinterpret_cast<char *>(base + desc->DllNameRVA);
+	size_t *iatTable = reinterpret_cast<size_t *>(base + desc->ImportAddressTableRVA);
+	size_t *nameTable = reinterpret_cast<size_t *>(base + desc->ImportNameTableRVA);
+	size_t *moduleHandle = reinterpret_cast<size_t *>(base + desc->ModuleHandleRVA);
+	
+	*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->GetModuleHandleAProxy(dllName));
+	if(!*moduleHandle)
+		*moduleHandle = reinterpret_cast<size_t>(loaderInstance_->loadLibrary(String(dllName)));
+
+	int i = 0;
+	while(true)
+	{
+		size_t *dest = reinterpret_cast<size_t *>(iatTable[i]);
+		IMAGE_IMPORT_BY_NAME *nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(base + nameTable[i]);
+		i ++;
+
+		if(!dest)
+			break;
+		if(reinterpret_cast<size_t>(dest) != *addr)
+			continue;
+		uint64_t functionAddress = loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name));
+
+		size_t old;
+		Win32NativeHelper::get()->protectVirtual(dest, 4, PAGE_READWRITE, &old);
+		*dest = static_cast<size_t>(functionAddress);
+		Win32NativeHelper::get()->protectVirtual(dest, 4, old, &old);
+
+		return static_cast<size_t>(functionAddress);
+	}
 
 	return 0;
 }

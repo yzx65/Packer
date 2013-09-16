@@ -453,3 +453,25 @@ typedef struct {
 	uint64_t  SEHandlerTable;          // VA
 	uint64_t  SEHandlerCount;
 } IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;
+
+typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR {
+	union {
+		uint32_t AllAttributes;
+		struct {
+			uint32_t RvaBased : 1;             // Delay load version 2
+			uint32_t ReservedAttributes : 31;
+		};
+	} Attributes;
+
+	uint32_t DllNameRVA;                       // RVA to the name of the target library (NULL-terminate ASCII string)
+	uint32_t ModuleHandleRVA;                  // RVA to the HMODULE caching location (PHMODULE)
+	uint32_t ImportAddressTableRVA;            // RVA to the start of the IAT (PIMAGE_THUNK_DATA)
+	uint32_t ImportNameTableRVA;               // RVA to the start of the name table (PIMAGE_THUNK_DATA::AddressOfData)
+	uint32_t BoundImportAddressTableRVA;       // RVA to an optional bound IAT
+	uint32_t UnloadInformationTableRVA;        // RVA to an optional unload info table
+	uint32_t TimeDateStamp;                    // 0 if not bound,
+	// Otherwise, date/time of the target DLL
+
+} IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
+
+typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
