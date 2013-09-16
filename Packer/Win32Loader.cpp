@@ -267,6 +267,10 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
 			else if(functionName.icompare("ResolveDelayLoadedAPI") == 0)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
+			else if(functionName.icompare("GetModuleFileNameA") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleFileNameAProxy);
+			else if(functionName.icompare("GetModuleFileNameW") == 0)
+				return reinterpret_cast<uint64_t>(GetModuleFileNameWProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
@@ -332,6 +336,32 @@ void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, vo
 	str.MaximumLength = -1;
 
 	LdrLoadDllProxy(nullptr, nullptr, &str, &result);
+	return result;
+}
+
+uint32_t __stdcall Win32Loader::GetModuleFileNameAProxy(void *hModule, char *lpFilename, uint32_t nSize)
+{
+	if(hModule == nullptr)
+	{
+		copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(loaderInstance_->image_.fileName.c_str()), loaderInstance_->image_.fileName.length());
+		return loaderInstance_->image_.fileName.length();
+	}
+	auto it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
+	if(it != loaderInstance_->loadedImages_.end())
+	{
+		copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(it->value->fileName.c_str()), it->value->fileName.length());
+		return it->value->fileName.length();
+	}
+	return 0;
+}
+
+uint32_t __stdcall Win32Loader::GetModuleFileNameWProxy(void *hModule, wchar_t *lpFilename, uint32_t nSize)
+{
+	char temp[255];
+	uint32_t result = GetModuleFileNameAProxy(hModule, temp, 255);
+	WString wstr = StringToWString(String(temp));
+	copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(wstr.c_str()), wstr.length() * 2);
+
 	return result;
 }
 

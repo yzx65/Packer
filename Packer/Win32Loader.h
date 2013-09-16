@@ -29,6 +29,8 @@ private:
 	void executeEntryPoint(uint8_t *baseAddress, const Image &image);
 	void executeEntryPointQueue();
 
+	static uint32_t __stdcall GetModuleFileNameAProxy(void *hModule, char *lpFilename, uint32_t nSize);
+	static uint32_t __stdcall GetModuleFileNameWProxy(void *hModule, wchar_t *lpFilename, uint32_t nSize);
 	static void * __stdcall LoadLibraryAProxy(const char *libraryName);
 	static void * __stdcall LoadLibraryWProxy(const wchar_t *libraryName);
 	static void * __stdcall LoadLibraryExAProxy(const char *libraryName, void *, uint32_t);
