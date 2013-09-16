@@ -142,6 +142,9 @@ void *Win32Loader::loadLibrary(const String &filename)
 	int pos;
 	if((pos = filename.rfind('\\')) != -1)
 		normalizedFilename = filename.substr(pos + 1);
+	if(filename.find('.') == -1)
+		normalizedFilename.append(".dll");
+
 	auto it = loadedLibraries_.find(normalizedFilename);
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<void *>(it->value);
