@@ -167,8 +167,8 @@ void *Win32Loader::loadLibrary(const String &filename)
 		}
 	}
 
-	if((filename[0] == 'a' && filename[1] == 'p' && filename[2] == 'i' && filename[3] == '-') ||
-		(filename[0] == 'e' && filename[1] == 'x' && filename[2] == 't' && filename[3] == '-'))
+	String temp = normalizedFilename.substr(0, 4);
+	if(temp.icompare("api-") == 0 || temp.icompare("ext-") == 0)
 	{
 		API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
 		String temp = filename;
