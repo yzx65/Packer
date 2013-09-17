@@ -22,7 +22,10 @@ Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(i
 
 uint8_t *Win32Loader::mapImage(const Image &image)
 {
-	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(image.info.baseAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	uint64_t desiredAddress = 0;
+	if(!image.relocations.size())
+		desiredAddress = image.info.baseAddress;
+	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(desiredAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	copyMemory(baseAddress, image.header->get(), image.header->getSize());
 
 	for(auto &i : image.sections)
@@ -387,9 +390,22 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExAProxy(uint32_t a1, const char 
 	return GetModuleHandleExWProxy(a1, StringToWString(String(filename_)).c_str(), result);
 }
 
-uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result)
+uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wchar_t *filename_, void **result)
 {
 	*result = 0;
+	if(flags == 4) //GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS
+	{
+		size_t address = reinterpret_cast<size_t>(filename_);
+		for(auto &i : loaderInstance_->loadedImages_)
+		{
+			if(i.key <= address && address <= i.key + i.value->info.size)
+			{
+				*result = reinterpret_cast<void *>(i.key);
+				return 1;
+			}
+		}
+		return 0;
+	}
 	if(filename_ == nullptr)
 	{
 		*result = reinterpret_cast<void *>(Win32NativeHelper::get()->getPEB()->ImageBaseAddress);
