@@ -15,15 +15,15 @@ typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
 class Win32Loader
 {
 private:
-	const Image &image_;
+	Image &image_;
 	List<Image> imports_;
 	List<uint64_t> entryPointQueue_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	void *loadLibrary(const String &filename);
 	uint64_t getFunctionAddress(void *library, const String &functionName, int ordinal = -1	);
-	uint8_t *loadImage(const Image &image);
-	uint8_t *mapImage(const Image &image);
+	uint8_t *loadImage(Image &image);
+	uint8_t *mapImage(Image &image);
 	void processImports(uint8_t *baseAddress, const Image &image);
 	void adjustPageProtection(uint8_t *baseAddress, const Image &image);
 	void executeEntryPoint(uint8_t *baseAddress, const Image &image);
@@ -44,7 +44,7 @@ private:
 	static uint32_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t *dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
 	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags);
 public:
-	Win32Loader(const Image &image, Vector<Image> &&imports);
+	Win32Loader(Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}
 
 	void execute();

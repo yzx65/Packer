@@ -15,12 +15,12 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(const Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
+Win32Loader::Win32Loader(Image &image, Vector<Image> &&imports) : image_(image), imports_(imports.begin(), imports.end())
 {
 	loaderInstance_ = this;
 }
 
-uint8_t *Win32Loader::mapImage(const Image &image)
+uint8_t *Win32Loader::mapImage(Image &image)
 {
 	uint64_t desiredAddress = 0;
 	if(!image.relocations.size())
@@ -119,7 +119,7 @@ void Win32Loader::executeEntryPointQueue()
 	}
 }
 
-uint8_t *Win32Loader::loadImage(const Image &image)
+uint8_t *Win32Loader::loadImage(Image &image)
 {
 	uint8_t *baseAddress = mapImage(image);
 	processImports(baseAddress, image);

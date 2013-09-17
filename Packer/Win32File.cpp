@@ -4,7 +4,7 @@
 
 #include "Win32Runtime.h"
 
-Win32File::Win32File(const String &filename)
+Win32File::Win32File(const String &filename) : mapCounter_(0)
 {
 	open(filename);
 }
@@ -41,12 +41,10 @@ void Win32File::open(const String &filename)
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
 	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, nullptr, 0);
-	mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, nullptr));
 }
 
 void Win32File::close() 
 {
-	Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
 	Win32NativeHelper::get()->closeHandle(mapHandle_);
 	Win32NativeHelper::get()->closeHandle(fileHandle_);
 }
@@ -68,7 +66,23 @@ void *Win32File::getHandle()
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
 {
-	return MakeShared<DataView>(sharedFromThis(), mapAddress_ + offset, size);
+	return MakeShared<DataView>(sharedFromThis(), offset, size);
+}
+
+uint8_t *Win32File::map(uint64_t offset)
+{
+	if(mapCounter_ == 0)
+		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, nullptr));
+
+	mapCounter_ ++;
+	return mapAddress_ + offset;
+}
+
+void Win32File::unmap()
+{
+	mapCounter_ --;
+	if(mapCounter_ == 0)	
+		Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
 }
 
 String File::combinePath(const String &directory, const String &filename)

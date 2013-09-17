@@ -3,32 +3,37 @@
 #include <cstdint>
 #include "SharedPtr.h"
 
-class DataSource;
+class DataView;
+class DataSource
+{
+public:
+	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size) = 0;
+	virtual uint8_t *map(uint64_t offset) = 0;
+	virtual void unmap() = 0;
+};
+
 class DataView
 {
 private:
 	SharedPtr<DataSource> source_;
-	uint8_t *baseAddress_;
+	uint64_t offset_;
 	size_t size_;
 public:
-	DataView(SharedPtr<DataSource> source, uint8_t *baseAddress, size_t size) : source_(source), baseAddress_(baseAddress), size_(size) {}
-	virtual ~DataView() {}
-
-	uint8_t *get() const
+	DataView(SharedPtr<DataSource> source, uint64_t offset, size_t size) : source_(source), offset_(offset), size_(size) {}
+	virtual ~DataView() 
 	{
-		return baseAddress_;
+		source_->unmap();
+	}
+
+	uint8_t *get()
+	{
+		return source_->map(offset_);
 	}
 
 	size_t getSize() const
 	{
 		return size_;
 	}
-};
-
-class DataSource
-{
-public:
-	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size) = 0;
 };
 
 class MemoryDataSource : public DataSource, public EnableSharedFromThis<MemoryDataSource>
@@ -41,6 +46,16 @@ public:
 
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size)
 	{
-		return MakeShared<DataView>(sharedFromThis(), memory_ + offset, size);
+		return MakeShared<DataView>(sharedFromThis(), offset, size);
+	}
+
+	virtual uint8_t *map(uint64_t offset)
+	{
+		return memory_ + offset;
+	}
+
+	virtual void unmap()
+	{
+
 	}
 };

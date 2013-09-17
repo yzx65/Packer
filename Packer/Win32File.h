@@ -9,6 +9,7 @@ private:
 	void *fileHandle_;
 	void *mapHandle_;
 	uint8_t *mapAddress_;
+	int mapCounter_;
 	void open(const String &filename);
 	void close();
 	String fileName_;
@@ -22,6 +23,8 @@ public:
 	virtual void *getHandle();
 
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size);
+	virtual uint8_t *map(uint64_t offset);
+	virtual void unmap();
 };
 
 SharedPtr<File> File::open(const String &filename)
