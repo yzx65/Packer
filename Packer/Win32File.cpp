@@ -81,8 +81,11 @@ uint8_t *Win32File::map(uint64_t offset)
 void Win32File::unmap()
 {
 	mapCounter_ --;
-	if(mapCounter_ == 0)	
+	if(mapCounter_ == 0)
+	{
 		Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
+		mapAddress_ = 0;
+	}
 }
 
 String File::combinePath(const String &directory, const String &filename)

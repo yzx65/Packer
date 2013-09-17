@@ -17,17 +17,33 @@ class DataView
 private:
 	SharedPtr<DataSource> source_;
 	uint64_t offset_;
+	uint8_t *baseAddress_;
 	size_t size_;
 public:
-	DataView(SharedPtr<DataSource> source, uint64_t offset, size_t size) : source_(source), offset_(offset), size_(size) {}
+	DataView(SharedPtr<DataSource> source, uint64_t offset, size_t size) : source_(source), offset_(offset), size_(size), baseAddress_(0) {}
 	virtual ~DataView() 
 	{
-		source_->unmap();
+		if(baseAddress_)
+			source_->unmap();
+	}
+
+	void unmap()
+	{
+		if(baseAddress_)
+			source_->unmap();
+		baseAddress_ = 0;
+	}
+
+	uint8_t *map()
+	{
+		if(!baseAddress_)
+			baseAddress_ = source_->map(offset_);
+		return baseAddress_;
 	}
 
 	uint8_t *get()
 	{
-		return source_->map(offset_);
+		return map();
 	}
 
 	size_t getSize() const
