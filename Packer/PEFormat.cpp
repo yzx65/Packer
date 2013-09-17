@@ -30,6 +30,9 @@ bool PEFormat::load(SharedPtr<DataSource> source, bool fromMemory)
 	if(headerSize == 0)
 		return false;
 	header_ = source->getView(0, headerSize);
+
+	for(auto &i : sections_)
+		i.data->unmap();
 	
 	return true;
 }
