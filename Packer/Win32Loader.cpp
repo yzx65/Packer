@@ -138,12 +138,14 @@ void Win32Loader::executeEntryPointQueue()
 	}
 }
 
-uint8_t *Win32Loader::loadImage(Image &image)
+uint8_t *Win32Loader::loadImage(Image &image, bool asDataFile)
 {
 	uint8_t *baseAddress = mapImage(image);
-	processImports(baseAddress, image);
+	if(!asDataFile)
+		processImports(baseAddress, image);
 	adjustPageProtection(baseAddress, image);
-	entryPointQueue_.push_back(reinterpret_cast<uint64_t>(baseAddress));
+	if(!asDataFile)
+		entryPointQueue_.push_back(reinterpret_cast<uint64_t>(baseAddress));
 	return baseAddress;
 }
 
@@ -158,7 +160,7 @@ void Win32Loader::execute()
 	executeEntryPoint(baseAddress, image_);
 }
 
-void *Win32Loader::loadLibrary(const String &filename)
+void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 {
 	String normalizedFilename = filename;
 	int pos;
@@ -253,12 +255,12 @@ void *Win32Loader::loadLibrary(const String &filename)
 	Image *image = nullptr;
 	for(auto &i : imports_)
 		if(i.fileName.icompare(filename) == 0)
-			return loadImage(i);
+			return loadImage(i, asDataFile);
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath);
 	if(!format.get())
 		return nullptr;
-	return loadImage(*imports_.push_back(format->serialize()));
+	return loadImage(*imports_.push_back(format->serialize()), asDataFile);
 }
 
 uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName, int ordinal)
@@ -349,7 +351,7 @@ void * __stdcall Win32Loader::LoadLibraryExAProxy(const char *libraryName, void 
 	return LoadLibraryExWProxy(StringToWString(String(libraryName)).c_str(), a1, a2);
 }
 
-void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, void *, uint32_t)
+void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, void *, uint32_t flags)
 {
 	UNICODE_STRING str;
 	void *result;
@@ -357,7 +359,7 @@ void * __stdcall Win32Loader::LoadLibraryExWProxy(const wchar_t *libraryName, vo
 	str.Length = -1;
 	str.MaximumLength = -1;
 
-	LdrLoadDllProxy(nullptr, nullptr, &str, &result);
+	LdrLoadDllProxy(nullptr, flags, &str, &result);
 	return result;
 }
 
@@ -456,10 +458,10 @@ uint32_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
 	return 0;
 }
 
-uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t *dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress)
+uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress)
 {
 	List<uint64_t> entryPointQueueTemp(std::move(loaderInstance_->entryPointQueue_));
-	void *result = loaderInstance_->loadLibrary(WStringToString(WString(dllName->Buffer)));
+	void *result = loaderInstance_->loadLibrary(WStringToString(WString(dllName->Buffer)), (dllCharacteristics & 0x02 ? true : false));
 	loaderInstance_->executeEntryPointQueue();
 	loaderInstance_->entryPointQueue_ = std::move(entryPointQueueTemp);
 	if(baseAddress)
