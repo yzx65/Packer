@@ -72,7 +72,7 @@ SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
 uint8_t *Win32File::map(uint64_t offset)
 {
 	if(mapCounter_ == 0)
-		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, nullptr));
+		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, 0));
 
 	mapCounter_ ++;
 	return mapAddress_ + offset;

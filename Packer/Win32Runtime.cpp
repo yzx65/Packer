@@ -84,6 +84,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	rtlFreeHeap_ = findItem("RtlFreeHeap");
 	ntAllocateVirtualMemory_ = findItem("NtAllocateVirtualMemory");
 	ntProtectVirtualMemory_ = findItem("NtProtectVirtualMemory");
+	ntFreeVirtualMemory_ = findItem("NtFreeVirtualMemory");
 	ntCreateFile_ = findItem("NtCreateFile");
 	ntClose_ = findItem("NtClose");
 	ntCreateSection_ = findItem("NtCreateSection");
@@ -133,11 +134,30 @@ void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSiz
 {
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
 	
-	void *result = reinterpret_cast<void *>(desiredAddress);
-	int code = reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), &result, 0, &RegionSize, AllocationType, Protect);
-	if(code < 0)
-		return 0;
-	return result;
+	if(desiredAddress == 0)
+		desiredAddress = 0x11000000;
+	void **result = reinterpret_cast<void **>(&desiredAddress);
+	while(true)
+	{
+		int code = reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
+		if(code == 0xc0000018)
+		{
+			desiredAddress += 0x01000000;
+			continue;
+		}
+		if(code < 0)
+			return 0;
+		break;
+	}
+	return *result;
+}
+
+void Win32NativeHelper::freeVirtual(void *baseAddress)
+{
+	typedef int32_t (__stdcall *NtFreeVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t *RegionSize, size_t FreeType);
+
+	size_t regionSize = 0;
+	int result = reinterpret_cast<NtFreeVirtualMemoryPtr>(ntFreeVirtualMemory_)(NtCurrentProcess(), &baseAddress, &regionSize, MEM_RELEASE);
 }
 
 void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection)
@@ -220,11 +240,13 @@ void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint64_t 
 	return result;
 }
 
-void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, void *lpBaseAddress)
+void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, size_t lpBaseAddress)
 {
 	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
 
-	void *result = lpBaseAddress;
+	if(lpBaseAddress == 0)
+		lpBaseAddress = 0x01000000;
+	void **result = reinterpret_cast<void **>(&lpBaseAddress);
 	LARGE_INTEGER sectionOffset;
 	size_t viewSize;
 	size_t protect;
@@ -238,9 +260,18 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 	else if(dwDesiredAccess & FILE_MAP_READ)
 		protect = dwDesiredAccess & FILE_MAP_EXECUTE ? PAGE_EXECUTE_READ : PAGE_READONLY;
 
-	reinterpret_cast<NtMapViewOfSectionPtr>(ntMapViewOfSection_)(section, NtCurrentProcess(), &result, 0, 0, &sectionOffset, &viewSize, 1, 0, protect);
+	while(true)
+	{
+		int code = reinterpret_cast<NtMapViewOfSectionPtr>(ntMapViewOfSection_)(section, NtCurrentProcess(), result, 0, 0, &sectionOffset, &viewSize, 1, 0, protect);
+		if(code == 0xc0000018)
+		{
+			lpBaseAddress += 0x01000000;
+			continue;
+		}
+		break;
+	}
 
-	return result;
+	return *result;
 }
 
 void Win32NativeHelper::unmapViewOfSection(void *lpBaseAddress)
