@@ -9,6 +9,9 @@
 struct _UNICODE_STRING;
 typedef _UNICODE_STRING UNICODE_STRING;
 
+struct _ANSI_STRING;
+typedef _ANSI_STRING ANSI_STRING;
+
 struct _IMAGE_DELAYLOAD_DESCRIPTOR;
 typedef _IMAGE_DELAYLOAD_DESCRIPTOR IMAGE_DELAYLOAD_DESCRIPTOR;
 typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
@@ -40,9 +43,12 @@ private:
 	static uint32_t __stdcall GetModuleHandleExAProxy(uint32_t, const char *filename_, void **result);
 	static uint32_t __stdcall GetModuleHandleExWProxy(uint32_t, const wchar_t *filename_, void **result);
 	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
-	static uint32_t __stdcall LdrAddRefDllProxy(uint32_t flags, void *library);
-	static uint32_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
+	static size_t __stdcall LdrAddRefDllProxy(size_t flags, void *library);
+	static size_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
 	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags);
+	static size_t __stdcall LdrGetDllHandleProxy(wchar_t *DllPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **dllHandle);
+	static size_t __stdcall LdrGetDllHandleExProxy(size_t Flags, wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle);
+	static size_t __stdcall LdrGetProcedureAddressProxy(void *BaseAddress, ANSI_STRING *Name, size_t Ordinal, void **ProcedureAddress);
 public:
 	Win32Loader(Image &image, Vector<Image> &&imports);
 	virtual ~Win32Loader() {}

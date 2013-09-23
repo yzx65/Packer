@@ -11,6 +11,14 @@ typedef struct _UNICODE_STRING {
 typedef UNICODE_STRING *PUNICODE_STRING;
 typedef const UNICODE_STRING *PCUNICODE_STRING;
 
+typedef struct _ANSI_STRING {
+	uint16_t Length;
+	uint16_t MaximumLength;
+	char *  Buffer;
+} ANSI_STRING;
+typedef ANSI_STRING *PANSI_STRING;
+typedef const ANSI_STRING *PCANSI_STRING;
+
 typedef struct _OBJECT_ATTRIBUTES {
 	uint32_t           Length;
 	void *          RootDirectory;

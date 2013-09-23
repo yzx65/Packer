@@ -304,6 +304,12 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 				return reinterpret_cast<uint64_t>(LdrLoadDllProxy);
 			else if(functionName.icompare("LdrResolveDelayLoadedAPI") == 0)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
+			else if(functionName.icompare("LdrGetDllHandle") == 0)
+				return reinterpret_cast<uint64_t>(LdrGetDllHandleProxy);
+			else if(functionName.icompare("LdrGetDllHandleEx") == 0)
+				return reinterpret_cast<uint64_t>(LdrGetDllHandleExProxy);
+			else if(functionName.icompare("LdrGetProcedureAddress") == 0)
+				return reinterpret_cast<uint64_t>(LdrGetProcedureAddressProxy);
 		}
 
 		auto item = static_cast<ExportFunction *>(nullptr);
@@ -453,12 +459,12 @@ void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionN
 	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(functionName)));
 }
 
-uint32_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
+size_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
 {
 	return 0;
 }
 
-uint32_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress)
+size_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress)
 {
 	List<uint64_t> entryPointQueueTemp(std::move(loaderInstance_->entryPointQueue_));
 	void *result = loaderInstance_->loadLibrary(WStringToString(WString(dllName->Buffer)), (dllCharacteristics & 0x02 ? true : false));
@@ -512,5 +518,24 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMA
 		return static_cast<size_t>(functionAddress);
 	}
 
+	return 0;
+}
+
+size_t __stdcall Win32Loader::LdrGetDllHandleProxy(wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle)
+{
+	GetModuleHandleExWProxy(DllCharacteristics, DllName->Buffer, DllHandle);
+	return 0;
+}
+
+size_t __stdcall Win32Loader::LdrGetDllHandleExProxy(size_t Flags, wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle)
+{
+	GetModuleHandleExWProxy(DllCharacteristics, DllName->Buffer, DllHandle);
+	return 0;
+}
+
+size_t __stdcall Win32Loader::LdrGetProcedureAddressProxy(void *BaseAddress, ANSI_STRING *Name, size_t Ordinal, void **ProcedureAddress)
+{
+	if(ProcedureAddress) 
+		*ProcedureAddress = GetProcAddressProxy(BaseAddress, Name->Buffer);
 	return 0;
 }
