@@ -475,3 +475,23 @@ typedef struct _IMAGE_DELAYLOAD_DESCRIPTOR {
 } IMAGE_DELAYLOAD_DESCRIPTOR, *PIMAGE_DELAYLOAD_DESCRIPTOR;
 
 typedef const IMAGE_DELAYLOAD_DESCRIPTOR *PCIMAGE_DELAYLOAD_DESCRIPTOR;
+
+typedef struct _IMAGE_TLS_DIRECTORY64 {
+	uint64_t   StartAddressOfRawData;
+	uint64_t   EndAddressOfRawData;
+	uint64_t   AddressOfIndex;         // PDWORD
+	uint64_t   AddressOfCallBacks;     // PIMAGE_TLS_CALLBACK *;
+	uint32_t   SizeOfZeroFill;
+	uint32_t   Characteristics;
+} IMAGE_TLS_DIRECTORY64;
+typedef IMAGE_TLS_DIRECTORY64 * PIMAGE_TLS_DIRECTORY64;
+
+typedef struct _IMAGE_TLS_DIRECTORY32 {
+	uint32_t   StartAddressOfRawData;
+	uint32_t   EndAddressOfRawData;
+	uint32_t   AddressOfIndex;             // PDWORD
+	uint32_t   AddressOfCallBacks;         // PIMAGE_TLS_CALLBACK *
+	uint32_t   SizeOfZeroFill;
+	uint32_t   Characteristics;
+} IMAGE_TLS_DIRECTORY32;
+typedef IMAGE_TLS_DIRECTORY32 * PIMAGE_TLS_DIRECTORY32;

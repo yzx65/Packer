@@ -90,6 +90,25 @@ void Win32Loader::executeEntryPoint(uint8_t *baseAddress, const Image &image)
 		else
 			*reinterpret_cast<uint64_t *>(baseAddress - image.info.baseAddress + image.info.platformData) += 10;
 	}
+	if(image.info.platformData1)
+	{
+		typedef void (__stdcall *TlsCallbackType) (void *DllHandle, uint32_t Reason, void *Reserved);
+		if(image.info.architecture == ArchitectureWin32)
+		{
+			IMAGE_TLS_DIRECTORY32 *directory = reinterpret_cast<IMAGE_TLS_DIRECTORY32 *>(image.info.platformData1 + reinterpret_cast<size_t>(baseAddress));
+			uint32_t *callbacks = reinterpret_cast<uint32_t *>(directory->AddressOfCallBacks);
+			while(*callbacks)
+			{
+				TlsCallbackType callback = reinterpret_cast<TlsCallbackType>(*callbacks);
+				callback(baseAddress, DLL_PROCESS_ATTACH, reinterpret_cast<void *>(1));
+				callbacks ++;
+			}
+		}
+		else
+		{
+			//TODO
+		}
+	}
 	if(image.info.entryPoint)
 	{
 		if((image.info.flag & ImageFlagLibrary))

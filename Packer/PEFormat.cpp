@@ -133,6 +133,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	}
 	else
 		info_.platformData = 0;
+	info_.platformData1 = dataDirectory[IMAGE_DIRECTORY_ENTRY_TLS].VirtualAddress;
 
 	return headerSize;
 }

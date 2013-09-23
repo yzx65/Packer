@@ -27,6 +27,7 @@ struct ImageInfo
 	uint32_t flag;
 
 	uint64_t platformData; //PE: security cookie
+	uint64_t platformData1; //PE: tls entry
 };
 
 enum SectionFlag
