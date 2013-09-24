@@ -134,21 +134,9 @@ void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSiz
 {
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
 	
-	if(desiredAddress == 0)
-		desiredAddress = 0x21000000;
 	void **result = reinterpret_cast<void **>(&desiredAddress);
-	while(true)
-	{
-		int code = reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
-		if(code == 0xc0000018)
-		{
-			desiredAddress += 0x01000000;
-			continue;
-		}
-		if(code < 0)
-			return 0;
-		break;
-	}
+	reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
+	
 	return *result;
 }
 
@@ -244,8 +232,6 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 {
 	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
 
-	if(lpBaseAddress == 0)
-		lpBaseAddress = 0x31000000;
 	void **result = reinterpret_cast<void **>(&lpBaseAddress);
 	LARGE_INTEGER sectionOffset;
 	size_t viewSize;
@@ -260,16 +246,7 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 	else if(dwDesiredAccess & FILE_MAP_READ)
 		protect = dwDesiredAccess & FILE_MAP_EXECUTE ? PAGE_EXECUTE_READ : PAGE_READONLY;
 
-	while(true)
-	{
-		int code = reinterpret_cast<NtMapViewOfSectionPtr>(ntMapViewOfSection_)(section, NtCurrentProcess(), result, 0, 0, &sectionOffset, &viewSize, 1, 0, protect);
-		if(code == 0xc0000018)
-		{
-			lpBaseAddress += 0x01000000;
-			continue;
-		}
-		break;
-	}
+	reinterpret_cast<NtMapViewOfSectionPtr>(ntMapViewOfSection_)(section, NtCurrentProcess(), result, 0, 0, &sectionOffset, &viewSize, 1, 0, protect);
 
 	return *result;
 }
