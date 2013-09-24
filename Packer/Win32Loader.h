@@ -43,6 +43,7 @@ private:
 	static uint32_t __stdcall GetModuleHandleExAProxy(uint32_t flags, const char *filename_, void **result);
 	static uint32_t __stdcall GetModuleHandleExWProxy(uint32_t flags, const wchar_t *filename_, void **result);
 	static void * __stdcall GetProcAddressProxy(void *library, char *functionName);
+	static size_t __stdcall DisableThreadLibraryCallsProxy(void *module);
 	static size_t __stdcall LdrAddRefDllProxy(size_t flags, void *library);
 	static size_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
 	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags);

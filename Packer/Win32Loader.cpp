@@ -295,6 +295,8 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 				return reinterpret_cast<uint64_t>(GetModuleFileNameAProxy);
 			else if(functionName.icompare("GetModuleFileNameW") == 0)
 				return reinterpret_cast<uint64_t>(GetModuleFileNameWProxy);
+			else if(functionName.icompare("DisableThreadLibraryCalls") == 0)
+				return reinterpret_cast<uint64_t>(DisableThreadLibraryCallsProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
@@ -340,6 +342,11 @@ uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionNa
 		return item->address + reinterpret_cast<uint64_t>(library);
 	}
 	return 0;
+}
+
+size_t __stdcall Win32Loader::DisableThreadLibraryCallsProxy(void *module)
+{
+	return 1;
 }
 
 void * __stdcall Win32Loader::LoadLibraryAProxy(const char *libraryName)
