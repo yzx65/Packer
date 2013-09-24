@@ -391,7 +391,7 @@ uint32_t __stdcall Win32Loader::GetModuleFileNameWProxy(void *hModule, wchar_t *
 	char temp[255];
 	uint32_t result = GetModuleFileNameAProxy(hModule, temp, 255);
 	WString wstr = StringToWString(String(temp));
-	copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(wstr.c_str()), wstr.length() * 2 + 1);
+	copyMemory(reinterpret_cast<uint8_t *>(lpFilename), reinterpret_cast<const uint8_t *>(wstr.c_str()), wstr.length() * 2 + 2);
 
 	return result;
 }
