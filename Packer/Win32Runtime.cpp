@@ -135,7 +135,7 @@ void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSiz
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
 	
 	if(desiredAddress == 0)
-		desiredAddress = 0x11000000;
+		desiredAddress = 0x21000000;
 	void **result = reinterpret_cast<void **>(&desiredAddress);
 	while(true)
 	{
@@ -245,7 +245,7 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
 
 	if(lpBaseAddress == 0)
-		lpBaseAddress = 0x01000000;
+		lpBaseAddress = 0x31000000;
 	void **result = reinterpret_cast<void **>(&lpBaseAddress);
 	LARGE_INTEGER sectionOffset;
 	size_t viewSize;
