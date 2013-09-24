@@ -410,11 +410,11 @@ void * __stdcall Win32Loader::GetModuleHandleWProxy(const wchar_t *fileName)
 	return result;
 }
 
-uint32_t __stdcall Win32Loader::GetModuleHandleExAProxy(uint32_t a1, const char *filename_, void **result)
+uint32_t __stdcall Win32Loader::GetModuleHandleExAProxy(uint32_t flags, const char *filename_, void **result)
 {
-	if(!filename_)
-		return GetModuleHandleExWProxy(a1, nullptr, result);
-	return GetModuleHandleExWProxy(a1, StringToWString(String(filename_)).c_str(), result);
+	if(!filename_ || flags == 4)
+		return GetModuleHandleExWProxy(flags, reinterpret_cast<const wchar_t *>(filename_), result);
+	return GetModuleHandleExWProxy(flags, StringToWString(String(filename_)).c_str(), result);
 }
 
 uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wchar_t *filename_, void **result)
