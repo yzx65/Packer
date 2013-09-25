@@ -22,6 +22,7 @@ private:
 	size_t ntdllBase_;
 	PEB *myPEB_;
 
+	List<Win32LoadedImage> *loadedImages_;
 	size_t rtlCreateHeap_;
 	size_t rtlDestroyHeap_;
 	size_t rtlAllocateHeap_;
@@ -40,6 +41,7 @@ private:
 	void init();
 	void initNtdllImport(const PEFormat &ntdll);
 	void initHeap();
+	void initModuleList();
 public:
 	API_SET_HEADER *getApiSet();
 	void *createHeap(size_t baseAddress);
@@ -61,7 +63,7 @@ public:
 	wchar_t *getEnvironments();
 	bool isInitialized();
 	PEB *getPEB();
-	List<Win32LoadedImage> getLoadedImages();
+	List<Win32LoadedImage> &&getLoadedImages();
 
 	static Win32NativeHelper *get();
 };

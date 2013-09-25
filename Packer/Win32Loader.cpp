@@ -188,7 +188,7 @@ void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
 			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
 
-			if(it->fileName.icompare("kernelbase.dll") == 0)
+			if(it->fileName.icompare("kernelbase.dll") == 0 || it->fileName.icompare("kernel32.dll") == 0)
 			{
 				//We need to patch ResolveDelayLoadedAPI
 				for(auto i : it->imports)

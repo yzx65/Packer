@@ -10,48 +10,10 @@
 
 #include <intrin.h>
 
+Win32NativeHelper g_helper;
+
 //utilites
 #define NtCurrentProcess() reinterpret_cast<void *>(-1)
-
-void copyUnicodeString(UNICODE_STRING *dest, UNICODE_STRING *src)
-{
-	dest->Length = src->Length;
-	dest->MaximumLength = src->Length;
-	if(!src->Buffer)
-		dest->Buffer = nullptr;
-	else
-		copyMemory(dest->Buffer, src->Buffer, sizeof(wchar_t) * src->Length + 2);
-}
-
-void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataSize, size_t length = 0)
-{
-	if(length == 0)
-		length = dataSize;
-	string->Buffer = reinterpret_cast<wchar_t *>(Win32NativeHelper::get()->allocateHeap(length * 2 + 2));
-	string->MaximumLength = length * 2;
-	string->Length = dataSize * 2;
-
-	for(size_t i = 0; i < dataSize; i ++)
-		string->Buffer[i] = data[i];
-	string->Buffer[dataSize] = 0;
-}
-
-void freeUnicodeString(UNICODE_STRING *string)
-{
-	Win32NativeHelper::get()->freeHeap(string->Buffer);
-}
-
-void addPrefixToPath(UNICODE_STRING *string, const wchar_t *path, size_t pathSize)
-{
-	initializeUnicodeString(string, L"\\??\\", 4, pathSize + 4);
-	for(size_t i = 4; i < pathSize + 4; i ++)
-		string->Buffer[i] = path[i - 4];
-	string->Buffer[pathSize + 4] = 0;
-	string->Length = pathSize * 2 + 8;
-}
-
-//helper implementation
-Win32NativeHelper g_helper;
 
 uint8_t tempHeap[655350]; //temporary heap during initialization.
 uint32_t tempHeapPtr = 0;
@@ -72,6 +34,43 @@ void heapFree(void *ptr)
 	if(!g_helper.isInitialized())
 		return;
 	Win32NativeHelper::get()->freeHeap(ptr);
+}
+
+void copyUnicodeString(UNICODE_STRING *dest, UNICODE_STRING *src)
+{
+	dest->Length = src->Length;
+	dest->MaximumLength = src->Length;
+	if(!src->Buffer)
+		dest->Buffer = nullptr;
+	else
+		copyMemory(dest->Buffer, src->Buffer, sizeof(wchar_t) * src->Length + 2);
+}
+
+void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataSize, size_t length = 0)
+{
+	if(length == 0)
+		length = dataSize;
+	string->Buffer = reinterpret_cast<wchar_t *>(heapAlloc(length * 2 + 2));
+	string->MaximumLength = length * 2;
+	string->Length = dataSize * 2;
+
+	for(size_t i = 0; i < dataSize; i ++)
+		string->Buffer[i] = data[i];
+	string->Buffer[dataSize] = 0;
+}
+
+void freeUnicodeString(UNICODE_STRING *string)
+{
+	Win32NativeHelper::get()->freeHeap(string->Buffer);
+}
+
+void addPrefixToPath(UNICODE_STRING *string, const wchar_t *path, size_t pathSize)
+{
+	initializeUnicodeString(string, L"\\??\\", 4, pathSize + 4);
+	for(size_t i = 4; i < pathSize + 4; i ++)
+		string->Buffer[i] = path[i - 4];
+	string->Buffer[pathSize + 4] = 0;
+	string->Length = pathSize * 2 + 8;
 }
 
 Win32NativeHelper *Win32NativeHelper::get()
@@ -124,8 +123,23 @@ void Win32NativeHelper::init()
 	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(module->BaseAddress)), true);
 
 	initNtdllImport(format);
-	init_ = true;
+	initModuleList();
 	initHeap();
+	init_ = true;
+}
+
+void Win32NativeHelper::initModuleList()
+{
+	loadedImages_ = new List<Win32LoadedImage>();
+	LDR_MODULE *node = reinterpret_cast<LDR_MODULE *>(getPEB()->LoaderData->InLoadOrderModuleList.Flink->Flink);
+	while(node->BaseAddress)
+	{
+		Win32LoadedImage image;
+		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
+		image.fileName = node->BaseDllName.Buffer;
+		loadedImages_->push_back(image);
+		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
+	}
 }
 
 void Win32NativeHelper::initHeap()
@@ -405,19 +419,9 @@ PEB *Win32NativeHelper::getPEB()
 	return myPEB_;
 }
 
-List<Win32LoadedImage> Win32NativeHelper::getLoadedImages()
+List<Win32LoadedImage> &&Win32NativeHelper::getLoadedImages()
 {
-	LDR_MODULE *node = reinterpret_cast<LDR_MODULE *>(getPEB()->LoaderData->InLoadOrderModuleList.Flink->Flink);
-	List<Win32LoadedImage> result;
-	while(node->BaseAddress)
-	{
-		Win32LoadedImage image;
-		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
-		image.fileName = node->BaseDllName.Buffer;
-		result.push_back(image);
-		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
-	}
-	return result;
+	return std::move(*loadedImages_);
 }
 
 void* operator new(size_t num)
