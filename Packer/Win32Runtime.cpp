@@ -145,7 +145,7 @@ void Win32NativeHelper::initModuleList()
 void Win32NativeHelper::initHeap()
 {
 	//Initialize heap not to contain address 0x00400000, which is base address of most executable.
-	RTL_USER_PROCESS_PARAMETERS pp;
+	RTL_USER_PROCESS_PARAMETERS *pp = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(allocateVirtual(0, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));;
 	UNICODE_STRING tempUS[8];
 	wchar_t *buffers = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	wchar_t *environment;
@@ -154,19 +154,19 @@ void Win32NativeHelper::initHeap()
 	for(int i = 0; i < 8; i ++)
 		tempUS[i].Buffer = &buffers[i * 255];
 
-	copyMemory(reinterpret_cast<uint8_t *>(&pp), reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), sizeof(RTL_USER_PROCESS_PARAMETERS));
-	copyUnicodeString(&tempUS[0], &pp.CurrentDirectoryPath);
-	copyUnicodeString(&tempUS[1], &pp.DllPath);
-	copyUnicodeString(&tempUS[2], &pp.ImagePathName);
-	copyUnicodeString(&tempUS[3], &pp.CommandLine);
-	copyUnicodeString(&tempUS[4], &pp.WindowTitle);
-	copyUnicodeString(&tempUS[5], &pp.DesktopName);
-	copyUnicodeString(&tempUS[6], &pp.ShellInfo);
-	copyUnicodeString(&tempUS[7], &pp.RuntimeData);
+	copyMemory(reinterpret_cast<uint8_t *>(pp), reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), myPEB_->ProcessParameters->MaximumLength);
+	copyUnicodeString(&tempUS[0], &pp->CurrentDirectoryPath);
+	copyUnicodeString(&tempUS[1], &pp->DllPath);
+	copyUnicodeString(&tempUS[2], &pp->ImagePathName);
+	copyUnicodeString(&tempUS[3], &pp->CommandLine);
+	copyUnicodeString(&tempUS[4], &pp->WindowTitle);
+	copyUnicodeString(&tempUS[5], &pp->DesktopName);
+	copyUnicodeString(&tempUS[6], &pp->ShellInfo);
+	copyUnicodeString(&tempUS[7], &pp->RuntimeData);
 
-	environmentLength = sizeHeap(pp.Environment);
+	environmentLength = sizeHeap(pp->Environment);
 	environment = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	copyMemory(environment, pp.Environment, environmentLength);
+	copyMemory(environment, pp->Environment, environmentLength);
 
 	void *oldHeap = myPEB_->ProcessHeap;
 	myPEB_->ProcessHeap = nullptr;
@@ -177,22 +177,23 @@ void Win32NativeHelper::initHeap()
 
 	myPEB_->ProcessHeap = createHeap(0);
 	myPEB_->ProcessHeaps[0] = myPEB_->ProcessHeap;
-	myPEB_->ProcessParameters = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(heapAlloc(sizeof(RTL_USER_PROCESS_PARAMETERS)));
+	myPEB_->ProcessParameters = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(heapAlloc(pp->MaximumLength));
 
-	initializeUnicodeString(&pp.CurrentDirectoryPath, tempUS[0].Buffer, tempUS[0].Length);
-	initializeUnicodeString(&pp.DllPath, tempUS[1].Buffer, tempUS[1].Length);
-	initializeUnicodeString(&pp.ImagePathName, tempUS[2].Buffer, tempUS[2].Length);
-	initializeUnicodeString(&pp.CommandLine, tempUS[3].Buffer, tempUS[3].Length);
-	initializeUnicodeString(&pp.WindowTitle, tempUS[4].Buffer, tempUS[4].Length);
-	initializeUnicodeString(&pp.DesktopName, tempUS[5].Buffer, tempUS[5].Length);
-	initializeUnicodeString(&pp.ShellInfo, tempUS[6].Buffer, tempUS[6].Length);
-	initializeUnicodeString(&pp.RuntimeData, tempUS[7].Buffer, tempUS[7].Length);
-	pp.Environment = reinterpret_cast<wchar_t *>(heapAlloc(environmentLength));
-	copyMemory(pp.Environment, environment, environmentLength);
-	copyMemory(reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), reinterpret_cast<uint8_t *>(&pp), sizeof(RTL_USER_PROCESS_PARAMETERS));
+	initializeUnicodeString(&pp->CurrentDirectoryPath, tempUS[0].Buffer, tempUS[0].Length);
+	initializeUnicodeString(&pp->DllPath, tempUS[1].Buffer, tempUS[1].Length);
+	initializeUnicodeString(&pp->ImagePathName, tempUS[2].Buffer, tempUS[2].Length);
+	initializeUnicodeString(&pp->CommandLine, tempUS[3].Buffer, tempUS[3].Length);
+	initializeUnicodeString(&pp->WindowTitle, tempUS[4].Buffer, tempUS[4].Length);
+	initializeUnicodeString(&pp->DesktopName, tempUS[5].Buffer, tempUS[5].Length);
+	initializeUnicodeString(&pp->ShellInfo, tempUS[6].Buffer, tempUS[6].Length);
+	initializeUnicodeString(&pp->RuntimeData, tempUS[7].Buffer, tempUS[7].Length);
+	pp->Environment = reinterpret_cast<wchar_t *>(heapAlloc(environmentLength));
+	copyMemory(pp->Environment, environment, environmentLength);
+	copyMemory(reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), reinterpret_cast<uint8_t *>(pp), pp->MaximumLength);
 
 	freeVirtual(buffers);
 	freeVirtual(environment);
+	freeVirtual(pp);
 }
 
 void *Win32NativeHelper::createHeap(size_t baseAddress)
