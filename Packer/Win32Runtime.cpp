@@ -161,13 +161,13 @@ void Win32NativeHelper::relocateSelf(void *entry)
 			break;
 		tryAddr += 0x01000000;
 	}
+
+	entry_ = reinterpret_cast<size_t>(entry) - myBase_;
 	copyMemory(newBase, reinterpret_cast<uint8_t *>(myBase_), static_cast<size_t>(format.getInfo().size));
 
 	int diff = -static_cast<int>(myBase_) + reinterpret_cast<int>(newBase);
 	for(auto &j : format.getRelocations())
 		*reinterpret_cast<int32_t *>(newBase + j) += static_cast<int32_t>(diff);
-	
-	entry_ = reinterpret_cast<size_t>(entry) - myBase_;
 
 	typedef void (*EntryType) (size_t newBase);
 	EntryType entryGateway = reinterpret_cast<EntryType>(newBase + reinterpret_cast<uint64_t>(newEntry) - myBase_);
