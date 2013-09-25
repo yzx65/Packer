@@ -180,15 +180,19 @@ typename IteratorType binarySearch(IteratorType begin, IteratorType end, Compara
 	return end;
 }
 
-inline void copyMemory(uint8_t *dest, const uint8_t *src, size_t size)
+template<typename DestinationType, typename SourceType>
+inline void copyMemory(DestinationType *dest_, const SourceType *src_, size_t size)
 {
+	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
+	const uint8_t *src = reinterpret_cast<const uint8_t *>(src_);
 	if(!size)
 		return;
 	size_t i;
 	for(i = 0; i < reinterpret_cast<size_t>(src) % sizeof(size_t); i ++)
 		*(dest + i) = *(src + i); //align to boundary
-	for(; i < size - sizeof(size_t); i += sizeof(size_t))
-		*reinterpret_cast<size_t *>(dest + i) = *reinterpret_cast<const size_t *>(src + i);
+	if(i > sizeof(size_t))
+		for(; i < size - sizeof(size_t); i += sizeof(size_t))
+			*reinterpret_cast<size_t *>(dest + i) = *reinterpret_cast<const size_t *>(src + i);
 	for(; i < size; i ++)
 		*(dest + i) = *(src + i); //remaining
 }
