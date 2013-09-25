@@ -13,6 +13,16 @@
 //utilites
 #define NtCurrentProcess() reinterpret_cast<void *>(-1)
 
+void copyUnicodeString(UNICODE_STRING *dest, UNICODE_STRING *src)
+{
+	dest->Length = src->Length;
+	dest->MaximumLength = src->Length;
+	if(!src->Buffer)
+		dest->Buffer = nullptr;
+	else
+		copyMemory(dest->Buffer, src->Buffer, sizeof(wchar_t) * src->Length + 2);
+}
+
 void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataSize, size_t length = 0)
 {
 	if(length == 0)
@@ -80,8 +90,11 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 		return static_cast<size_t>(binarySearch(exports.begin(), exports.end(), [&](const ExportFunction *a) -> int { return a->name.icompare(name); })->address + ntdllBase_);
 	};
 
+	rtlCreateHeap_ = findItem("RtlCreateHeap");
+	rtlDestroyHeap_ = findItem("RtlDestroyHeap");
 	rtlAllocateHeap_ = findItem("RtlAllocateHeap");
 	rtlFreeHeap_ = findItem("RtlFreeHeap");
+	rtlSizeHeap_ = findItem("RtlSizeHeap");
 	ntAllocateVirtualMemory_ = findItem("NtAllocateVirtualMemory");
 	ntProtectVirtualMemory_ = findItem("NtProtectVirtualMemory");
 	ntFreeVirtualMemory_ = findItem("NtFreeVirtualMemory");
@@ -112,6 +125,73 @@ void Win32NativeHelper::init()
 
 	initNtdllImport(format);
 	init_ = true;
+	initHeap();
+}
+
+void Win32NativeHelper::initHeap()
+{
+	//Initialize heap not to contain address 0x00400000, which is base address of most executable.
+	RTL_USER_PROCESS_PARAMETERS pp;
+	UNICODE_STRING tempUS[8];
+	wchar_t *buffers = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	wchar_t *environment;
+	size_t environmentLength;
+
+	for(int i = 0; i < 8; i ++)
+		tempUS[i].Buffer = &buffers[i * 255];
+
+	copyMemory(reinterpret_cast<uint8_t *>(&pp), reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), sizeof(RTL_USER_PROCESS_PARAMETERS));
+	copyUnicodeString(&tempUS[0], &pp.CurrentDirectoryPath);
+	copyUnicodeString(&tempUS[1], &pp.DllPath);
+	copyUnicodeString(&tempUS[2], &pp.ImagePathName);
+	copyUnicodeString(&tempUS[3], &pp.CommandLine);
+	copyUnicodeString(&tempUS[4], &pp.WindowTitle);
+	copyUnicodeString(&tempUS[5], &pp.DesktopName);
+	copyUnicodeString(&tempUS[6], &pp.ShellInfo);
+	copyUnicodeString(&tempUS[7], &pp.RuntimeData);
+
+	environmentLength = sizeHeap(pp.Environment);
+	environment = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	copyMemory(environment, pp.Environment, environmentLength);
+
+	void *oldHeap = myPEB_->ProcessHeap;
+	myPEB_->ProcessHeap = nullptr;
+	myPEB_->ProcessHeaps[0] = nullptr;
+	destroyHeap(oldHeap);
+
+	allocateVirtual(0x00400000, 0x01000000, MEM_RESERVE, PAGE_EXECUTE_READWRITE); //reserve
+
+	myPEB_->ProcessHeap = createHeap(0);
+	myPEB_->ProcessHeaps[0] = myPEB_->ProcessHeap;
+	myPEB_->ProcessParameters = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(heapAlloc(sizeof(RTL_USER_PROCESS_PARAMETERS)));
+
+	initializeUnicodeString(&pp.CurrentDirectoryPath, tempUS[0].Buffer, tempUS[0].Length);
+	initializeUnicodeString(&pp.DllPath, tempUS[1].Buffer, tempUS[1].Length);
+	initializeUnicodeString(&pp.ImagePathName, tempUS[2].Buffer, tempUS[2].Length);
+	initializeUnicodeString(&pp.CommandLine, tempUS[3].Buffer, tempUS[3].Length);
+	initializeUnicodeString(&pp.WindowTitle, tempUS[4].Buffer, tempUS[4].Length);
+	initializeUnicodeString(&pp.DesktopName, tempUS[5].Buffer, tempUS[5].Length);
+	initializeUnicodeString(&pp.ShellInfo, tempUS[6].Buffer, tempUS[6].Length);
+	initializeUnicodeString(&pp.RuntimeData, tempUS[7].Buffer, tempUS[7].Length);
+	pp.Environment = reinterpret_cast<wchar_t *>(heapAlloc(environmentLength));
+	copyMemory(pp.Environment, environment, environmentLength);
+	copyMemory(reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), reinterpret_cast<uint8_t *>(&pp), sizeof(RTL_USER_PROCESS_PARAMETERS));
+
+	freeVirtual(buffers);
+	freeVirtual(environment);
+}
+
+void *Win32NativeHelper::createHeap(size_t baseAddress)
+{
+	typedef void *(__stdcall *RtlCreateHeapPtr)(size_t Flags, void *HeapBase, size_t Reservesize, size_t Commitsize, void *Lock, void *Parameters);
+	//flag 2: HEAP_GROWABLE
+	return reinterpret_cast<RtlCreateHeapPtr>(rtlCreateHeap_)(2, reinterpret_cast<void *>(baseAddress), 0, 0, 0, 0);
+}
+
+void Win32NativeHelper::destroyHeap(void *heap)
+{
+	typedef void (__stdcall *RtlDestroyHeapPtr)(void *heap);
+	reinterpret_cast<RtlDestroyHeapPtr>(rtlDestroyHeap_)(heap);
 }
 
 void *Win32NativeHelper::allocateHeap(size_t dwBytes)
@@ -130,10 +210,20 @@ bool Win32NativeHelper::freeHeap(void *ptr)
 	return reinterpret_cast<RtlFreeHeapPtr>(rtlFreeHeap_)(myPEB_->ProcessHeap, 0, ptr);
 }
 
+size_t Win32NativeHelper::sizeHeap(void *ptr)
+{
+	typedef size_t (__stdcall *RtlSizeHeapPtr)(void *hHeap, size_t flags, void *ptr);
+
+	return reinterpret_cast<RtlSizeHeapPtr>(rtlSizeHeap_)(myPEB_->ProcessHeap, 0, ptr);
+}
+
 void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
 {
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
-	
+
+	if(init_ && desiredAddress == 0x00400000)
+		freeVirtual(reinterpret_cast<void *>(0x00400000));
+
 	void **result = reinterpret_cast<void **>(&desiredAddress);
 	reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
 	

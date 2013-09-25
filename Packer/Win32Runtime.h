@@ -22,8 +22,11 @@ private:
 	size_t ntdllBase_;
 	PEB *myPEB_;
 
+	size_t rtlCreateHeap_;
+	size_t rtlDestroyHeap_;
 	size_t rtlAllocateHeap_;
 	size_t rtlFreeHeap_;
+	size_t rtlSizeHeap_;
 	size_t ntAllocateVirtualMemory_;
 	size_t ntFreeVirtualMemory_;
 	size_t ntProtectVirtualMemory_;
@@ -36,10 +39,14 @@ private:
 
 	void init();
 	void initNtdllImport(const PEFormat &ntdll);
+	void initHeap();
 public:
 	API_SET_HEADER *getApiSet();
+	void *createHeap(size_t baseAddress);
+	void destroyHeap(void *heap);
 	void *allocateHeap(size_t dwBytes);
 	bool freeHeap(void *ptr);
+	size_t sizeHeap(void *ptr);
 	void freeVirtual(void *baseAddress);
 	void *allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection);
