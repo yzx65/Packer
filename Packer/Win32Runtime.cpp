@@ -173,7 +173,7 @@ void Win32NativeHelper::initHeap()
 	myPEB_->ProcessHeaps[0] = nullptr;
 	destroyHeap(oldHeap);
 
-	allocateVirtual(0x00400000, 0x01000000, MEM_RESERVE, PAGE_EXECUTE_READWRITE); //reserve
+	allocateVirtual(0x00400000, 0x01000000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE); //reserve
 
 	myPEB_->ProcessHeap = createHeap(0);
 	myPEB_->ProcessHeaps[0] = myPEB_->ProcessHeap;
@@ -335,7 +335,7 @@ void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint64_t 
 void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, size_t lpBaseAddress)
 {
 	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
-
+	
 	void **result = reinterpret_cast<void **>(&lpBaseAddress);
 	LARGE_INTEGER sectionOffset;
 	size_t viewSize;
