@@ -40,6 +40,8 @@ public:
 	virtual Image serialize();
 	virtual const List<Import> &getImports() const;
 	virtual const List<ExportFunction> &getExports() const;
+	virtual const ImageInfo &getInfo() const;
+	virtual const List<uint64_t> getRelocations() const;
 
 	virtual bool isSystemLibrary(const String &filename);
 };

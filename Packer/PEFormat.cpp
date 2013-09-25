@@ -317,6 +317,16 @@ const List<ExportFunction> &PEFormat::getExports() const
 	return exports_;
 }
 
+const ImageInfo &PEFormat::getInfo() const
+{
+	return info_;
+}
+
+const List<uint64_t> PEFormat::getRelocations() const
+{
+	return relocations_;
+}
+
 Image PEFormat::serialize()
 {
 	Image image;

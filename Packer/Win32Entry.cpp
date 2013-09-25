@@ -4,6 +4,7 @@
 
 void WindowsEntry()
 {
+	Win32NativeHelper::init(WindowsEntry);
 	String str = WStringToString(Win32NativeHelper::get()->getCommandLine());
 
 	int argc = 0;

@@ -63,8 +63,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EntryPointSymbol>WindowsEntry</EntryPointSymbol>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <BaseAddress>0x10000000</BaseAddress>
+      <BaseAddress>0x00400000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <FixedBaseAddress>false</FixedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

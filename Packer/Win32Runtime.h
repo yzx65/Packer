@@ -19,8 +19,10 @@ struct Win32LoadedImage
 class Win32NativeHelper
 {
 private:
-	bool init_;
+	bool initialized_;
 	size_t ntdllBase_;
+	size_t myBase_;
+	size_t entry_;
 	PEB *myPEB_;
 
 	size_t rtlCreateHeap_;
@@ -38,10 +40,11 @@ private:
 	size_t ntUnmapViewOfSection_;
 	size_t ntQueryFullAttributesFile_;
 
-	void init();
+	void init_(void *entry);
 	void initNtdllImport(const PEFormat &ntdll);
 	void initHeap();
 	void initModuleList();
+	void relocateSelf(void *entry);
 public:
 	API_SET_HEADER *getApiSet();
 	void *createHeap(size_t baseAddress);
@@ -65,7 +68,9 @@ public:
 	PEB *getPEB();
 	List<Win32LoadedImage> getLoadedImages();
 
+	static void newEntry(size_t newBase);
 	static Win32NativeHelper *get();
+	static void init(void *entry);
 };
 
 #define GENERIC_READ                     (0x80000000L)
