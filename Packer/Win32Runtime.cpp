@@ -419,9 +419,9 @@ PEB *Win32NativeHelper::getPEB()
 	return myPEB_;
 }
 
-List<Win32LoadedImage> &&Win32NativeHelper::getLoadedImages()
+List<Win32LoadedImage> &Win32NativeHelper::getLoadedImages()
 {
-	return std::move(*loadedImages_);
+	return *loadedImages_;
 }
 
 void* operator new(size_t num)

@@ -63,7 +63,7 @@ public:
 	wchar_t *getEnvironments();
 	bool isInitialized();
 	PEB *getPEB();
-	List<Win32LoadedImage> &&getLoadedImages();
+	List<Win32LoadedImage> &getLoadedImages();
 
 	static Win32NativeHelper *get();
 };
