@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "List.h"
+#include "String.h"
 
 struct _PEB;
 typedef struct _PEB PEB;
@@ -11,7 +12,7 @@ class PEFormat;
 
 struct Win32LoadedImage
 {
-	const wchar_t *fileName;
+	WString fileName;
 	uint8_t *baseAddress;
 };
 
