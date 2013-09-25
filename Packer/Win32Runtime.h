@@ -12,7 +12,7 @@ class PEFormat;
 
 struct Win32LoadedImage
 {
-	WString fileName;
+	const wchar_t *fileName;
 	uint8_t *baseAddress;
 };
 
@@ -23,7 +23,6 @@ private:
 	size_t ntdllBase_;
 	PEB *myPEB_;
 
-	List<Win32LoadedImage> *loadedImages_;
 	size_t rtlCreateHeap_;
 	size_t rtlDestroyHeap_;
 	size_t rtlAllocateHeap_;
@@ -64,7 +63,7 @@ public:
 	wchar_t *getEnvironments();
 	bool isInitialized();
 	PEB *getPEB();
-	List<Win32LoadedImage> &getLoadedImages();
+	List<Win32LoadedImage> getLoadedImages();
 
 	static Win32NativeHelper *get();
 };

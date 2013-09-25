@@ -123,77 +123,7 @@ void Win32NativeHelper::init()
 	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(module->BaseAddress)), true);
 
 	initNtdllImport(format);
-	initModuleList();
-	initHeap();
 	init_ = true;
-}
-
-void Win32NativeHelper::initModuleList()
-{
-	loadedImages_ = new List<Win32LoadedImage>();
-	LDR_MODULE *node = reinterpret_cast<LDR_MODULE *>(getPEB()->LoaderData->InLoadOrderModuleList.Flink->Flink);
-	while(node->BaseAddress)
-	{
-		Win32LoadedImage image;
-		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
-		image.fileName = node->BaseDllName.Buffer;
-		loadedImages_->push_back(image);
-		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
-	}
-}
-
-void Win32NativeHelper::initHeap()
-{
-	//Initialize heap not to contain address 0x00400000, which is base address of most executable.
-	RTL_USER_PROCESS_PARAMETERS *pp = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(allocateVirtual(0, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));;
-	UNICODE_STRING tempUS[8];
-	wchar_t *buffers = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x1000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	wchar_t *environment;
-	size_t environmentLength;
-
-	for(int i = 0; i < 8; i ++)
-		tempUS[i].Buffer = &buffers[i * 255];
-
-	copyMemory(reinterpret_cast<uint8_t *>(pp), reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), myPEB_->ProcessParameters->MaximumLength);
-	copyUnicodeString(&tempUS[0], &pp->CurrentDirectoryPath);
-	copyUnicodeString(&tempUS[1], &pp->DllPath);
-	copyUnicodeString(&tempUS[2], &pp->ImagePathName);
-	copyUnicodeString(&tempUS[3], &pp->CommandLine);
-	copyUnicodeString(&tempUS[4], &pp->WindowTitle);
-	copyUnicodeString(&tempUS[5], &pp->DesktopName);
-	copyUnicodeString(&tempUS[6], &pp->ShellInfo);
-	copyUnicodeString(&tempUS[7], &pp->RuntimeData);
-
-	environmentLength = sizeHeap(pp->Environment);
-	environment = reinterpret_cast<wchar_t *>(allocateVirtual(0, 0x10000, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	copyMemory(environment, pp->Environment, environmentLength);
-
-	void *oldHeap = myPEB_->ProcessHeap;
-	myPEB_->ProcessHeap = nullptr;
-	myPEB_->ProcessHeaps[0] = nullptr;
-	destroyHeap(oldHeap);
-
-	allocateVirtual(0x00400000, 0x01000000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE); //reserve
-
-	myPEB_->ProcessHeap = createHeap(0);
-	myPEB_->ProcessHeaps[0] = myPEB_->ProcessHeap;
-	myPEB_->ProcessParameters = reinterpret_cast<RTL_USER_PROCESS_PARAMETERS *>(heapAlloc(pp->MaximumLength));
-
-	initializeUnicodeString(&pp->CurrentDirectoryPath, tempUS[0].Buffer, tempUS[0].Length);
-	initializeUnicodeString(&pp->DllPath, tempUS[1].Buffer, tempUS[1].Length);
-	initializeUnicodeString(&pp->ImagePathName, tempUS[2].Buffer, tempUS[2].Length);
-	initializeUnicodeString(&pp->CommandLine, tempUS[3].Buffer, tempUS[3].Length);
-	initializeUnicodeString(&pp->WindowTitle, tempUS[4].Buffer, tempUS[4].Length);
-	initializeUnicodeString(&pp->DesktopName, tempUS[5].Buffer, tempUS[5].Length);
-	initializeUnicodeString(&pp->ShellInfo, tempUS[6].Buffer, tempUS[6].Length);
-	initializeUnicodeString(&pp->RuntimeData, tempUS[7].Buffer, tempUS[7].Length);
-	pp->Environment = reinterpret_cast<wchar_t *>(heapAlloc(environmentLength));
-	copyMemory(pp->Environment, environment, environmentLength);
-	copyMemory(reinterpret_cast<uint8_t *>(myPEB_->ProcessParameters), reinterpret_cast<uint8_t *>(pp), pp->MaximumLength);
-
-	freeVirtual(buffers);
-	freeVirtual(environment);
-	freeVirtual(pp);
 }
 
 void *Win32NativeHelper::createHeap(size_t baseAddress)
@@ -420,9 +350,19 @@ PEB *Win32NativeHelper::getPEB()
 	return myPEB_;
 }
 
-List<Win32LoadedImage> &Win32NativeHelper::getLoadedImages()
+List<Win32LoadedImage> Win32NativeHelper::getLoadedImages()
 {
-	return *loadedImages_;
+	List<Win32LoadedImage> result;
+	LDR_MODULE *node = reinterpret_cast<LDR_MODULE *>(getPEB()->LoaderData->InLoadOrderModuleList.Flink->Flink);
+	while(node->BaseAddress)
+	{
+		Win32LoadedImage image;
+		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
+		image.fileName = node->BaseDllName.Buffer;
+		result.push_back(image);
+		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
+	}
+	return result;
 }
 
 void* operator new(size_t num)
