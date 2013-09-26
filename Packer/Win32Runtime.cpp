@@ -149,6 +149,8 @@ void Win32NativeHelper::init_(void *entry)
 
 void Win32NativeHelper::relocateSelf(void *entry)
 {
+	if(!entry)
+		return;
 	//relocate self, making space for non-aslr aware executables
 
 #ifndef _DEBUG
