@@ -222,9 +222,6 @@ void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSiz
 {
 	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
 
-	if(initialized_ && desiredAddress == 0x00400000)
-		freeVirtual(reinterpret_cast<void *>(0x00400000));
-
 	void **result = reinterpret_cast<void **>(&desiredAddress);
 	int code = reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
 	if(code < 0)
