@@ -19,7 +19,9 @@ void Option::handleStringOption(const String &name, const String &value)
 
 void Option::parseOptions(List<String> rawOptions)
 {
-	for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
+	auto it = rawOptions.begin();
+	it ++;
+	for(; it != rawOptions.end(); it ++)
 	{
 		if(it->length() > 0 && it->at(0) == '-')
 		{
