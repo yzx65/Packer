@@ -67,6 +67,7 @@ public:
 	bool isInitialized();
 	PEB *getPEB();
 	List<Win32LoadedImage> getLoadedImages();
+	List<String> getArgumentList();
 
 	static void newEntry(size_t newBase);
 	static Win32NativeHelper *get();
