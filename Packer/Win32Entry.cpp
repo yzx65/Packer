@@ -7,11 +7,8 @@ void WindowsEntry()
 	Win32NativeHelper::init(WindowsEntry);
 	String str = WStringToString(Win32NativeHelper::get()->getCommandLine());
 
-	int argc = 0;
-	char **argv;
-
 	String item;
-	Vector<String> items;
+	List<String> items;
 	bool quote = false;
 	bool slash = false;
 	for(size_t i = 0; i < str.length(); i ++)
@@ -46,7 +43,6 @@ void WindowsEntry()
 		{
 			if(item.length() == 0)
 				continue;
-			argc ++;
 			items.push_back(std::move(item));
 			item = "";
 			continue;
@@ -55,15 +51,7 @@ void WindowsEntry()
 		item.push_back(str[i]);
 	}
 	if(item.length())
-	{
-		argc ++;
 		items.push_back(std::move(item));
-	}
 
-	argv = new char *[argc];
-	int c = 0;
-	for(auto &i : items)
-		argv[c ++] = const_cast<char *>(i.c_str());
-
-	PackerMain(Option(argc, argv)).process();
+	PackerMain(Option(items)).process();
 }

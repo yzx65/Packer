@@ -2,12 +2,9 @@
 
 #include "File.h"
 
-Option::Option(int argc, char **argv)
+Option::Option(const List<String> &args)
 {
-	List<String> rawOptions;
-	for(int i = 1; i < argc; i ++)
-		rawOptions.push_back(String(argv[i]));
-	parseOptions(argc, rawOptions);
+	parseOptions(args);
 }
 
 bool Option::isBooleanOption(const String &optionName)
@@ -20,7 +17,7 @@ void Option::handleStringOption(const String &name, const String &value)
 
 }
 
-void Option::parseOptions(int argc, List<String> rawOptions)
+void Option::parseOptions(List<String> rawOptions)
 {
 	for(auto it = rawOptions.begin(); it != rawOptions.end(); it ++)
 	{
