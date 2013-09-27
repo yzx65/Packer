@@ -23,8 +23,8 @@ private:
 	List<uint64_t> entryPointQueue_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
-	void *loadLibrary(const String &filename, bool asDataFile = false);
-	uint64_t getFunctionAddress(void *library, const String &functionName, int ordinal = -1	);
+	uint8_t *loadLibrary(const String &filename, bool asDataFile = false);
+	uint64_t getFunctionAddress(uint8_t *library, const String &functionName, int ordinal = -1);
 	uint8_t *loadImage(Image &image, bool asDataFile = false);
 	uint8_t *mapImage(Image &image);
 	void processImports(uint8_t *baseAddress, const Image &image);
@@ -46,7 +46,7 @@ private:
 	static size_t __stdcall DisableThreadLibraryCallsProxy(void *module);
 	static size_t __stdcall LdrAddRefDllProxy(size_t flags, void *library);
 	static size_t __stdcall LdrLoadDllProxy(wchar_t *searchPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **baseAddress);
-	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags);
+	static size_t __stdcall LdrResolveDelayLoadedAPIProxy(void *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags);
 	static size_t __stdcall LdrGetDllHandleProxy(wchar_t *DllPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **dllHandle);
 	static size_t __stdcall LdrGetDllHandleExProxy(size_t Flags, wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle);
 	static size_t __stdcall LdrGetProcedureAddressProxy(void *BaseAddress, ANSI_STRING *Name, size_t Ordinal, void **ProcedureAddress);

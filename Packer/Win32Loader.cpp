@@ -47,7 +47,7 @@ void Win32Loader::processImports(uint8_t *baseAddress, const Image &image)
 {
 	for(auto &i : image.imports)
 	{
-		void *library = loadLibrary(i.libraryName);
+		uint8_t *library = loadLibrary(i.libraryName);
 		for(auto &j : i.functions)
 		{
 			uint64_t function = getFunctionAddress(library, j.name, j.ordinal);
@@ -160,7 +160,7 @@ void Win32Loader::execute()
 	executeEntryPoint(baseAddress, image_);
 }
 
-void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
+uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 {
 	String normalizedFilename = filename;
 	int pos;
@@ -171,7 +171,7 @@ void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 
 	auto it = loadedLibraries_.find(normalizedFilename);
 	if(it != loadedLibraries_.end())
-		return reinterpret_cast<void *>(it->value);
+		return reinterpret_cast<uint8_t *>(it->value);
 
 	//check if already loaded
 	auto images = Win32NativeHelper::get()->getLoadedImages();
@@ -239,8 +239,8 @@ void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			{
 				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
 				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
-				void *library;
-				if((library = GetModuleHandleWProxy(moduleName.c_str())) == 0)
+				uint8_t *library;
+				if((library = reinterpret_cast<uint8_t *>(GetModuleHandleWProxy(moduleName.c_str()))) == 0)
 				{
 					library = loadLibrary(WStringToString(moduleName));
 					loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
@@ -263,7 +263,7 @@ void *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	return loadImage(*imports_.push_back(format->serialize()), asDataFile);
 }
 
-uint64_t Win32Loader::getFunctionAddress(void *library, const String &functionName, int ordinal)
+uint64_t Win32Loader::getFunctionAddress(uint8_t *library, const String &functionName, int ordinal)
 {
 	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
@@ -462,8 +462,8 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wc
 void * __stdcall Win32Loader::GetProcAddressProxy(void *library, char *functionName)
 {
 	if(reinterpret_cast<size_t>(functionName) < 0x10000)
-		return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(), reinterpret_cast<size_t>(functionName)));
-	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(library, String(functionName)));
+		return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(reinterpret_cast<uint8_t *>(library), String(), reinterpret_cast<size_t>(functionName)));
+	return reinterpret_cast<void *>(loaderInstance_->getFunctionAddress(reinterpret_cast<uint8_t *>(library), String(functionName)));
 }
 
 size_t __stdcall Win32Loader::LdrAddRefDllProxy(uint32_t flags, void *library)
@@ -483,8 +483,9 @@ size_t __stdcall Win32Loader::LdrLoadDllProxy(wchar_t *searchPath, size_t dllCha
 	return 0;
 }
 
-size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags)
+size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(void *base_, PCIMAGE_DELAYLOAD_DESCRIPTOR desc, void *dllhook, void *syshook, size_t *addr, size_t flags)
 {
+	uint8_t *base = reinterpret_cast<uint8_t *>(base_);
 	char *dllName = reinterpret_cast<char *>(base + desc->DllNameRVA);
 	size_t *iatTable = reinterpret_cast<size_t *>(base + desc->ImportAddressTableRVA);
 	size_t *nameTable = reinterpret_cast<size_t *>(base + desc->ImportNameTableRVA);
@@ -511,9 +512,9 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(uint8_t *base, PCIMA
 			continue;
 		size_t functionAddress;
 		if(nameOffset & IMAGE_ORDINAL_FLAG32)
-			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(), nameOffset & 0xffff));
+			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<uint8_t *>(*moduleHandle), String(), nameOffset & 0xffff));
 		else
-			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<void *>(*moduleHandle), String(nameEntry->Name)));
+			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(reinterpret_cast<uint8_t *>(*moduleHandle), String(nameEntry->Name)));
 
 		size_t old;
 		Win32NativeHelper::get()->protectVirtual(dest, 5, PAGE_READWRITE, &old);
