@@ -59,7 +59,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	fileHeader = getStructureAtOffset<IMAGE_FILE_HEADER>(data, dosHeader->e_lfanew + sizeof(uint32_t));
 	optionalHeaderBase = getStructureAtOffset<IMAGE_OPTIONAL_HEADER_BASE>(data, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER));
 
-	offset = dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + sizeof(IMAGE_OPTIONAL_HEADER_BASE);
+	offset = dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER);
 	info_.entryPoint = optionalHeaderBase->AddressOfEntryPoint;
 	info_.flag = 0;
 	if(fileHeader->Characteristics & IMAGE_FILE_DLL)
@@ -73,7 +73,6 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 		info_.size = optionalHeader->SizeOfImage;
 		info_.architecture = ArchitectureWin32;
 		headerSize = optionalHeader->SizeOfHeaders;
-		offset += sizeof(IMAGE_OPTIONAL_HEADER32);
 	}
 	else if(optionalHeaderBase->Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
 	{
@@ -83,8 +82,8 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 		info_.size = optionalHeader->SizeOfImage;
 		headerSize = optionalHeader->SizeOfHeaders;
 		info_.architecture = ArchitectureWin32AMD64;
-		offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
+	offset += fileHeader->SizeOfOptionalHeader;
 
 	exportTableBase_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
 	exportTableSize_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;

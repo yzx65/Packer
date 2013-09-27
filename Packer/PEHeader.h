@@ -117,6 +117,7 @@ typedef struct _IMAGE_OPTIONAL_HEADER_BASE {
 } IMAGE_OPTIONAL_HEADER_BASE;
 
 typedef struct _IMAGE_OPTIONAL_HEADER {
+	IMAGE_OPTIONAL_HEADER_BASE base;
 	uint32_t   BaseOfData;
 
 	//
@@ -149,6 +150,7 @@ typedef struct _IMAGE_OPTIONAL_HEADER {
 
 
 typedef struct _IMAGE_OPTIONAL_HEADER64 {
+	IMAGE_OPTIONAL_HEADER_BASE base;
 	uint64_t   ImageBase;
 	uint32_t       SectionAlignment;
 	uint32_t       FileAlignment;
