@@ -11,9 +11,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}</ProjectGuid>
+    <ProjectGuid>{EA3BC0AC-A01B-43E3-932C-B0F719BC57CC}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Packer</RootNamespace>
+    <RootNamespace>Stage2</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -41,9 +41,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <GenerateManifest>false</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -51,21 +53,21 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <IntrinsicFunctions>false</IntrinsicFunctions>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EntryPointSymbol>WindowsEntry</EntryPointSymbol>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <BaseAddress>0x00400000</BaseAddress>
+      <EntryPointSymbol>Entry</EntryPointSymbol>
+      <BaseAddress>0x50000000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <FixedBaseAddress>false</FixedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -73,61 +75,32 @@
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <OmitFramePointers>true</OmitFramePointers>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-      <EntryPointSymbol>WindowsEntry</EntryPointSymbol>
-      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-      <BaseAddress>0x10000000</BaseAddress>
+      <EntryPointSymbol>Entry</EntryPointSymbol>
+      <BaseAddress>0x00500000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Win32Entry.cpp" />
-    <ClCompile Include="Win32Loader.cpp" />
-    <ClCompile Include="PEFormat.cpp" />
-    <ClCompile Include="Win32File.cpp" />
-    <ClCompile Include="Option.cpp" />
-    <ClCompile Include="PackerMain.cpp" />
-    <ClCompile Include="Win32Runtime.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\Win32Stub\Win32Stub.h" />
-    <ClInclude Include="DataSource.h" />
-    <ClInclude Include="Map.h" />
-    <ClInclude Include="Runtime.h" />
-    <ClInclude Include="SharedPtr.h" />
-    <ClInclude Include="String.h" />
-    <ClInclude Include="Win32Runtime.h" />
-    <ClInclude Include="Vector.h" />
-    <ClInclude Include="File.h" />
-    <ClInclude Include="FormatBase.h" />
-    <ClInclude Include="Image.h" />
-    <ClInclude Include="List.h" />
-    <ClInclude Include="Win32Loader.h" />
-    <ClInclude Include="Util.h" />
-    <ClInclude Include="PEFormat.h" />
-    <ClInclude Include="PEHeader.h" />
-    <ClInclude Include="Signature.h" />
-    <ClInclude Include="Win32File.h" />
-    <ClInclude Include="Option.h" />
-    <ClInclude Include="PackerMain.h" />
-    <ClInclude Include="Win32Structure.h" />
+    <ClCompile Include="..\..\Packer\PEFormat.cpp" />
+    <ClCompile Include="..\..\Packer\Win32File.cpp" />
+    <ClCompile Include="..\..\Packer\Win32Loader.cpp" />
+    <ClCompile Include="..\..\Packer\Win32Runtime.cpp" />
+    <ClCompile Include="Stage2.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

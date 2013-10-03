@@ -98,5 +98,8 @@
     <ClInclude Include="DataSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Win32Stub\Win32Stub.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
