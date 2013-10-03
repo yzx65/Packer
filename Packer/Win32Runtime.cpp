@@ -103,7 +103,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	Vector<ExportFunction> exports(exportList.begin(), exportList.end());
 	auto findItem = [&](const char *name) -> size_t
 	{
-		return static_cast<size_t>(binarySearch(exports.begin(), exports.end(), [&](const ExportFunction *a) -> int { return a->name.icompare(name); })->address + ntdllBase_);
+		return static_cast<size_t>(binarySearch(exports.begin(), exports.end(), [&](const ExportFunction *a) -> int { return a->name.compare(name); })->address + ntdllBase_);
 	};
 
 	rtlCreateHeap_ = findItem("RtlCreateHeap");
@@ -117,6 +117,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	ntCreateFile_ = findItem("NtCreateFile");
 	ntClose_ = findItem("NtClose");
 	ntCreateSection_ = findItem("NtCreateSection");
+	ntWriteFile_ = findItem("NtWriteFile");
 	ntMapViewOfSection_ = findItem("NtMapViewOfSection");
 	ntUnmapViewOfSection_ = findItem("NtUnmapViewOfSection");
 	ntQueryFullAttributesFile_ = findItem("NtQueryFullAttributesFile");
@@ -245,7 +246,7 @@ void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, 
 	reinterpret_cast<NtProtectVirtualMemoryPtr>(ntProtectVirtualMemory_)(NtCurrentProcess(), &BaseAddress, &NumberOfBytes, NewAccessProtection, OldAccessProtection);
 }
 
-void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions)
+void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition)
 {
 	typedef int32_t (__stdcall *NtCreateFilePtr)(void **FileHandle, uint32_t DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions, void *EaBuffer, size_t EaLength);
 
@@ -254,6 +255,7 @@ void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filen
 	IO_STATUS_BLOCK statusBlock;
 	UNICODE_STRING name;
 	uint32_t desiredAccess = 0;
+	uint32_t CreateOptions = 0;
 	
 	//Prefix
 	addPrefixToPath(&name, Filename, FilenameLength);
@@ -267,14 +269,27 @@ void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filen
 
 	if(DesiredAccess & GENERIC_READ)
 		desiredAccess |= FILE_GENERIC_READ;
-	if(desiredAccess & GENERIC_WRITE)
+	if(DesiredAccess & GENERIC_WRITE)
+	{
 		desiredAccess |= FILE_GENERIC_WRITE;
+		CreateOptions = 0x00000010; //FILE_SYNCHRONOUS_IO_ALERT;
+	}
 
-	reinterpret_cast<NtCreateFilePtr>(ntCreateFile_)(&result, desiredAccess, &attributes, &statusBlock, nullptr, FileAttributes, ShareAccess, CreateDisposition, CreateOptions, nullptr, 0);
+	reinterpret_cast<NtCreateFilePtr>(ntCreateFile_)(&result, desiredAccess, &attributes, &statusBlock, nullptr, 0, ShareAccess, CreateDisposition, CreateOptions, nullptr, 0);
 
 	freeUnicodeString(&name);
 
 	return result;
+}
+
+size_t Win32NativeHelper::writeFile(void *fileHandle, uint8_t *buffer, size_t bufferSize)
+{
+	typedef int32_t (__stdcall *NtWriteFilePtr)(void *fileHandle, void *event, void *, void *, IO_STATUS_BLOCK *statusBlock, void *buffer, size_t length, LARGE_INTEGER *byteOffset, size_t *key);
+
+	IO_STATUS_BLOCK statusBlock;
+	reinterpret_cast<NtWriteFilePtr>(ntWriteFile_)(fileHandle, nullptr, nullptr, nullptr, &statusBlock, buffer, bufferSize, nullptr, nullptr);
+
+	return reinterpret_cast<size_t>(statusBlock.Information);
 }
 
 void Win32NativeHelper::closeHandle(void *handle)

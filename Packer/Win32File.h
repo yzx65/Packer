@@ -10,12 +10,12 @@ private:
 	void *mapHandle_;
 	uint8_t *mapAddress_;
 	int mapCounter_;
-	void open(const String &filename);
+	void open(const String &filename, bool write);
 	void close();
 	String fileName_;
 	String filePath_;
 public:
-	Win32File(const String &filename);
+	Win32File(const String &filename, bool write = false);
 	virtual ~Win32File();
 
 	virtual String getFileName();
@@ -25,9 +25,5 @@ public:
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size);
 	virtual uint8_t *map(uint64_t offset);
 	virtual void unmap();
+	virtual void write(const Vector<uint8_t> &data);
 };
-
-SharedPtr<File> File::open(const String &filename)
-{
-	return MakeShared<Win32File>(filename);
-}

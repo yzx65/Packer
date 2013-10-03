@@ -4,9 +4,9 @@
 
 #include "Win32Runtime.h"
 
-Win32File::Win32File(const String &filename) : mapCounter_(0)
+Win32File::Win32File(const String &filename, bool write) : mapCounter_(0)
 {
-	open(filename);
+	open(filename, write);
 }
 
 Win32File::~Win32File()
@@ -14,7 +14,7 @@ Win32File::~Win32File()
 	close();
 }
 
-void Win32File::open(const String &filename)
+void Win32File::open(const String &filename, bool write)
 {
 	WString wFileName = StringToWString(filename);
 	WString fullPath;
@@ -37,7 +37,16 @@ void Win32File::open(const String &filename)
 		fullPath = wFileName;
 	}
 
-	fileHandle_ = Win32NativeHelper::get()->createFile(GENERIC_READ, fullPath.c_str(), fullPath.length(), 0, FILE_SHARE_READ, FILE_OPEN, 0);
+	int access = GENERIC_READ;
+	int disposition = FILE_OPEN;
+
+	if(write)
+	{
+		access |= GENERIC_WRITE;
+		disposition = FILE_OVERWRITE_IF;
+	}
+
+	fileHandle_ = Win32NativeHelper::get()->createFile(access, fullPath.c_str(), fullPath.length(), FILE_SHARE_READ, disposition);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
 	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, nullptr, 0);
@@ -62,6 +71,11 @@ String Win32File::getFilePath()
 void *Win32File::getHandle()
 {
 	return fileHandle_;
+}
+
+void Win32File::write(const Vector<uint8_t> &data)
+{
+	Win32NativeHelper::get()->writeFile(fileHandle_, data.get(), data.size());
 }
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
@@ -99,4 +113,9 @@ bool File::isPathExists(const String &path)
 	if(Win32NativeHelper::get()->getFileAttributes(widePath.c_str(), widePath.length()) == INVALID_FILE_ATTRIBUTES)
 		return false;
 	return true;
+}
+
+SharedPtr<File> File::open(const String &filename)
+{
+	return MakeShared<Win32File>(filename);
 }

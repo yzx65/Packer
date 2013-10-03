@@ -34,6 +34,7 @@ private:
 	size_t ntFreeVirtualMemory_;
 	size_t ntProtectVirtualMemory_;
 	size_t ntCreateFile_;
+	size_t ntWriteFile_;
 	size_t ntClose_;
 	size_t ntCreateSection_;
 	size_t ntMapViewOfSection_;
@@ -55,7 +56,8 @@ public:
 	void freeVirtual(void *baseAddress);
 	void *allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection);
-	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions);
+	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition);
+	size_t writeFile(void *fileHandle, uint8_t *buffer, size_t bufferSize);
 	void closeHandle(void *handle);
 	void *createSection(void *file, uint32_t flProtect, uint64_t sectionSize, wchar_t *lpName, size_t NameLength);
 	void *mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, size_t lpBaseAddress);
