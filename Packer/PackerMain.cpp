@@ -4,7 +4,7 @@
 #include "FormatBase.h"
 #include "PEFormat.h"
 #include "Signature.h"
-#include "Win32Loader.h"
+#include "../Win32Stub/Win32Stub.h"
 
 PackerMain::PackerMain(const Option &option) : option_(option)
 {
@@ -18,9 +18,9 @@ int PackerMain::process()
 	return 0;
 }
 
-List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
+List<Image> PackerMain::loadImport(SharedPtr<FormatBase> input)
 {
-	List<SharedPtr<FormatBase>> result;
+	List<Image> result;
 	for(auto &i : input->getImports())
 	{
 		bool alreadyLoaded = false;
@@ -38,9 +38,9 @@ List<SharedPtr<FormatBase>> PackerMain::loadImport(SharedPtr<FormatBase> input)
 			continue;
 		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input->getFilePath());
 		loadedFiles_.push_back(import->getFileName());
-		result.push_back(import);
+		result.push_back(import->serialize());
 
-		List<SharedPtr<FormatBase>> dependencies = loadImport(import);
+		List<Image> dependencies = loadImport(import);
 		result.insert(result.end(), dependencies.begin(), dependencies.end());
 	}
 
@@ -62,14 +62,27 @@ void PackerMain::processFile(SharedPtr<File> file)
 	input->setFileName(file->getFileName());
 	input->setFilePath(file->getFilePath());
 	loadedFiles_.push_back(input->getFileName());
-	List<SharedPtr<FormatBase>> imports = loadImport(input);
+	List<Image> imports = loadImport(input);
 	
-	//test
-	Image image = input->serialize();
-	Vector<Image> importImages;
-	importImages.reserve(imports.size());
-	for(auto &i : imports)
-		importImages.push_back(i->serialize());
-	Win32Loader loader(image, std::move(importImages));
-	loader.execute();
+	outputPE(input->serialize(), imports);
+}
+
+void PackerMain::outputPE(const Image &image, const List<Image> imports)
+{
+	Image outputImage;
+	outputImage.header = image.header;
+	outputImage.info = image.info;
+	outputImage.nameExportLen = 0;
+
+	Section mainSection;
+	mainSection.baseAddress = WIN32_STUB_MAIN_SECTION_BASE;
+	mainSection.flag = SectionFlagData | SectionFlagRead;
+	mainSection.name = WIN32_STUB_MAIN_SECTION_NAME;
+	outputImage.sections.push_back(mainSection);
+
+	Section importSection;
+	importSection.baseAddress = 0x00200000;
+	importSection.flag = SectionFlagData | SectionFlagRead;
+	importSection.name = WIN32_STUB_IMP_SECTION_NAME;
+	outputImage.sections.push_back(importSection);
 }
