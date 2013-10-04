@@ -6,11 +6,20 @@
 #pragma section(".stage2", write) //stage2 section should start at 0x50000000
 
 __declspec(allocate(".stage2")) size_t entryPoint;
+__declspec(allocate(".stage2")) size_t dataSize;
 __declspec(allocate(".stage2")) uint8_t data[1]; //will be modified by packer
 
 #define STAGE2_SIZE 16777216
 
 uint8_t stage2[STAGE2_SIZE];
+
+inline size_t checkSignature()
+{
+	size_t check = 0;
+	for(size_t i = 0; i < dataSize / 4; i ++)
+		check += reinterpret_cast<uint32_t *>(data)[i];
+	return check;
+}
 
 int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 {
@@ -25,9 +34,15 @@ int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 		int temp = context->Eip;
 		_asm
 		{
-			push cont
+			sub esp, 14h
+			mov ecx, cont
+			mov [esp], ecx
+		}
+		checkSignature();
+		_asm
+		{
 			mov eax, [esp]
-			ret
+			retn 10h
 cont:
 			mov ecx, temp
 			lea ebx, dword ptr stage2
