@@ -12,7 +12,7 @@ __declspec(allocate(".stage2")) uint8_t data[1]; //will be modified by packer
 
 uint8_t stage2[STAGE2_SIZE];
 
-int Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
+int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 {
 	if(context->Eax == reinterpret_cast<size_t>(stage2) && context->Edi == reinterpret_cast<size_t>(data)) //exception while copying
 	{
@@ -25,9 +25,7 @@ int Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 		int temp = context->Eip;
 		_asm
 		{
-			call get_eip
-			jmp cont
-get_eip: //unneeded, just for more complexity.
+			push cont
 			mov eax, [esp]
 			ret
 cont:
