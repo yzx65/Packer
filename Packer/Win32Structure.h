@@ -286,11 +286,6 @@ typedef struct _PEB {
 	FILE_EXECUTE             |\
 	SYNCHRONIZE)
 
-#define MEM_COMMIT                  0x1000      
-#define MEM_RESERVE                 0x2000      
-#define MEM_DECOMMIT                0x4000      
-#define MEM_RELEASE                 0x8000      
-
 #define OBJ_INHERIT             0x00000002L
 #define OBJ_PERMANENT           0x00000010L
 #define OBJ_EXCLUSIVE           0x00000020L

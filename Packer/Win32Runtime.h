@@ -140,3 +140,8 @@ public:
 #define SEC_NOCACHE      0x10000000     
 #define SEC_WRITECOMBINE 0x40000000     
 #define SEC_LARGE_PAGES  0x80000000     
+
+#define MEM_COMMIT                  0x1000      
+#define MEM_RESERVE                 0x2000      
+#define MEM_DECOMMIT                0x4000      
+#define MEM_RELEASE                 0x8000      
