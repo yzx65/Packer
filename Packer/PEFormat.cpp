@@ -321,9 +321,14 @@ const ImageInfo &PEFormat::getInfo() const
 	return info_;
 }
 
-const List<uint64_t> PEFormat::getRelocations() const
+const List<uint64_t> &PEFormat::getRelocations() const
 {
 	return relocations_;
+}
+
+const List<Section> &PEFormat::getSections() const
+{
+	return sections_;
 }
 
 Image PEFormat::serialize()
