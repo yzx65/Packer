@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "Runtime.h"
+#include "Util.h"
 
 template<typename ValueType>
 class Vector
@@ -11,7 +12,7 @@ private:
 	size_t size_;
 	ValueType *data_;
 
-	void resize_(uint32_t size, bool preserve = false)
+	void resize_(uint32_t size, bool preserve)
 	{
 		if(alloc_ <= size)
 		{
@@ -23,11 +24,11 @@ private:
 			if(oldData)
 			{
 				if(preserve)
-					for(size_t i = 0; i < size_; i ++)
-						data_[i] = oldData[i];
+					copyMemory(data_, oldData, sizeof(value_type) * size_);
 				delete [] oldData;
 			}
 		}
+		size_ = size;
 	}
 public:
 	typedef ValueType value_type;
@@ -82,21 +83,15 @@ public:
 	{
 		return data_;
 	}
-
-	void reserve(size_t size)
+	
+	void resize(size_t size)
 	{
 		resize_(size, true);
 	}
 
-	void resize(size_t size)
-	{
-		resize_(size, false);
-		size_ = size;
-	}
-
 	void assign(ValueType *data, size_t size)
 	{
-		resize(size);
+		resize_(size, false);
 		for(size_t i = 0; i < size; i ++)
 			data_[i] = data[i];
 	}
@@ -105,7 +100,7 @@ public:
 	void assign(IteratorType start, IteratorType end)
 	{
 		size_t length = end - start;
-		resize(length);
+		resize_(length, false);
 
 		size_t i = 0;
 		for(IteratorType it = start; it != end; it ++, i ++)
@@ -116,7 +111,7 @@ public:
 	void assign_move(IteratorType start, IteratorType end)
 	{
 		size_t length = end - start;
-		resize(length);
+		resize_(length, false);
 
 		size_t i = 0;
 		for(IteratorType it = start; it != end; it ++, i ++)
@@ -125,41 +120,44 @@ public:
 
 	iterator push_back(const ValueType &data)
 	{
-		reserve(size_ + 1);
-		data_[size_] = data;
-		size_ ++;
+		resize_(size_ + 1, true);
+		data_[size_ - 1] = data;
 
 		return &data_[size_ - 1];
 	}
 
 	iterator push_back(ValueType &&data)
 	{
-		reserve(size_ + 1);
-		data_[size_] = std::move(data);
-		size_ ++;
+		resize_(size_ + 1, true);
+		data_[size_ - 1] = std::move(data);
 
 		return &data_[size_ - 1];
 	}
 
 	void insert(size_t pos, ValueType data)
 	{
-		reserve(size_ + 1);
+		size_t originalSize = size_;
+		resize_(size_ + 1, true);
 
-		for(size_t i = size(); i >= pos + 1; i --)
+		for(size_t i = originalSize; i >= pos + 1; i --)
 			data_[i] = data_[i - 1];
 		data_[pos] = data;
-		size_ ++;
 	}
 
 	void insert(size_t pos, const Vector &data)
 	{
-		reserve(size_ + data.size());
+		size_t originalSize = size_;
+		resize_(size_ + data.size(), true);
 
-		for(size_t i = size(); i >= pos + data.size(); i --)
+		for(size_t i = originalSize + data.size() - 1; i >= pos + data.size(); i --)
 			data_[i] = data_[i - data.size()];
 		for(size_t i = 0; i < data.size(); i ++)
 			data_[i + pos] = data[i];
-		size_ += data.size();
+	}
+
+	void append(const Vector &data)
+	{
+		insert(size_, data);
 	}
 
 	size_t size() const
