@@ -46,7 +46,7 @@ public:
 		return map();
 	}
 
-	size_t getSize() const
+	size_t size() const
 	{
 		return size_;
 	}
