@@ -347,6 +347,21 @@ Image PEFormat::serialize()
 	return image;
 }
 
+void PEFormat::setSections(const List<Section> &sections)
+{
+	sections_ = sections;
+}
+
+void PEFormat::setRelocations(const List<uint64_t> &relocations)
+{
+	relocations_ = relocations;
+}
+
+void PEFormat::setImageInfo(const ImageInfo &info)
+{
+	info_ = info;
+}
+
 bool PEFormat::isSystemLibrary(const String &filename)
 {
 	if(filename.substr(0, 4).icompare("api-") == 0)

@@ -44,5 +44,9 @@ public:
 	virtual const List<uint64_t> &getRelocations() const;
 	virtual const List<Section> &getSections() const;
 
+	virtual void setSections(const List<Section> &sections);
+	virtual void setRelocations(const List<uint64_t> &relocations);
+	virtual void setImageInfo(const ImageInfo &info);
+
 	virtual bool isSystemLibrary(const String &filename);
 };
