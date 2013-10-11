@@ -103,17 +103,7 @@ public:
 
 	List(const List &other)
 	{
-		head_ = new ListNodeBase();
-		head_->next = head_;
-		head_->prev = head_;
-
-		ListNodeBase *item = other.head_->next;
-		while(item != other.head_)
-		{
-			ListNode *item_ = static_cast<ListNode *>(item);
-			push_back(item_->data);
-			item = item->next;
-		}
+		*this = other;
 	}
 
 	List(List &&other) : head_(other.head_)
@@ -151,6 +141,23 @@ public:
 	{
 		head_ = operand.head_;
 		operand.head_ = nullptr;
+
+		return *this;
+	}
+
+	const List &operator =(const List &operand)
+	{
+		head_ = new ListNodeBase();
+		head_->next = head_;
+		head_->prev = head_;
+
+		ListNodeBase *item = operand.head_->next;
+		while(item != operand.head_)
+		{
+			ListNode *item_ = static_cast<ListNode *>(item);
+			push_back(item_->data);
+			item = item->next;
+		}
 
 		return *this;
 	}

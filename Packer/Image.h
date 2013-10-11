@@ -53,6 +53,17 @@ struct Section
 
 		return *this;
 	}
+
+	const Section &operator =(const Section &operand)
+	{
+		name = operand.name;
+		baseAddress = operand.baseAddress;
+		size = operand.size;
+		data = operand.data;
+		flag = operand.flag;
+
+		return *this;
+	}
 	String name;
 	uint64_t baseAddress;
 	uint64_t size;
