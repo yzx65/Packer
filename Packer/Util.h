@@ -38,3 +38,19 @@ inline void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 	for(; i < size; i ++)
 		*(dest + i) = *(src + i); //remaining
 }
+
+template<typename DestinationType>
+inline void zeroMemory(DestinationType *dest_, size_t size)
+{
+	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
+	if(!size)
+		return;
+	size_t i;
+	for(i = 0; i < reinterpret_cast<size_t>(dest) % sizeof(size_t); i ++)
+		*(dest + i) = 0; //align to boundary
+	if(i > sizeof(size_t))
+		for(; i < size - sizeof(size_t); i += sizeof(size_t))
+			*reinterpret_cast<size_t *>(dest + i) = 0;
+	for(; i < size; i ++)
+		*(dest + i) = 0; //remaining
+}
