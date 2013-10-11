@@ -25,5 +25,5 @@ public:
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size);
 	virtual uint8_t *map(uint64_t offset);
 	virtual void unmap();
-	virtual void write(const Vector<uint8_t> &data);
+	virtual void write(uint8_t *data, size_t size);
 };

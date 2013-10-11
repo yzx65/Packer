@@ -73,9 +73,9 @@ void *Win32File::getHandle()
 	return fileHandle_;
 }
 
-void Win32File::write(const Vector<uint8_t> &data)
+void Win32File::write(uint8_t *data, size_t size)
 {
-	Win32NativeHelper::get()->writeFile(fileHandle_, data.get(), data.size());
+	Win32NativeHelper::get()->writeFile(fileHandle_, data, size);
 }
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
