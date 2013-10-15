@@ -47,7 +47,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	size_t offset;
 	size_t headerSize;
 	SharedPtr<DataView> view = source->getView(0, 0);
-	uint8_t *data = view->get();
+	uint8_t *data = view->map();
 
 	dosHeader = getStructureAtOffset<IMAGE_DOS_HEADER>(data, 0);
 	if(!dosHeader->e_lfanew)
@@ -141,7 +141,7 @@ uint8_t *PEFormat::getDataPointerOfRVA(uint32_t rva)
 {
 	for(auto &section : sections_)
 		if(rva >= section.baseAddress && rva < section.baseAddress + section.size)
-			return section.data->get() + rva - section.baseAddress;
+			return section.data->map() + rva - section.baseAddress;
 	return nullptr;
 }
 
@@ -238,7 +238,7 @@ String PEFormat::checkExportForwarder(uint64_t address)
 	if(address >= exportTableBase_ && address < exportTableBase_ + exportTableSize_)
 		for(auto &i : sections_)
 			if(address >= i.baseAddress && address < i.baseAddress + i.size)
-				return String(reinterpret_cast<const char *>(i.data->get() + static_cast<uint32_t>(address - i.baseAddress)));
+				return String(reinterpret_cast<const char *>(i.data->map() + static_cast<uint32_t>(address - i.baseAddress)));
 	return String();
 }
 

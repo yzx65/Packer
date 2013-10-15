@@ -41,11 +41,6 @@ public:
 		return baseAddress_;
 	}
 
-	uint8_t *get()
-	{
-		return map();
-	}
-
 	size_t size() const
 	{
 		return size_;
@@ -56,12 +51,15 @@ class MemoryDataSource : public DataSource, public EnableSharedFromThis<MemoryDa
 {
 private:
 	uint8_t *memory_;
+	size_t size_;
 public:
-	MemoryDataSource(uint8_t *memory) : memory_(memory) {}
+	MemoryDataSource(uint8_t *memory, size_t size = 0) : memory_(memory), size_(size) {}
 	virtual ~MemoryDataSource() {}
 
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size)
 	{
+		if(size == 0)
+			size = size_;
 		return MakeShared<DataView>(sharedFromThis(), offset, size);
 	}
 

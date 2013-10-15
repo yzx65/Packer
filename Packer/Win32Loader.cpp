@@ -26,10 +26,10 @@ uint8_t *Win32Loader::mapImage(Image &image)
 	if(!image.relocations.size())
 		desiredAddress = image.info.baseAddress;
 	uint8_t *baseAddress = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(desiredAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
-	copyMemory(baseAddress, image.header->get(), image.header->size());
+	copyMemory(baseAddress, image.header->map(), image.header->size());
 
 	for(auto &i : image.sections)
-		copyMemory(baseAddress + i.baseAddress, i.data->get(), i.data->size());
+		copyMemory(baseAddress + i.baseAddress, i.data->map(), i.data->size());
 
 	int64_t diff = -static_cast<int64_t>(image.info.baseAddress) + reinterpret_cast<int64_t>(baseAddress);
 	for(auto &j : image.relocations)

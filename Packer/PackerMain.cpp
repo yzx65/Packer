@@ -52,7 +52,7 @@ void PackerMain::processFile(SharedPtr<File> file)
 	SharedPtr<FormatBase> input;
 	{
 		SharedPtr<DataView> view = file->getView(0, 0);
-		uint8_t *fileData = view->get();
+		uint8_t *fileData = view->map();
 		if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
 			input = MakeShared<PEFormat>();
 		else
