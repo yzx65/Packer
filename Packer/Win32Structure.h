@@ -295,3 +295,124 @@ typedef struct _PEB {
 #define OBJ_KERNEL_HANDLE       0x00000200L
 #define OBJ_FORCE_ACCESS_CHECK  0x00000400L
 #define OBJ_VALID_ATTRIBUTES    0x000007F2L
+
+
+#define EXCEPTION_MAXIMUM_PARAMETERS 15 // maximum number of exception parameters
+typedef struct _EXCEPTION_RECORD {
+	uint32_t    ExceptionCode;
+	uint32_t ExceptionFlags;
+	struct _EXCEPTION_RECORD *ExceptionRecord;
+	void *ExceptionAddress;
+	uint32_t NumberParameters;
+	size_t *ExceptionInformation[EXCEPTION_MAXIMUM_PARAMETERS];
+} EXCEPTION_RECORD;
+
+
+#define SIZE_OF_80387_REGISTERS      80
+typedef struct _FLOATING_SAVE_AREA {
+	uint32_t   ControlWord;
+	uint32_t   StatusWord;
+	uint32_t   TagWord;
+	uint32_t   ErrorOffset;
+	uint32_t   ErrorSelector;
+	uint32_t   DataOffset;
+	uint32_t   DataSelector;
+	uint8_t    RegisterArea[SIZE_OF_80387_REGISTERS];
+	uint32_t   Cr0NpxState;
+} FLOATING_SAVE_AREA;
+
+
+#define MAXIMUM_SUPPORTED_EXTENSION     512
+typedef struct _CONTEXT {
+
+	//
+	// The flags values within this flag control the contents of
+	// a CONTEXT record.
+	//
+	// If the context record is used as an input parameter, then
+	// for each portion of the context record controlled by a flag
+	// whose value is set, it is assumed that that portion of the
+	// context record contains valid context. If the context record
+	// is being used to modify a threads context, then only that
+	// portion of the threads context will be modified.
+	//
+	// If the context record is used as an IN OUT parameter to capture
+	// the context of a thread, then only those portions of the thread's
+	// context corresponding to set flags will be returned.
+	//
+	// The context record is never used as an OUT only parameter.
+	//
+
+	uint32_t ContextFlags;
+
+	//
+	// This section is specified/returned if CONTEXT_DEBUG_REGISTERS is
+	// set in ContextFlags.  Note that CONTEXT_DEBUG_REGISTERS is NOT
+	// included in CONTEXT_FULL.
+	//
+
+	uint32_t   Dr0;
+	uint32_t   Dr1;
+	uint32_t   Dr2;
+	uint32_t   Dr3;
+	uint32_t   Dr6;
+	uint32_t   Dr7;
+
+	//
+	// This section is specified/returned if the
+	// ContextFlags word contians the flag CONTEXT_FLOATING_POINT.
+	//
+
+	FLOATING_SAVE_AREA FloatSave;
+
+	//
+	// This section is specified/returned if the
+	// ContextFlags word contians the flag CONTEXT_SEGMENTS.
+	//
+
+	uint32_t   SegGs;
+	uint32_t   SegFs;
+	uint32_t   SegEs;
+	uint32_t   SegDs;
+
+	//
+	// This section is specified/returned if the
+	// ContextFlags word contians the flag CONTEXT_INTEGER.
+	//
+
+	uint32_t   Edi;
+	uint32_t   Esi;
+	uint32_t   Ebx;
+	uint32_t   Edx;
+	uint32_t   Ecx;
+	uint32_t   Eax;
+
+	//
+	// This section is specified/returned if the
+	// ContextFlags word contians the flag CONTEXT_CONTROL.
+	//
+
+	uint32_t   Ebp;
+	uint32_t   Eip;
+	uint32_t   SegCs;              // MUST BE SANITIZED
+	uint32_t   EFlags;             // MUST BE SANITIZED
+	uint32_t   Esp;
+	uint32_t   SegSs;
+
+	//
+	// This section is specified/returned if the ContextFlags word
+	// contains the flag CONTEXT_EXTENDED_REGISTERS.
+	// The format and contexts are processor specific
+	//
+
+	uint8_t    ExtendedRegisters[MAXIMUM_SUPPORTED_EXTENSION];
+
+} CONTEXT;
+
+
+typedef enum _EXCEPTION_DISPOSITION {
+	ExceptionContinueExecution,
+	ExceptionContinueSearch,
+	ExceptionNestedException,
+	ExceptionCollidedUnwind
+} EXCEPTION_DISPOSITION;

@@ -1,13 +1,10 @@
 #include <cstdint>
-#include <windows.h>
+#include "../Win32Stub.h"
+#include "../../Packer/Win32Structure.h"
+#include "../../Packer/PEHeader.h"
+#include <intrin.h>
 
 #pragma warning(disable:4733) //we don't use safeseh.
-
-#pragma section(".stage2", write) //stage2 section should start at 0x50000000
-
-__declspec(allocate(".stage2")) size_t entryPoint;
-__declspec(allocate(".stage2")) size_t dataSize;
-__declspec(allocate(".stage2")) uint8_t data[1]; //will be modified by packer
 
 #define STAGE2_SIZE 2097152
 
@@ -94,24 +91,20 @@ uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedData)
 	return resultSize;
 }
 
-inline size_t checkSignature()
+inline int unneededCopy(const uint8_t *src, uint8_t *dst)
 {
-	size_t check = 0;
-	for(size_t i = 0; i < dataSize / 4; i ++)
-		check += reinterpret_cast<uint32_t *>(data)[i];
-	return check;
+	for(size_t i = 0; i < 1000; i ++)
+		dst[i] = src[i];
+	return src[0];
 }
 
 int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 {
-	if(context->Eax == reinterpret_cast<size_t>(stage2) && context->Edi == reinterpret_cast<size_t>(data)) //exception while copying
+	if(!context)
+		return 0;
+	if(context->Ecx == 0)
 	{
-		context->Esi = 0;
-		context->Ecx = 0; //reset counter to exit
-		return ExceptionContinueExecution;
-	}
-	if(context->Ecx == 0) //initialize copy, move start address to ecx
-	{
+		size_t stage2Data = context->Edi;
 		int temp = context->Eip;
 		_asm
 		{
@@ -119,7 +112,11 @@ int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 			mov ecx, cont
 			mov [esp], ecx
 		}
-		checkSignature();
+		if(reinterpret_cast<uint32_t>(record->ExceptionAddress) == context->Eip)
+		{
+			Handler(record, 0, nullptr, 0);
+			unneededCopy(stage2, reinterpret_cast<uint8_t *>(stage2Data));
+		}
 		_asm
 		{
 			mov eax, [esp]
@@ -127,39 +124,40 @@ int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 cont:
 			mov ecx, temp
 			lea ebx, dword ptr stage2
+			mov edx, [stage2Data]
 			mov [eax], ebx //re-trigger exception handler, start copy
 
 			mov eax, fs:[0] //top level exception handler
 			mov eax, [eax] //next exception handler
 			mov fs:[0], eax //remove this exception handler
 		}
+		Win32StubStage2Header *header = reinterpret_cast<Win32StubStage2Header *>(stage2);
+		if(header->magic != WIN32_STUB_STAGE2_MAGIC || buildSignature(stage2 + sizeof(Win32StubStage2Header), header->imageSize) != header->signature)
+			return ExceptionContinueSearch;
+
+		context->Eip = reinterpret_cast<size_t>(stage2 + sizeof(Win32StubStage2Header) + header->entryPoint);
 		return ExceptionContinueExecution; //continue to stage2 code
 	}
-	uint8_t *ptr = reinterpret_cast<uint8_t *>(context->Ecx);
-	if(*ptr != 0)
-		return ExceptionContinueSearch;
 
-	_asm
-	{
-		mov ecx, 1 //loop initialization
-		lea eax, stage2
-		lea edi, data
-		mov edx, STAGE2_SIZE
-copy_loop:
-		mov esi, ecx
-		dec esi
-		mov ebx, [edi + esi]
-		mov [eax + esi], ebx //copy from data to stage2.
-		cmp ecx, 0 //ecx is zero only if exception occurred.
-		jz quit
-		inc ecx
-		cmp edx, ecx //end reached
-		jg copy_loop
-	}
-
-quit:
-	context->Eax = reinterpret_cast<size_t>(data); //don't trigger exception again.
+	decompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
+	context->Eax = context->Edx; //don't trigger exception again.
 	return ExceptionContinueExecution;
+}
+
+size_t getStage2DataAddress()
+{
+	uint32_t pebAddress;
+#ifndef __WIN64 
+	pebAddress = __readfsdword(0x30);
+#elif defined(__WIN32)
+	pebAddress = __readgsqword(0x60);
+#endif
+	PEB *peb = reinterpret_cast<PEB *>(pebAddress);
+	LDR_MODULE *myModule = reinterpret_cast<LDR_MODULE *>(peb->LoaderData->InLoadOrderModuleList.Flink);
+	uint8_t *myBase = reinterpret_cast<uint8_t *>(myModule->BaseAddress);
+
+	IMAGE_DOS_HEADER *dosHeader = reinterpret_cast<IMAGE_DOS_HEADER *>(myBase);
+	return 0;
 }
 
 int __declspec(naked) Entry()
@@ -170,10 +168,9 @@ int __declspec(naked) Entry()
 		push fs:[0]
 		mov fs:[0], esp //set exception handler
 
-		lea edx, stage2
-		add edx, entryPoint
-		xor eax, eax
+		call getStage2DataAddress
+		mov edi, eax
 		xor ecx, ecx
-		jmp edx //triggers an exception
+		in eax, 4
 	}
 }

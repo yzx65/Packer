@@ -108,8 +108,6 @@ void Entry()
 	SharedPtr<Win32File> stage2 = MakeShared<Win32File>(*it ++);
 	SharedPtr<Win32File> result = MakeShared<Win32File>(*it ++, true);
 
-	PEFormat stage1Format;
-	stage1Format.load(stage1, false);
 	PEFormat stage2Format;
 	stage2Format.load(stage2, false);
 
@@ -129,7 +127,29 @@ void Entry()
 	stage2Header->magic = WIN32_STUB_STAGE2_MAGIC;
 	stage2Header->imageSize = static_cast<size_t>(stage2Format.getInfo().size);
 	stage2Header->numberOfRelocations = stage2Format.getRelocations().size();
+	stage2Header->entryPoint = static_cast<size_t>(stage2Format.getInfo().entryPoint);
 
 	Vector<uint8_t> compressedStage2 = compress(data);
+	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 
+	SharedPtr<MemoryDataSource> compressedStage2Source = MakeShared<MemoryDataSource>(compressedStage2.get());
+
+	//create PE
+	PEFormat resultFormat;
+	resultFormat.load(stage1, false);
+	List<Section> resultSections(resultFormat.getSections());
+
+	size_t lastAddress = 0;
+	for(auto i : resultSections)
+		lastAddress = i.baseAddress + i.size;
+
+	Section stage2Section;
+	stage2Section.baseAddress = multipleOf(lastAddress, 0x10000);
+	stage2Section.size = compressedStage2.size();
+	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
+	stage2Section.flag = SectionFlagData | SectionFlagRead;
+	stage2Section.data = compressedStage2Source->getView(0, 0);
+	resultSections.push_back(stage2Section);
+
+	resultFormat.setSections(resultSections);
 }

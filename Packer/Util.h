@@ -54,3 +54,8 @@ inline void zeroMemory(DestinationType *dest_, size_t size)
 	for(; i < size; i ++)
 		*(dest + i) = 0; //remaining
 }
+
+inline size_t multipleOf(size_t value, size_t n)
+{
+	return ((value + n - 1) / n) * n;
+}
