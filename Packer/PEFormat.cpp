@@ -102,7 +102,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 		if(sectionHeaders[i].Characteristics & IMAGE_SCN_CNT_INITIALIZED_DATA)
 			section.flag |= SectionFlagData;
 		if(sectionHeaders[i].Characteristics & IMAGE_SCN_CNT_UNINITIALIZED_DATA)
-			section.flag |= SectionFlagData;
+			section.flag |= SectionFlagUninitializedData;
 		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_READ)
 			section.flag |= SectionFlagRead;
 		if(sectionHeaders[i].Characteristics & IMAGE_SCN_MEM_WRITE)

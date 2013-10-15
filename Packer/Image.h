@@ -34,9 +34,10 @@ enum SectionFlag
 {
 	SectionFlagCode = 1,
 	SectionFlagData = 2,
-	SectionFlagRead = 4,
-	SectionFlagWrite = 8,
-	SectionFlagExecute = 16,
+	SectionFlagUninitializedData = 4,
+	SectionFlagRead = 8,
+	SectionFlagWrite = 16,
+	SectionFlagExecute = 32,
 };
 
 struct Section
