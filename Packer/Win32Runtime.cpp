@@ -282,9 +282,9 @@ void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filen
 	return result;
 }
 
-size_t Win32NativeHelper::writeFile(void *fileHandle, uint8_t *buffer, size_t bufferSize)
+size_t Win32NativeHelper::writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize)
 {
-	typedef int32_t (__stdcall *NtWriteFilePtr)(void *fileHandle, void *event, void *, void *, IO_STATUS_BLOCK *statusBlock, void *buffer, size_t length, LARGE_INTEGER *byteOffset, size_t *key);
+	typedef int32_t (__stdcall *NtWriteFilePtr)(void *fileHandle, void *event, void *, void *, IO_STATUS_BLOCK *statusBlock, const void *buffer, size_t length, LARGE_INTEGER *byteOffset, size_t *key);
 
 	IO_STATUS_BLOCK statusBlock;
 	reinterpret_cast<NtWriteFilePtr>(ntWriteFile_)(fileHandle, nullptr, nullptr, nullptr, &statusBlock, buffer, bufferSize, nullptr, nullptr);

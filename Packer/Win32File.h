@@ -10,7 +10,8 @@ private:
 	void *mapHandle_;
 	uint8_t *mapAddress_;
 	int mapCounter_;
-	void open(const String &filename, bool write);
+	bool write_;
+	void open(const String &filename);
 	void close();
 	String fileName_;
 	String filePath_;
@@ -25,5 +26,5 @@ public:
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size);
 	virtual uint8_t *map(uint64_t offset);
 	virtual void unmap();
-	virtual void write(uint8_t *data, size_t size);
+	virtual void write(const uint8_t *data, size_t size);
 };

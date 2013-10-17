@@ -4,9 +4,9 @@
 
 #include "Win32Runtime.h"
 
-Win32File::Win32File(const String &filename, bool write) : mapCounter_(0)
+Win32File::Win32File(const String &filename, bool write) : mapCounter_(0), write_(write), mapHandle_(INVALID_HANDLE_VALUE)
 {
-	open(filename, write);
+	open(filename);
 }
 
 Win32File::~Win32File()
@@ -14,7 +14,7 @@ Win32File::~Win32File()
 	close();
 }
 
-void Win32File::open(const String &filename, bool write)
+void Win32File::open(const String &filename)
 {
 	WString wFileName = StringToWString(filename);
 	WString fullPath;
@@ -40,7 +40,7 @@ void Win32File::open(const String &filename, bool write)
 	int access = GENERIC_READ;
 	int disposition = FILE_OPEN;
 
-	if(write)
+	if(write_)
 	{
 		access |= GENERIC_WRITE;
 		disposition = FILE_OVERWRITE_IF;
@@ -49,7 +49,6 @@ void Win32File::open(const String &filename, bool write)
 	fileHandle_ = Win32NativeHelper::get()->createFile(access, fullPath.c_str(), fullPath.length(), FILE_SHARE_READ, disposition);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
-	mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, PAGE_READONLY, 0, nullptr, 0);
 }
 
 void Win32File::close() 
@@ -73,7 +72,7 @@ void *Win32File::getHandle()
 	return fileHandle_;
 }
 
-void Win32File::write(uint8_t *data, size_t size)
+void Win32File::write(const uint8_t *data, size_t size)
 {
 	Win32NativeHelper::get()->writeFile(fileHandle_, data, size);
 }
@@ -85,8 +84,21 @@ SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
 
 uint8_t *Win32File::map(uint64_t offset)
 {
+	if(mapHandle_ == INVALID_HANDLE_VALUE)
+	{
+		int sectionProtect = PAGE_READONLY;
+		if(write_)
+			sectionProtect = PAGE_READWRITE;
+		mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, sectionProtect, 0, nullptr, 0);
+	}
+
 	if(mapCounter_ == 0)
-		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, FILE_MAP_READ, 0, 0, 0));
+	{
+		uint32_t access = FILE_MAP_READ;
+		if(write_)
+			access = FILE_MAP_READ | FILE_MAP_WRITE;
+		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, access, 0, 0, 0));
+	}
 
 	mapCounter_ ++;
 	return mapAddress_ + offset;
