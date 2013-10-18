@@ -377,6 +377,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	List<IMAGE_SECTION_HEADER> sectionHeaders;
 	Map<uint32_t, uint32_t> rawDataMap;
 
+	uint32_t imageSize = 0;
 	uint32_t dataOffset = 0x1000;
 	for(auto i : sections_)
 	{
@@ -404,6 +405,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 		sectionHeaders.push_back(sectionHeader);
 		rawDataMap.insert(sectionHeader.VirtualAddress, dataOffset);
 		dataOffset += multipleOf(sectionHeader.SizeOfRawData, 0x1000);
+		imageSize = sectionHeader.VirtualAddress + sectionHeader.VirtualSize;
 	}
 
 	//2. Write headers
@@ -428,7 +430,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER32 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER32));
-		optionalHeader.SizeOfImage = dataOffset;
+		optionalHeader.SizeOfImage = imageSize;
 
 		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER32)); offset += sizeof(IMAGE_OPTIONAL_HEADER32);
 	}
@@ -436,7 +438,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER64 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER64));
-		optionalHeader.SizeOfImage = dataOffset;
+		optionalHeader.SizeOfImage = imageSize;
 
 		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER64)); offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
