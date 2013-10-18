@@ -3,6 +3,7 @@
 #include "Signature.h"
 #include "PEHeader.h"
 #include "Util.h"
+#include "Map.h"
 
 #ifdef _WIN32
 #include "Win32Runtime.h" //for path search.
@@ -360,6 +361,99 @@ void PEFormat::setRelocations(const List<uint64_t> &relocations)
 void PEFormat::setImageInfo(const ImageInfo &info)
 {
 	info_ = info;
+}
+
+size_t PEFormat::estimateSize()
+{
+	size_t size = 0x1000;
+	for(auto i : sections_)
+		size += multipleOf(i.data->size(), 0x1000);
+	return size;
+}
+
+void PEFormat::save(SharedPtr<DataSource> target)
+{
+	//1. Preparation
+	List<IMAGE_SECTION_HEADER> sectionHeaders;
+	Map<uint32_t, uint32_t> rawDataMap;
+
+	uint32_t dataOffset = 0x1000;
+	for(auto i : sections_)
+	{
+		IMAGE_SECTION_HEADER sectionHeader;
+		zeroMemory(&sectionHeader, sizeof(sectionHeader));
+		copyMemory(sectionHeader.Name, &i.name[0], i.name.length() + 1);
+		sectionHeader.VirtualAddress = static_cast<uint32_t>(i.baseAddress);
+		sectionHeader.VirtualSize = static_cast<uint32_t>(i.size);
+		sectionHeader.PointerToRawData = dataOffset;
+		sectionHeader.SizeOfRawData = i.data->size();
+		sectionHeader.Characteristics = 0;
+		if(i.flag & SectionFlagData)
+			sectionHeader.Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
+		if(i.flag & SectionFlagUninitializedData)
+			sectionHeader.Characteristics |= IMAGE_SCN_CNT_UNINITIALIZED_DATA;
+		if(i.flag & SectionFlagCode)
+			sectionHeader.Characteristics |= IMAGE_SCN_CNT_CODE;
+		if(i.flag & SectionFlagRead)
+			sectionHeader.Characteristics |= IMAGE_SCN_MEM_READ;
+		if(i.flag & SectionFlagWrite)
+			sectionHeader.Characteristics |= IMAGE_SCN_MEM_WRITE;
+		if(i.flag & SectionFlagExecute)
+			sectionHeader.Characteristics |= IMAGE_SCN_MEM_EXECUTE;
+
+		sectionHeaders.push_back(sectionHeader);
+		rawDataMap.insert(sectionHeader.VirtualAddress, dataOffset);
+		dataOffset += multipleOf(sectionHeader.SizeOfRawData, 0x1000);
+	}
+
+	//2. Write headers
+	uint8_t *originalHeader = header_->map();
+	uint8_t *targetMap = target->map(0);
+	IMAGE_DOS_HEADER *dosHeader = getStructureAtOffset<IMAGE_DOS_HEADER>(originalHeader, 0);
+	IMAGE_FILE_HEADER fileHeader;
+	IMAGE_OPTIONAL_HEADER_BASE optionalHeaderBase;
+	const uint32_t ntSignature = IMAGE_NT_SIGNATURE;
+
+	copyMemory(&fileHeader, getStructureAtOffset<IMAGE_FILE_HEADER>(originalHeader, dosHeader->e_lfanew + sizeof(uint32_t)), sizeof(IMAGE_FILE_HEADER));
+	copyMemory(&optionalHeaderBase, getStructureAtOffset<IMAGE_OPTIONAL_HEADER_BASE>(originalHeader, dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER)), sizeof(IMAGE_OPTIONAL_HEADER_BASE));
+
+	fileHeader.NumberOfSections = sections_.size();
+
+	size_t offset = 0;
+	copyMemory(targetMap, originalHeader, dosHeader->e_lfanew); offset += dosHeader->e_lfanew;
+	copyMemory(targetMap + offset, &ntSignature, sizeof(ntSignature)); offset += sizeof(ntSignature);
+	copyMemory(targetMap + offset, &fileHeader, sizeof(IMAGE_FILE_HEADER)); offset += sizeof(IMAGE_FILE_HEADER);
+
+	if(info_.architecture == ArchitectureWin32)
+	{
+		IMAGE_OPTIONAL_HEADER32 optionalHeader;
+		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER32));
+		optionalHeader.SizeOfImage = dataOffset;
+
+		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER32)); offset += sizeof(IMAGE_OPTIONAL_HEADER32);
+	}
+	else if(info_.architecture == ArchitectureWin32AMD64)
+	{
+		IMAGE_OPTIONAL_HEADER64 optionalHeader;
+		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER64));
+		optionalHeader.SizeOfImage = dataOffset;
+
+		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER64)); offset += sizeof(IMAGE_OPTIONAL_HEADER64);
+	}
+	
+	for(auto i : sectionHeaders)
+	{
+		copyMemory(targetMap + offset, &i, sizeof(IMAGE_SECTION_HEADER)); 
+		offset += sizeof(IMAGE_SECTION_HEADER);
+	}
+
+	for(auto i : sections_)
+	{
+		dataOffset = rawDataMap[static_cast<uint32_t>(i.baseAddress)];
+		copyMemory(targetMap + dataOffset, i.data->map(), i.data->size());
+	}
+
+	target->unmap();
 }
 
 bool PEFormat::isSystemLibrary(const String &filename)

@@ -141,15 +141,23 @@ void Entry()
 
 	size_t lastAddress = 0;
 	for(auto i : resultSections)
-		lastAddress = i.baseAddress + i.size;
+		lastAddress = static_cast<size_t>(i.baseAddress + i.size);
 
 	Section stage2Section;
 	stage2Section.baseAddress = multipleOf(lastAddress, 0x10000);
 	stage2Section.size = compressedStage2.size();
 	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
 	stage2Section.flag = SectionFlagData | SectionFlagRead;
-	stage2Section.data = compressedStage2Source->getView(0, 0);
+	stage2Section.data = compressedStage2Source->getView(0, compressedStage2.size());
 	resultSections.push_back(stage2Section);
 
 	resultFormat.setSections(resultSections);
+
+	uint8_t *resultData = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, resultFormat.estimateSize(), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	SharedPtr<MemoryDataSource> resultDataSource = MakeShared<MemoryDataSource>(resultData);
+	resultFormat.save(resultDataSource);
+
+	result->write(resultData, resultFormat.estimateSize());
+
+	Win32NativeHelper::get()->freeVirtual(resultData);
 }
