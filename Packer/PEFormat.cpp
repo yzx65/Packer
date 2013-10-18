@@ -365,9 +365,9 @@ void PEFormat::setImageInfo(const ImageInfo &info)
 
 size_t PEFormat::estimateSize()
 {
-	size_t size = 0x1000;
+	size_t size = 0x400;
 	for(auto i : sections_)
-		size += multipleOf(i.data->size(), 0x1000);
+		size += multipleOf(i.data->size(), 0x100);
 	return size;
 }
 
@@ -378,7 +378,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	Map<uint32_t, uint32_t> rawDataMap;
 
 	uint32_t imageSize = 0;
-	uint32_t dataOffset = 0x1000;
+	uint32_t dataOffset = 0x400;
 	for(auto i : sections_)
 	{
 		IMAGE_SECTION_HEADER sectionHeader;
@@ -386,8 +386,11 @@ void PEFormat::save(SharedPtr<DataSource> target)
 		copyMemory(sectionHeader.Name, &i.name[0], i.name.length() + 1);
 		sectionHeader.VirtualAddress = static_cast<uint32_t>(i.baseAddress);
 		sectionHeader.VirtualSize = static_cast<uint32_t>(i.size);
-		sectionHeader.PointerToRawData = dataOffset;
-		sectionHeader.SizeOfRawData = i.data->size();
+		sectionHeader.SizeOfRawData = multipleOf(i.data->size(), 0x100);
+		if(sectionHeader.SizeOfRawData)
+			sectionHeader.PointerToRawData = dataOffset;
+		else
+			sectionHeader.PointerToRawData = 0;
 		sectionHeader.Characteristics = 0;
 		if(i.flag & SectionFlagData)
 			sectionHeader.Characteristics |= IMAGE_SCN_CNT_INITIALIZED_DATA;
@@ -404,7 +407,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 
 		sectionHeaders.push_back(sectionHeader);
 		rawDataMap.insert(sectionHeader.VirtualAddress, dataOffset);
-		dataOffset += multipleOf(sectionHeader.SizeOfRawData, 0x1000);
+		dataOffset += multipleOf(sectionHeader.SizeOfRawData, 0x100);
 		imageSize = sectionHeader.VirtualAddress + sectionHeader.VirtualSize;
 	}
 
