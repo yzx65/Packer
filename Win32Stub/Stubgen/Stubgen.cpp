@@ -6,8 +6,6 @@
 
 #include "../Win32Stub.h"
 
-#include <limits>
-
 Vector<uint8_t> encodeSize(uint8_t flag, uint32_t number)
 {
 	//f1xxxxxx
@@ -36,7 +34,7 @@ Vector<uint8_t> encodeSize(uint8_t flag, uint32_t number)
 		result.push_back((number >> 8) & 0xff);
 		result.push_back(number & 0xff);
 	}
-	else if(number < std::numeric_limits<uint32_t>::max())
+	else if(number < 0xFFFFFFFF)
 	{
 		result.push_back((flag << 7) | ((number & 0x07000000) >> 24));
 		result.push_back((number >> 24) & 0xff);
