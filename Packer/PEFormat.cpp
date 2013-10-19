@@ -377,6 +377,8 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	List<IMAGE_SECTION_HEADER> sectionHeaders;
 	Map<uint32_t, uint32_t> rawDataMap;
 
+	const uint32_t sectionAlignment = 0x1000;
+	const uint32_t fileAlignment = 0x200;
 	uint32_t imageSize = 0;
 	uint32_t dataOffset = 0x400;
 	for(auto i : sections_)
@@ -386,7 +388,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 		copyMemory(sectionHeader.Name, &i.name[0], i.name.length() + 1);
 		sectionHeader.VirtualAddress = static_cast<uint32_t>(i.baseAddress);
 		sectionHeader.VirtualSize = static_cast<uint32_t>(i.size);
-		sectionHeader.SizeOfRawData = multipleOf(i.data->size(), 0x100);
+		sectionHeader.SizeOfRawData = multipleOf(i.data->size(), fileAlignment);
 		if(sectionHeader.SizeOfRawData)
 			sectionHeader.PointerToRawData = dataOffset;
 		else
@@ -407,7 +409,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 
 		sectionHeaders.push_back(sectionHeader);
 		rawDataMap.insert(sectionHeader.VirtualAddress, dataOffset);
-		dataOffset += multipleOf(sectionHeader.SizeOfRawData, 0x100);
+		dataOffset += multipleOf(sectionHeader.SizeOfRawData, fileAlignment);
 		imageSize = sectionHeader.VirtualAddress + sectionHeader.VirtualSize;
 	}
 
@@ -433,7 +435,9 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER32 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER32));
-		optionalHeader.SizeOfImage = imageSize;
+		optionalHeader.SizeOfImage = multipleOf(imageSize, sectionAlignment);
+		optionalHeader.FileAlignment = fileAlignment;
+		optionalHeader.SectionAlignment = sectionAlignment;
 
 		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER32)); offset += sizeof(IMAGE_OPTIONAL_HEADER32);
 	}
@@ -441,7 +445,9 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER64 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER64));
-		optionalHeader.SizeOfImage = imageSize;
+		optionalHeader.SizeOfImage = multipleOf(imageSize, sectionAlignment);
+		optionalHeader.FileAlignment = fileAlignment;
+		optionalHeader.SectionAlignment = sectionAlignment;
 
 		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER64)); offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}

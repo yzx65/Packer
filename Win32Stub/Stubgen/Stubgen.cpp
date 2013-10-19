@@ -142,7 +142,7 @@ void Entry()
 		lastAddress = static_cast<size_t>(i.baseAddress + i.size);
 
 	Section stage2Section;
-	stage2Section.baseAddress = multipleOf(lastAddress, 0x10000);
+	stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
 	stage2Section.size = multipleOf(compressedStage2.size(), 0x100);
 	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
 	stage2Section.flag = SectionFlagData | SectionFlagRead;
