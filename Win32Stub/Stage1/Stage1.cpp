@@ -8,6 +8,7 @@
 
 #define STAGE2_SIZE 2097152
 
+uint32_t unused;
 uint8_t stage2[STAGE2_SIZE];
 
 const uint8_t *decodeSize(const uint8_t *ptr, uint8_t *flag, uint32_t *size)
@@ -91,7 +92,7 @@ uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedData)
 	return resultSize;
 }
 
-inline int unneededCopy(const uint8_t *src, uint8_t *dst)
+inline int unneededCopy(uint8_t *dst, const uint8_t *src)
 {
 	for(size_t i = 0; i < 1000; i ++)
 		dst[i] = src[i];
@@ -140,16 +141,16 @@ cont:
 	}
 
 	decompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
-	context->Eax = context->Edx; //don't trigger exception again.
+	context->Eax = reinterpret_cast<size_t>(&unused); //don't trigger exception again.
 	return ExceptionContinueExecution;
 }
 
 size_t getStage2DataAddress()
 {
 	uint32_t pebAddress;
-#ifndef __WIN64 
+#ifndef _WIN64 
 	pebAddress = __readfsdword(0x30);
-#elif defined(__WIN32)
+#elif defined(_WIN32)
 	pebAddress = __readgsqword(0x60);
 #endif
 	PEB *peb = reinterpret_cast<PEB *>(pebAddress);
@@ -157,6 +158,22 @@ size_t getStage2DataAddress()
 	uint8_t *myBase = reinterpret_cast<uint8_t *>(myModule->BaseAddress);
 
 	IMAGE_DOS_HEADER *dosHeader = reinterpret_cast<IMAGE_DOS_HEADER *>(myBase);
+#ifndef _WIN64
+	IMAGE_NT_HEADERS32 *ntHeader = reinterpret_cast<IMAGE_NT_HEADERS32 *>(myBase + dosHeader->e_lfanew);
+#elif defined(_WIN32)
+	IMAGE_NT_HEADERS64 *ntHeader = reinterpret_cast<IMAGE_NT_HEADERS64 *>(myBase + dosHeader->e_lfanew);
+#endif
+	IMAGE_SECTION_HEADER *sectionHeader = reinterpret_cast<IMAGE_SECTION_HEADER *>(myBase + dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + ntHeader->FileHeader.SizeOfOptionalHeader);
+	char stage2Name[] = WIN32_STUB_STAGE2_SECTION_NAME;
+	for(int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++ i)
+	{
+		int j;
+		for(j = 0; sectionHeader[i].Name[j] != 0; ++ j)
+			if(sectionHeader[i].Name[j] != stage2Name[j])
+				break;
+		if(sectionHeader[i].Name[j] == stage2Name[j])
+			return sectionHeader[i].VirtualAddress + reinterpret_cast<size_t>(myBase);
+	}
 	return 0;
 }
 

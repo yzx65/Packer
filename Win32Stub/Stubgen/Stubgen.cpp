@@ -117,7 +117,7 @@ void Entry()
 	uint64_t *relocationData = reinterpret_cast<uint64_t *>(data.get() + sizeof(Win32StubStage2Header) + stage2Format.getInfo().size);
 
 	for(auto i : stage2Format.getSections())
-		copyMemory(stage2Data + i.baseAddress + sizeof(stage2Header), i.data->map(), i.data->size());
+		copyMemory(stage2Data + i.baseAddress, i.data->map(), i.data->size());
 	size_t cnt = 0;
 	for(auto i : stage2Format.getRelocations())
 		relocationData[cnt ++] = i;
@@ -126,9 +126,9 @@ void Entry()
 	stage2Header->imageSize = static_cast<size_t>(stage2Format.getInfo().size);
 	stage2Header->numberOfRelocations = stage2Format.getRelocations().size();
 	stage2Header->entryPoint = static_cast<size_t>(stage2Format.getInfo().entryPoint);
+	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 
 	Vector<uint8_t> compressedStage2 = compress(data);
-	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 
 	SharedPtr<MemoryDataSource> compressedStage2Source = MakeShared<MemoryDataSource>(compressedStage2.get());
 
@@ -138,8 +138,12 @@ void Entry()
 	List<Section> resultSections(resultFormat.getSections());
 
 	size_t lastAddress = 0;
-	for(auto i : resultSections)
+	for(auto &i : resultSections)
+	{
+		if(i.data->size() == 0) //data
+			i.flag |= SectionFlagExecute;
 		lastAddress = static_cast<size_t>(i.baseAddress + i.size);
+	}
 
 	Section stage2Section;
 	stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
