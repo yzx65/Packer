@@ -118,15 +118,16 @@ void Entry()
 
 	for(auto i : stage2Format.getSections())
 		copyMemory(stage2Data + i.baseAddress, i.data->map(), i.data->size());
-	size_t cnt = 0;
+	
 	for(auto i : stage2Format.getRelocations())
-		relocationData[cnt ++] = i;
+		*relocationData ++ = i;
 
 	stage2Header->magic = WIN32_STUB_STAGE2_MAGIC;
 	stage2Header->imageSize = static_cast<size_t>(stage2Format.getInfo().size);
 	stage2Header->numberOfRelocations = stage2Format.getRelocations().size();
 	stage2Header->entryPoint = static_cast<size_t>(stage2Format.getInfo().entryPoint);
 	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
+	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
 	Vector<uint8_t> compressedStage2 = compress(data);
 

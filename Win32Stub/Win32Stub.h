@@ -18,6 +18,7 @@ struct Win32StubStage2Header
 	size_t imageSize;
 	size_t numberOfRelocations;
 	size_t entryPoint;
+	size_t originalBase;
 };
 
 inline size_t buildSignature(const uint8_t *data, size_t size)

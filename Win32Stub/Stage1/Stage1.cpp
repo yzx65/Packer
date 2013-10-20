@@ -133,10 +133,16 @@ cont:
 			mov fs:[0], eax //remove this exception handler
 		}
 		Win32StubStage2Header *header = reinterpret_cast<Win32StubStage2Header *>(stage2);
-		if(header->magic != WIN32_STUB_STAGE2_MAGIC || buildSignature(stage2 + sizeof(Win32StubStage2Header), header->imageSize) != header->signature)
+		uint8_t *stage2Start = stage2 + sizeof(Win32StubStage2Header);
+		if(header->magic != WIN32_STUB_STAGE2_MAGIC || buildSignature(stage2Start, header->imageSize) != header->signature)
 			return ExceptionContinueSearch;
 
-		context->Eip = reinterpret_cast<size_t>(stage2 + sizeof(Win32StubStage2Header) + header->entryPoint);
+		//relocate
+		uint64_t *relocationData = reinterpret_cast<uint64_t *>(stage2Start + header->imageSize);
+		for(size_t i = 0; i < header->numberOfRelocations; ++ i)
+			*reinterpret_cast<int32_t *>(stage2Start + relocationData[i]) += -static_cast<int32_t>(header->originalBase) + reinterpret_cast<int32_t>(stage2Start);
+
+		context->Eip = reinterpret_cast<size_t>(stage2Start + header->entryPoint);
 		return ExceptionContinueExecution; //continue to stage2 code
 	}
 
