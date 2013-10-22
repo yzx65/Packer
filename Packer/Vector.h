@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits> //for is_pod
 #include "Runtime.h"
 #include "Util.h"
 
@@ -24,7 +25,13 @@ private:
 			if(oldData)
 			{
 				if(preserve)
-					copyMemory(data_, oldData, sizeof(value_type) * size_);
+				{
+					if(std::is_pod<ValueType>::value)
+						copyMemory(data_, oldData, sizeof(value_type) * size_);
+					else
+						for(size_t i = 0; i < size_; i ++)
+							data_[i] = std::move(oldData[i]);
+				}
 				delete [] oldData;
 			}
 		}
@@ -134,30 +141,35 @@ public:
 		return &data_[size_ - 1];
 	}
 
-	void insert(size_t pos, ValueType data)
+	void insert(size_t pos, const ValueType &data)
 	{
-		size_t originalSize = size_;
-		resize_(size_ + 1, true);
-
-		for(size_t i = originalSize; i >= pos + 1; i --)
-			data_[i] = data_[i - 1];
-		data_[pos] = data;
+		insert(pos, &data, 1);
 	}
 
 	void insert(size_t pos, const Vector &data)
 	{
-		size_t originalSize = size_;
-		resize_(size_ + data.size(), true);
+		insert(pos, data.get(), data.size());
+	}
 
-		for(size_t i = originalSize + data.size() - 1; i >= pos + data.size(); i --)
-			data_[i] = data_[i - data.size()];
-		for(size_t i = 0; i < data.size(); i ++)
+	void insert(size_t pos, const value_type *data, size_t size)
+	{
+		size_t originalSize = size_;
+		resize_(size_ + size, true);
+
+		for(size_t i = originalSize + size - 1; i >= pos + size; i --)
+			data_[i] = data_[i - size];
+		for(size_t i = 0; i < size; i ++)
 			data_[i + pos] = data[i];
 	}
 
 	void append(const Vector &data)
 	{
 		insert(size_, data);
+	}
+
+	void append(const value_type *data, size_t size)
+	{
+		insert(size_, data, size);
 	}
 
 	size_t size() const
