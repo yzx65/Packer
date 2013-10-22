@@ -13,6 +13,21 @@ private:
 	size_t size_;
 	ValueType *data_;
 
+	template<typename T = ValueType>
+	typename std::enable_if<std::is_pod<T>::value>::type
+		_copyData(ValueType *oldData)
+	{
+		copyMemory(data_, oldData, sizeof(value_type) * size_);
+	}
+
+	template<typename T = ValueType>
+	typename std::enable_if<!std::is_pod<T>::value>::type
+		_copyData(ValueType *oldData)
+	{
+		for(size_t i = 0; i < size_; i ++)
+			data_[i] = std::move(oldData[i]);
+	}
+
 	void resize_(uint32_t size, bool preserve)
 	{
 		if(alloc_ <= size)
@@ -25,13 +40,7 @@ private:
 			if(oldData)
 			{
 				if(preserve)
-				{
-					if(std::is_pod<ValueType>::value)
-						copyMemory(data_, oldData, sizeof(value_type) * size_);
-					else
-						for(size_t i = 0; i < size_; i ++)
-							data_[i] = std::move(oldData[i]);
-				}
+					_copyData(oldData);
 				delete [] oldData;
 			}
 		}
