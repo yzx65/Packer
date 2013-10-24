@@ -130,6 +130,7 @@ void Entry()
 	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
 	Vector<uint8_t> compressedStage2 = compress(data);
+	simpleCrypt(&compressedStage2[0], compressedStage2.size());
 
 	SharedPtr<MemoryDataSource> compressedStage2Source = MakeShared<MemoryDataSource>(compressedStage2.get());
 
@@ -139,18 +140,21 @@ void Entry()
 	List<Section> resultSections(resultFormat.getSections());
 
 	size_t lastAddress = 0;
+	Section stage2Section;
+	stage2Section.baseAddress = 0;
 	for(auto &i : resultSections)
 	{
 		if(i.data->size() == 0) //data
 			i.flag |= SectionFlagExecute;
 		lastAddress = static_cast<size_t>(i.baseAddress + i.size);
+		if(i.name == WIN32_STUB_STAGE2_SECTION_NAME)
+			stage2Section = i;
 	}
-
-	Section stage2Section;
-	stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
+	if(stage2Section.baseAddress == 0)
+		stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
 	stage2Section.size = multipleOf(compressedStage2.size(), 0x100);
 	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
-	stage2Section.flag = SectionFlagData | SectionFlagRead;
+	stage2Section.flag = SectionFlagData | SectionFlagRead | SectionFlagWrite;
 	stage2Section.data = compressedStage2Source->getView(0, compressedStage2.size());
 	resultSections.push_back(stage2Section);
 

@@ -105,7 +105,8 @@ int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 		return 0;
 	if(context->Ecx == 0)
 	{
-		size_t stage2Data = context->Edi;
+		size_t stage2Data = context->Eax;
+		size_t stage2Size = context->Ebx;
 		int temp = context->Eip;
 		_asm
 		{
@@ -126,6 +127,7 @@ cont:
 			mov ecx, temp
 			lea ebx, dword ptr stage2
 			mov edx, [stage2Data]
+			mov ecx, [stage2Size]
 			mov [eax], ebx //re-trigger exception handler, start copy
 
 			mov eax, fs:[0] //top level exception handler
@@ -146,13 +148,21 @@ cont:
 		return ExceptionContinueExecution; //continue to stage2 code
 	}
 
+	simpleDecrypt(reinterpret_cast<uint8_t *>(context->Edx), context->Ecx);
 	decompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
 	context->Eax = reinterpret_cast<size_t>(&unused); //don't trigger exception again.
 	return ExceptionContinueExecution;
 }
 
-size_t getStage2DataAddress()
+int Entry()
 {
+	__asm
+	{
+		push Handler
+		push fs:[0]
+		mov fs:[0], esp //set exception handler
+	}
+
 	uint32_t pebAddress;
 #ifndef _WIN64 
 	pebAddress = __readfsdword(0x30);
@@ -169,31 +179,25 @@ size_t getStage2DataAddress()
 #elif defined(_WIN32)
 	IMAGE_NT_HEADERS64 *ntHeader = reinterpret_cast<IMAGE_NT_HEADERS64 *>(myBase + dosHeader->e_lfanew);
 #endif
-	IMAGE_SECTION_HEADER *sectionHeader = reinterpret_cast<IMAGE_SECTION_HEADER *>(myBase + dosHeader->e_lfanew + sizeof(uint32_t) + sizeof(IMAGE_FILE_HEADER) + ntHeader->FileHeader.SizeOfOptionalHeader);
+	IMAGE_SECTION_HEADER *sectionHeader = reinterpret_cast<IMAGE_SECTION_HEADER *>(myBase + dosHeader->e_lfanew + sizeof(uint32_t)+ sizeof(IMAGE_FILE_HEADER)+ ntHeader->FileHeader.SizeOfOptionalHeader);
 	char stage2Name[] = WIN32_STUB_STAGE2_SECTION_NAME;
 	for(int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++ i)
 	{
 		int j;
 		for(j = 0; sectionHeader[i].Name[j] != 0; ++ j)
-			if(sectionHeader[i].Name[j] != stage2Name[j])
-				break;
+		if(sectionHeader[i].Name[j] != stage2Name[j])
+			break;
 		if(sectionHeader[i].Name[j] == stage2Name[j])
-			return sectionHeader[i].VirtualAddress + reinterpret_cast<size_t>(myBase);
-	}
-	return 0;
-}
-
-int __declspec(naked) Entry()
-{
-	__asm
-	{
-		push Handler
-		push fs:[0]
-		mov fs:[0], esp //set exception handler
-
-		call getStage2DataAddress
-		mov edi, eax
-		xor ecx, ecx
-		in eax, 4
+		{
+			size_t sectionSize = sectionHeader[i].VirtualSize;
+			size_t address = sectionHeader[i].VirtualAddress + reinterpret_cast<size_t>(myBase);
+			__asm
+			{
+				mov eax, address
+				mov ebx, sectionSize
+				xor ecx, ecx
+				in eax, 4
+			}
+		}
 	}
 }
