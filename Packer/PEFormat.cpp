@@ -363,7 +363,7 @@ void PEFormat::setImageInfo(const ImageInfo &info)
 	info_ = info;
 }
 
-size_t PEFormat::estimateSize()
+size_t PEFormat::estimateSize() const
 {
 	size_t size = 0x400;
 	for(auto i : sections_)

@@ -45,7 +45,7 @@ Vector<uint8_t> encodeSize(uint8_t flag, uint32_t number)
 	return result;
 }
 
-Vector<uint8_t> compress(const Vector<uint8_t> &originalData)
+Vector<uint8_t> compress(const uint8_t *source, size_t size)
 {
 	Vector<uint8_t> control;
 	Vector<uint8_t> data;
@@ -54,9 +54,9 @@ Vector<uint8_t> compress(const Vector<uint8_t> &originalData)
 	size_t successionCount = 1;
 	size_t nonSuccessionCount = 0;
 
-	for(uint8_t byte : originalData)
+	for(size_t i = 0; i < size; ++ i)
 	{
-		if(byte == lastData)
+		if(source[i] == lastData)
 		{
 			if(nonSuccessionCount > 1)
 			{
@@ -67,7 +67,7 @@ Vector<uint8_t> compress(const Vector<uint8_t> &originalData)
 			successionCount ++;
 		}
 		
-		if(byte != lastData)
+		if(source[i] != lastData)
 		{
 			if(successionCount > 1)
 			{
@@ -76,9 +76,9 @@ Vector<uint8_t> compress(const Vector<uint8_t> &originalData)
 				nonSuccessionCount = 0;
 			}
 			nonSuccessionCount ++;
-			data.push_back(byte);
+			data.push_back(source[i]);
 		}
-		lastData = byte;
+		lastData = source[i];
 	}
 	if(nonSuccessionCount > 1)
 		control.append(encodeSize(0, nonSuccessionCount - 1));
@@ -102,9 +102,9 @@ void Entry()
 		return;
 
 	auto it = arguments.begin();
-	SharedPtr<Win32File> stage1 = MakeShared<Win32File>(*it ++);
-	SharedPtr<Win32File> stage2 = MakeShared<Win32File>(*it ++);
-	SharedPtr<Win32File> result = MakeShared<Win32File>(*it ++, true);
+	SharedPtr<File> stage1 = MakeShared<Win32File>(*it ++);
+	SharedPtr<File> stage2 = MakeShared<Win32File>(*it ++);
+	SharedPtr<File> result = MakeShared<Win32File>(*it ++, true);
 
 	PEFormat stage2Format;
 	stage2Format.load(stage2, false);
@@ -129,7 +129,7 @@ void Entry()
 	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
-	Vector<uint8_t> compressedStage2 = compress(data);
+	Vector<uint8_t> compressedStage2 = compress(data.get(), data.size());
 	simpleCrypt(&compressedStage2[0], compressedStage2.size());
 
 	SharedPtr<MemoryDataSource> compressedStage2Source = MakeShared<MemoryDataSource>(compressedStage2.get());
@@ -160,11 +160,28 @@ void Entry()
 
 	resultFormat.setSections(resultSections);
 
-	uint8_t *resultData = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, resultFormat.estimateSize(), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	size_t resultSize = resultFormat.estimateSize();
+	uint8_t *resultData = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, resultSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	SharedPtr<MemoryDataSource> resultDataSource = MakeShared<MemoryDataSource>(resultData);
 	resultFormat.save(resultDataSource);
+	
+	Vector<uint8_t> compressedResult = compress(resultData, resultSize);
+	result->write("#pragma once\n", 13);
+	result->write("#include <cstdint>\n", 19);
+	result->write("uint8_t stubData[] = {\n", 23);
 
-	result->write(resultData, resultFormat.estimateSize());
+	for(size_t i = 0; i < compressedResult.size(); ++ i)
+	{
+		const char *hex = "0123456789ABCDEF";
+		result->write("0x", 2);
+		result->write(&hex[(compressedResult[i] & 0xF0) >> 4], 1);
+		result->write(&hex[compressedResult[i] & 0x0F], 1);
+		result->write(", ", 2);
+
+		if((i + 1) % 10 == 0 && i > 0)
+			result->write("\n", 1);
+	}
+	result->write("};", 2);
 
 	Win32NativeHelper::get()->freeVirtual(resultData);
 }

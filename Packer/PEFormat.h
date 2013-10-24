@@ -49,7 +49,7 @@ public:
 	virtual void setImageInfo(const ImageInfo &info);
 
 	virtual void save(SharedPtr<DataSource> target);
-	virtual size_t estimateSize();
+	virtual size_t estimateSize() const;
 
 	virtual bool isSystemLibrary(const String &filename);
 };
