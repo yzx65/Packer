@@ -59,3 +59,84 @@ inline size_t multipleOf(size_t value, size_t n)
 {
 	return ((value + n - 1) / n) * n;
 }
+
+static const uint8_t *decodeSize(const uint8_t *ptr, uint8_t *flag, uint32_t *size)
+{
+	//f1xxxxxx
+	//f01xxxxx xxxxxxxx
+	//f001xxxx xxxxxxxx xxxxxxxx
+	//f0001xxx xxxxxxxx xxxxxxxx xxxxxxxx
+	//f0000100 xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx
+	*size = *ptr ++;
+	*flag = (*size & 0x80) >> 7;
+	if(*size & 0x40)
+		*size &= 0x3f;
+	else if(*size & 0x20)
+	{
+		*size &= 0x1f;
+		*size <<= 8;
+		*size |= *(ptr ++);
+	}
+	else if(*size & 0x10)
+	{
+		*size &= 0x0f;
+		*size <<= 8;
+		*size |= *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+	}
+	else if(*size & 0x08)
+	{
+		*size &= 0x07;
+		*size <<= 8;
+		*size |= *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+	}
+	else if(*size & 0x04)
+	{
+		*size = *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+		*size <<= 8;
+		*size |= *(ptr ++);
+	}
+
+	return ptr;
+}
+
+static uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedData)
+{
+	uint32_t controlSize = *reinterpret_cast<const uint32_t *>(compressedData);
+	const uint8_t *data = compressedData + controlSize + 4;
+	const uint8_t *control = compressedData + 4;
+	const uint8_t *controlPtr = control;
+	uint32_t resultSize = 0;
+
+	uint8_t flag;
+	size_t size;
+	while(controlPtr < control + controlSize)
+	{
+		controlPtr = decodeSize(controlPtr, &flag, &size);
+		resultSize += size;
+		if(flag)
+		{
+			//succession
+			for(; size > 0; size --)
+				*decompressedData ++ = *data;
+			data ++;
+		}
+		else
+		{
+			//nonsuccession
+			for(; size > 0; size --)
+				*decompressedData ++ = *data ++;
+		}
+	}
+
+	return resultSize;
+}

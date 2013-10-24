@@ -166,13 +166,26 @@ void Entry()
 	resultFormat.save(resultDataSource);
 	
 	Vector<uint8_t> compressedResult = compress(resultData, resultSize);
+	const char *hex = "0123456789ABCDEF";
+
 	result->write("#pragma once\n", 13);
 	result->write("#include <cstdint>\n", 19);
+	result->write("uint32_t stubSize = 0x", 22);
+
+	result->write(&hex[(resultSize & 0xF0000000) >> 28], 1);
+	result->write(&hex[(resultSize & 0x0F000000) >> 24], 1);
+	result->write(&hex[(resultSize & 0x00F00000) >> 20], 1);
+	result->write(&hex[(resultSize & 0x000F0000) >> 16], 1);
+	result->write(&hex[(resultSize & 0x0000F000) >> 12], 1);
+	result->write(&hex[(resultSize & 0x00000F00) >> 8], 1);
+	result->write(&hex[(resultSize & 0x000000F0) >> 4], 1);
+	result->write(&hex[resultSize & 0x0000000F], 1);
+	result->write(";\n", 2);
+
 	result->write("uint8_t stubData[] = {\n", 23);
 
 	for(size_t i = 0; i < compressedResult.size(); ++ i)
 	{
-		const char *hex = "0123456789ABCDEF";
 		result->write("0x", 2);
 		result->write(&hex[(compressedResult[i] & 0xF0) >> 4], 1);
 		result->write(&hex[compressedResult[i] & 0x0F], 1);
