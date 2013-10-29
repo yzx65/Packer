@@ -98,6 +98,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Image.cpp" />
     <ClCompile Include="Win32Entry.cpp" />
     <ClCompile Include="Win32Loader.cpp" />
     <ClCompile Include="PEFormat.cpp" />

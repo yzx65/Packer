@@ -4,6 +4,7 @@
 
 #include "Runtime.h"
 #include "Vector.h"
+#include "List.h"
 #include "String.h"
 #include "DataSource.h"
 
@@ -149,10 +150,14 @@ struct Image
 	ImageInfo info;
 	String fileName;
 	String filePath;
-	size_t nameExportLen;
+	uint32_t nameExportLen;
 	Vector<ExportFunction> exports;
 	List<Section> sections;
 	List<Import> imports;
 	List<uint64_t> relocations;
 	SharedPtr<DataView> header;
+
+	Vector<uint8_t> serialize() const;
+	static Image unserialize(const Vector<uint8_t> &data);
 };
+
