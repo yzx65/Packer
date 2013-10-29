@@ -121,6 +121,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	ntMapViewOfSection_ = findItem("NtMapViewOfSection");
 	ntUnmapViewOfSection_ = findItem("NtUnmapViewOfSection");
 	ntQueryFullAttributesFile_ = findItem("NtQueryFullAttributesFile");
+	ntSetInformationFile_ = findItem("NtSetInformationFile");
 }
 
 void Win32NativeHelper::init_(void *entry)
@@ -388,6 +389,18 @@ uint32_t Win32NativeHelper::getFileAttributes(const wchar_t *filePath, size_t fi
 	if(status < 0)
 		return INVALID_FILE_ATTRIBUTES;
 	return result.FileAttributes;
+}
+
+void Win32NativeHelper::setFileSize(void *file, uint64_t size)
+{
+	typedef int32_t (__stdcall *NtSetInformationFilePtr)(void *FileHandle, PIO_STATUS_BLOCK IoStatusBlock, void *FileInformation, size_t Length, size_t FileInformationClass);
+	
+	LARGE_INTEGER largeSize;
+	IO_STATUS_BLOCK result;
+	largeSize.QuadPart = size;
+
+	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 20); //FileEndOfFileInfo
+	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 19); //FileAllocationInfo
 }
 
 wchar_t *Win32NativeHelper::getCommandLine()
