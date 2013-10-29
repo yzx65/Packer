@@ -15,7 +15,7 @@ private:
 	List<String> loadedFiles_;
 
 	void outputPE(const Image &image, const List<Image> imports);
-	void processFile(SharedPtr<File> file);
+	void processFile(SharedPtr<File> inputf, SharedPtr<File> output);
 	List<Image> loadImport(SharedPtr<FormatBase> input);
 public:
 	PackerMain(const Option &option);

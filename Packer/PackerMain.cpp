@@ -12,8 +12,7 @@ PackerMain::PackerMain(const Option &option) : option_(option)
 
 int PackerMain::process()
 {
-	for(SharedPtr<File> &file : option_.getInputFiles())
-		processFile(file);
+	processFile(option_.getInputFile(), option_.getOutputFile());
 
 	return 0;
 }
@@ -47,20 +46,20 @@ List<Image> PackerMain::loadImport(SharedPtr<FormatBase> input)
 	return result;
 }
 
-void PackerMain::processFile(SharedPtr<File> file)
+void PackerMain::processFile(SharedPtr<File> inputf, SharedPtr<File> output)
 {
 	SharedPtr<FormatBase> input;
 	{
-		SharedPtr<DataView> view = file->getView(0, 0);
+		SharedPtr<DataView> view = inputf->getView(0, 0);
 		uint8_t *fileData = view->map();
 		if(*(reinterpret_cast<uint16_t *>(fileData)) == IMAGE_DOS_SIGNATURE)
 			input = MakeShared<PEFormat>();
 		else
 			return;
 	}
-	input->load(file, false);
-	input->setFileName(file->getFileName());
-	input->setFilePath(file->getFilePath());
+	input->load(inputf, false);
+	input->setFileName(inputf->getFileName());
+	input->setFilePath(inputf->getFilePath());
 	loadedFiles_.push_back(input->getFileName());
 	List<Image> imports = loadImport(input);
 	

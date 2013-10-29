@@ -9,7 +9,8 @@ class File;
 class Option
 {
 private:
-	List<SharedPtr<File>> inputFiles_;
+	SharedPtr<File> inputFile_;
+	SharedPtr<File> outputFile_;
 	Map<String, bool> booleanOptions_;
 	Map<String, String> stringOptions_;
 
@@ -19,5 +20,6 @@ private:
 public:
 	Option(const List<String> &args);
 
-	List<SharedPtr<File>> getInputFiles() const;
+	SharedPtr<File> getInputFile() const;
+	SharedPtr<File> getOutputFile() const;
 };

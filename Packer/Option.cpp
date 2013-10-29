@@ -14,7 +14,8 @@ bool Option::isBooleanOption(const String &optionName)
 
 void Option::handleStringOption(const String &name, const String &value)
 {
-
+	if(name == "o")
+		outputFile_ = File::open(value, true);
 }
 
 void Option::parseOptions(List<String> rawOptions)
@@ -36,14 +37,16 @@ void Option::parseOptions(List<String> rawOptions)
 			}
 		}
 		else
-		{
-			//input file
-			inputFiles_.push_back(File::open(*it));
-		}
+			inputFile_ = File::open(*it);
 	}
 }
 
-List<SharedPtr<File>> Option::getInputFiles() const
+SharedPtr<File> Option::getInputFile() const
 {
-	return inputFiles_;
+	return inputFile_;
+}
+
+SharedPtr<File> Option::getOutputFile() const
+{
+	return outputFile_;
 }
