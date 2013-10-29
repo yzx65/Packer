@@ -56,7 +56,7 @@ public:
 	MemoryDataSource(uint8_t *memory, size_t size = 0) : memory_(memory), size_(size) {}
 	virtual ~MemoryDataSource() {}
 
-	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size)
+	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size = 0)
 	{
 		if(size == 0)
 			size = size_;
