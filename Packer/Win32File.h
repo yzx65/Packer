@@ -27,4 +27,5 @@ public:
 	virtual uint8_t *map(uint64_t offset);
 	virtual void unmap();
 	virtual void write(const uint8_t *data, size_t size);
+	virtual void resize(uint64_t newSize);
 };

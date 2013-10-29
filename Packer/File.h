@@ -12,11 +12,12 @@ public:
 	File() {}
 	virtual ~File() {}
 
-	static SharedPtr<File> open(const String &filename);
+	static SharedPtr<File> open(const String &filename, bool write = false);
 
 	virtual String getFileName() = 0;
 	virtual String getFilePath() = 0;
 	virtual void *getHandle() = 0;
+	virtual void resize(uint64_t newSize) = 0;
 	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size) = 0;
 	virtual void write(const uint8_t *data, size_t size) = 0;
 

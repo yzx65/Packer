@@ -51,6 +51,11 @@ void Win32File::open(const String &filename)
 		return;
 }
 
+void Win32File::resize(uint64_t newSize)
+{
+	Win32NativeHelper::get()->setFileSize(fileHandle_, newSize);
+}
+
 void Win32File::close() 
 {
 	Win32NativeHelper::get()->closeHandle(mapHandle_);
@@ -127,7 +132,7 @@ bool File::isPathExists(const String &path)
 	return true;
 }
 
-SharedPtr<File> File::open(const String &filename)
+SharedPtr<File> File::open(const String &filename, bool write)
 {
-	return MakeShared<Win32File>(filename);
+	return MakeShared<Win32File>(filename, write);
 }
