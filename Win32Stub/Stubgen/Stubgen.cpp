@@ -161,7 +161,7 @@ void Entry()
 	resultFormat.setSections(resultSections);
 
 	size_t resultSize = resultFormat.estimateSize();
-	uint8_t *resultData = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, resultSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	uint8_t *resultData = new uint8_t[resultSize];
 	SharedPtr<MemoryDataSource> resultDataSource = MakeShared<MemoryDataSource>(resultData);
 	resultFormat.save(resultDataSource);
 	
@@ -170,7 +170,7 @@ void Entry()
 
 	result->write("#pragma once\n", 13);
 	result->write("#include <cstdint>\n", 19);
-	result->write("uint32_t stubSize = 0x", 22);
+	result->write("uint32_t win32StubSize = 0x", 27);
 
 	result->write(&hex[(resultSize & 0xF0000000) >> 28], 1);
 	result->write(&hex[(resultSize & 0x0F000000) >> 24], 1);
@@ -182,7 +182,7 @@ void Entry()
 	result->write(&hex[resultSize & 0x0000000F], 1);
 	result->write(";\n", 2);
 
-	result->write("uint8_t stubData[] = {\n", 23);
+	result->write("uint8_t win32StubData[] = {\n", 28);
 
 	for(size_t i = 0; i < compressedResult.size(); ++ i)
 	{
@@ -196,5 +196,5 @@ void Entry()
 	}
 	result->write("};", 2);
 
-	Win32NativeHelper::get()->freeVirtual(resultData);
+	delete [] resultData;
 }

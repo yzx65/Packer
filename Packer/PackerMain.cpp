@@ -5,6 +5,7 @@
 #include "PEFormat.h"
 #include "Signature.h"
 #include "../Win32Stub/Win32Stub.h"
+#include "../Win32Stub/StubData.h"
 
 PackerMain::PackerMain(const Option &option) : option_(option)
 {
@@ -63,25 +64,47 @@ void PackerMain::processFile(SharedPtr<File> inputf, SharedPtr<File> output)
 	loadedFiles_.push_back(input->getFileName());
 	List<Image> imports = loadImport(input);
 	
-	outputPE(input->serialize(), imports);
+	outputPE(input->serialize(), imports, output);
 }
 
-void PackerMain::outputPE(const Image &image, const List<Image> imports)
+void PackerMain::outputPE(const Image &image, const List<Image> imports, SharedPtr<File> output)
 {
-	Image outputImage;
-	outputImage.header = image.header;
-	outputImage.info = image.info;
-	outputImage.nameExportLen = 0;
+	PEFormat resultFormat;
+	Vector<uint8_t> stub(win32StubSize);
+	decompress(win32StubData, stub.get());
+	resultFormat.load(MakeShared<MemoryDataSource>(stub.get()), false);
+	
+	List<Section> resultSections(resultFormat.getSections());
+	uint64_t lastAddress;
+	for(auto &i : resultSections)
+		lastAddress = i.baseAddress + i.size;
+
+	Vector<uint8_t> mainData = image.serialize();
 
 	Section mainSection;
-	mainSection.baseAddress = WIN32_STUB_MAIN_SECTION_BASE;
+	mainSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	mainSection.flag = SectionFlagData | SectionFlagRead;
 	mainSection.name = WIN32_STUB_MAIN_SECTION_NAME;
-	outputImage.sections.push_back(mainSection);
+	mainSection.data = MakeShared<MemoryDataSource>(mainData.get(), mainData.size())->getView(0);
+	mainSection.size = multipleOf(mainData.size(), 0x100);
+	resultSections.push_back(mainSection);
+
+	lastAddress += mainSection.size;
+
+	Vector<uint8_t> impData;
+	for(auto i : imports)
+		impData.append(i.serialize());
 
 	Section importSection;
-	importSection.baseAddress = 0x00200000;
+	importSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	importSection.flag = SectionFlagData | SectionFlagRead;
 	importSection.name = WIN32_STUB_IMP_SECTION_NAME;
-	outputImage.sections.push_back(importSection);
+	importSection.data = MakeShared<MemoryDataSource>(impData.get(), impData.size())->getView(0);
+	importSection.size = multipleOf(impData.size(), 0x100);
+	resultSections.push_back(importSection);
+
+	resultFormat.setSections(resultSections);
+
+	output->resize(resultFormat.estimateSize());
+	resultFormat.save(output);
 }
