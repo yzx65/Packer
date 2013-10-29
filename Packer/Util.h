@@ -32,7 +32,7 @@ inline void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 	size_t i;
 	for(i = 0; i < reinterpret_cast<size_t>(src) % sizeof(size_t); i ++)
 		*(dest + i) = *(src + i); //align to boundary
-	if(i > sizeof(size_t))
+	if(size > sizeof(size_t))
 		for(; i < size - sizeof(size_t); i += sizeof(size_t))
 			*reinterpret_cast<size_t *>(dest + i) = *reinterpret_cast<const size_t *>(src + i);
 	for(; i < size; i ++)
