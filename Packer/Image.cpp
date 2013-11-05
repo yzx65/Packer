@@ -83,9 +83,9 @@ Vector<uint8_t> Image::serialize() const
 		A(i);
 
 	for(auto &i : sections)
-		A(i.data->map(), i.data->size());
+		A(i.data->get(), i.data->size());
 
-	A(header->map(), header->size());
+	A(header->get(), header->size());
 
 #undef A
 	*reinterpret_cast<uint32_t *>(&result[0]) = result.size();
@@ -132,7 +132,7 @@ SharedPtr<DataView> readFromVector(uint8_t *data, size_t &offset, SharedPtr<Data
 Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 {
 	size_t offset = 0;
-	uint8_t *data = data_->map();
+	uint8_t *data = data_->get();
 	Image result;
 
 	if(processedSize)

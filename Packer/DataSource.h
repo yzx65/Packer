@@ -34,7 +34,7 @@ public:
 		baseAddress_ = 0;
 	}
 
-	uint8_t *map() const
+	uint8_t *get() const
 	{
 		return baseAddress_;
 	}

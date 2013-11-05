@@ -117,7 +117,7 @@ void Entry()
 	uint64_t *relocationData = reinterpret_cast<uint64_t *>(data.get() + sizeof(Win32StubStage2Header) + stage2Format.getInfo().size);
 
 	for(auto &i : stage2Format.getSections())
-		copyMemory(stage2Data + i.baseAddress, i.data->map(), i.data->size());
+		copyMemory(stage2Data + i.baseAddress, i.data->get(), i.data->size());
 	
 	for(auto &i : stage2Format.getRelocations())
 		*relocationData ++ = i;
