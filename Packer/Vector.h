@@ -100,6 +100,13 @@ public:
 		return data_;
 	}
 	
+	void reserve(size_t size)
+	{
+		size_t oldSize = size_;
+		resize_(size, true);
+		size_ = oldSize;
+	}
+
 	void resize(size_t size)
 	{
 		resize_(size, true);
