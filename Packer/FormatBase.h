@@ -13,7 +13,7 @@ public:
 	virtual ~FormatBase() {}
 
 	virtual bool load(SharedPtr<DataSource> source, bool fromMemory) = 0;
-	virtual Image serialize() = 0;
+	virtual Image toImage() = 0;
 	virtual void setFileName(const String &fileName) = 0;
 	virtual void setFilePath(const String &filePath) = 0;
 	virtual const String &getFileName() const = 0;

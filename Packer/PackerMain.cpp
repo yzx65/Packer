@@ -38,7 +38,7 @@ List<Image> PackerMain::loadImport(SharedPtr<FormatBase> input)
 			continue;
 		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input->getFilePath());
 		loadedFiles_.push_back(import->getFileName());
-		result.push_back(import->serialize());
+		result.push_back(import->toImage());
 
 		List<Image> dependencies = loadImport(import);
 		result.insert(result.end(), dependencies.begin(), dependencies.end());
@@ -64,7 +64,7 @@ void PackerMain::processFile(SharedPtr<File> inputf, SharedPtr<File> output)
 	loadedFiles_.push_back(input->getFileName());
 	List<Image> imports = loadImport(input);
 	
-	outputPE(input->serialize(), imports, output);
+	outputPE(input->toImage(), imports, output);
 }
 
 void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<File> output)

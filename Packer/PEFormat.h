@@ -37,7 +37,7 @@ public:
 	virtual void setFilePath(const String &filePath);
 	virtual const String &getFileName() const;
 	virtual const String &getFilePath() const;
-	virtual Image serialize();
+	virtual Image toImage();
 	virtual const List<Import> &getImports() const;
 	virtual const List<ExportFunction> &getExports() const;
 	virtual const ImageInfo &getInfo() const;

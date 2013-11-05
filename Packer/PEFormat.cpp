@@ -332,7 +332,7 @@ const List<Section> &PEFormat::getSections() const
 	return sections_;
 }
 
-Image PEFormat::serialize()
+Image PEFormat::toImage()
 {
 	Image image;
 	image.fileName = getFileName();

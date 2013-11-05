@@ -184,7 +184,7 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			PEFormat format;
 			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
 			format.setFileName(filename);
-			auto it = imports_.push_back(format.serialize());
+			auto it = imports_.push_back(format.toImage());
 			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
 			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
 
@@ -260,7 +260,7 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath);
 	if(!format.get())
 		return nullptr;
-	return loadImage(*imports_.push_back(format->serialize()), asDataFile);
+	return loadImage(*imports_.push_back(format->toImage()), asDataFile);
 }
 
 uint64_t Win32Loader::getFunctionAddress(uint8_t *library, const String &functionName, int ordinal)
