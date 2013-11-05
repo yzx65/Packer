@@ -45,6 +45,11 @@ public:
 	{
 		return size_;
 	}
+
+	SharedPtr<DataView> getView(uint64_t offset, size_t size)
+	{
+		return MakeShared<DataView>(source_, offset_ + offset, size);
+	}
 };
 
 class MemoryDataSource : public DataSource, public EnableSharedFromThis<MemoryDataSource>
