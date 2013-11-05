@@ -28,7 +28,7 @@ void appendToVector(Vector<uint8_t> &dst, const String &src)
 	dst.append(reinterpret_cast<const uint8_t *>(src.c_str()), src.length());
 }
 
-Vector<uint8_t> Image::serialize()
+Vector<uint8_t> Image::serialize() const
 {
 	Vector<uint8_t> result;
 #define A(...) appendToVector(result, __VA_ARGS__);
@@ -48,7 +48,7 @@ Vector<uint8_t> Image::serialize()
 
 	A(nameExportLen);
 	A(static_cast<uint32_t>(exports.size()));
-	for(auto i : exports)
+	for(auto &i : exports)
 	{
 		A(i.address);
 		A(i.forward);
@@ -57,7 +57,7 @@ Vector<uint8_t> Image::serialize()
 	}
 
 	A(static_cast<uint32_t>(sections.size()));
-	for(auto i : sections)
+	for(auto &i : sections)
 	{
 		A(i.name);
 		A(i.baseAddress);
@@ -66,7 +66,7 @@ Vector<uint8_t> Image::serialize()
 	}
 
 	A(static_cast<uint32_t>(imports.size()));
-	for(auto i : imports)
+	for(auto &i : imports)
 	{
 		A(i.libraryName);
 		A(static_cast<uint32_t>(i.functions.size()));
@@ -79,10 +79,10 @@ Vector<uint8_t> Image::serialize()
 	}
 
 	A(static_cast<uint32_t>(relocations.size()));
-	for(auto i : relocations)
+	for(auto &i : relocations)
 		A(i);
 
-	for(auto i : sections)
+	for(auto &i : sections)
 		A(i.data->map(), i.data->size());
 
 	A(header->map(), header->size());
@@ -200,7 +200,7 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 	for(size_t i = 0; i < relocationLen; ++ i)
 		result.relocations.push_back(R(uint64_t));
 
-	for(auto i : result.sections)
+	for(auto &i : result.sections)
 		i.data = R(SharedPtr<DataView>, data_);
 
 	result.header = R(SharedPtr<DataView>, data_);

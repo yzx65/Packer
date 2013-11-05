@@ -366,7 +366,7 @@ void PEFormat::setImageInfo(const ImageInfo &info)
 size_t PEFormat::estimateSize() const
 {
 	size_t size = 0x400;
-	for(auto i : sections_)
+	for(auto &i : sections_)
 		size += multipleOf(i.data->size(), 0x100);
 	return size;
 }
@@ -381,7 +381,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	const uint32_t fileAlignment = 0x200;
 	uint32_t imageSize = 0;
 	uint32_t dataOffset = 0x400;
-	for(auto i : sections_)
+	for(auto &i : sections_)
 	{
 		IMAGE_SECTION_HEADER sectionHeader;
 		zeroMemory(&sectionHeader, sizeof(sectionHeader));
@@ -452,13 +452,13 @@ void PEFormat::save(SharedPtr<DataSource> target)
 		copyMemory(targetMap + offset, &optionalHeader, sizeof(IMAGE_OPTIONAL_HEADER64)); offset += sizeof(IMAGE_OPTIONAL_HEADER64);
 	}
 	
-	for(auto i : sectionHeaders)
+	for(auto &i : sectionHeaders)
 	{
 		copyMemory(targetMap + offset, &i, sizeof(IMAGE_SECTION_HEADER)); 
 		offset += sizeof(IMAGE_SECTION_HEADER);
 	}
 
-	for(auto i : sections_)
+	for(auto &i : sections_)
 	{
 		dataOffset = rawDataMap[static_cast<uint32_t>(i.baseAddress)];
 		copyMemory(targetMap + dataOffset, i.data->map(), i.data->size());

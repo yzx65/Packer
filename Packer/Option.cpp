@@ -20,7 +20,7 @@ void Option::handleStringOption(const String &name, const String &value)
 
 void Option::parseOptions(List<String> rawOptions)
 {
-	auto it = rawOptions.begin();
+	auto &it = rawOptions.begin();
 	it ++;
 	for(; it != rawOptions.end(); it ++)
 	{

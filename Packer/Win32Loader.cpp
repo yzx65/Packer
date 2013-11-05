@@ -128,7 +128,7 @@ void Win32Loader::executeEntryPoint(uint8_t *baseAddress, const Image &image)
 
 void Win32Loader::executeEntryPointQueue()
 {
-	for(auto i = entryPointQueue_.begin(); i != entryPointQueue_.end(); )
+	for(auto &i = entryPointQueue_.begin(); i != entryPointQueue_.end(); )
 	{
 		auto oldi = i;
 		uint64_t baseAddress = *i;
@@ -169,14 +169,14 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	if(filename.find('.') == -1)
 		normalizedFilename.append(".dll");
 
-	auto it = loadedLibraries_.find(normalizedFilename);
+	auto &it = loadedLibraries_.find(normalizedFilename);
 	if(it != loadedLibraries_.end())
 		return reinterpret_cast<uint8_t *>(it->value);
 
 	//check if already loaded
-	auto images = Win32NativeHelper::get()->getLoadedImages();
+	auto &images = Win32NativeHelper::get()->getLoadedImages();
 	WString wstrName(StringToWString(filename));
-	for(auto it = images.begin(); it != images.end(); it ++)
+	for(auto &it = images.begin(); it != images.end(); it ++)
 	{
 		if(wstrName.icompare(it->fileName) == 0)
 		{
@@ -184,14 +184,14 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			PEFormat format;
 			format.load(MakeShared<MemoryDataSource>(baseAddress), true);
 			format.setFileName(filename);
-			auto it = imports_.push_back(format.toImage());
+			auto &it = imports_.push_back(format.toImage());
 			loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(baseAddress));
 			loadedImages_.insert(reinterpret_cast<uint64_t>(baseAddress), &*it);
 
 			if(it->fileName.icompare("kernelbase.dll") == 0 || it->fileName.icompare("kernel32.dll") == 0)
 			{
 				//We need to patch ResolveDelayLoadedAPI
-				for(auto i : it->imports)
+				for(auto &i : it->imports)
 				{
 					if(i.libraryName.icompare("ntdll.dll") == 0)
 					{
@@ -265,7 +265,7 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 
 uint64_t Win32Loader::getFunctionAddress(uint8_t *library, const String &functionName, int ordinal)
 {
-	auto it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
+	auto &it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
 	{
 		const Image *image = it->value;
@@ -383,7 +383,7 @@ uint32_t __stdcall Win32Loader::GetModuleFileNameAProxy(void *hModule, char *lpF
 		path = File::combinePath(loaderInstance_->image_.filePath, loaderInstance_->image_.fileName);
 	else
 	{
-		auto it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
+		auto &it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
 		if(it != loaderInstance_->loadedImages_.end())
 			path = File::combinePath(it->value->filePath, it->value->fileName);
 	}

@@ -20,7 +20,7 @@ private:
 	uint8_t *baseAddress_;
 	size_t size_;
 public:
-	DataView(SharedPtr<DataSource> source, uint64_t offset, size_t size) : source_(source), offset_(offset), size_(size), baseAddress_(0) {}
+	DataView(SharedPtr<DataSource> source, uint64_t offset, size_t size) : source_(source), offset_(offset), size_(size), baseAddress_(source_->map(offset_)) {}
 	virtual ~DataView() 
 	{
 		if(baseAddress_)
@@ -34,10 +34,8 @@ public:
 		baseAddress_ = 0;
 	}
 
-	uint8_t *map()
+	uint8_t *map() const
 	{
-		if(!baseAddress_)
-			baseAddress_ = source_->map(offset_);
 		return baseAddress_;
 	}
 

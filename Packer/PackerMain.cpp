@@ -92,7 +92,7 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	lastAddress += mainSection.size;
 
 	Vector<uint8_t> impData;
-	for(auto i : imports)
+	for(auto &i : imports)
 		impData.append(i.serialize());
 
 	Section importSection;

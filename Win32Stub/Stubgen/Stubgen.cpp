@@ -101,7 +101,7 @@ void Entry()
 	if(arguments.size() < 4)
 		return;
 
-	auto it = arguments.begin();
+	auto &it = arguments.begin();
 	SharedPtr<File> stage1 = MakeShared<Win32File>(*it ++);
 	SharedPtr<File> stage2 = MakeShared<Win32File>(*it ++);
 	SharedPtr<File> result = MakeShared<Win32File>(*it ++, true);
@@ -116,10 +116,10 @@ void Entry()
 	uint8_t *stage2Data = data.get() + sizeof(Win32StubStage2Header);
 	uint64_t *relocationData = reinterpret_cast<uint64_t *>(data.get() + sizeof(Win32StubStage2Header) + stage2Format.getInfo().size);
 
-	for(auto i : stage2Format.getSections())
+	for(auto &i : stage2Format.getSections())
 		copyMemory(stage2Data + i.baseAddress, i.data->map(), i.data->size());
 	
-	for(auto i : stage2Format.getRelocations())
+	for(auto &i : stage2Format.getRelocations())
 		*relocationData ++ = i;
 
 	stage2Header->magic = WIN32_STUB_STAGE2_MAGIC;
