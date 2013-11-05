@@ -4,7 +4,7 @@
 
 void WindowsEntry()
 {
-	Win32NativeHelper::init(WindowsEntry);
+	Win32NativeHelper::init();
 	List<String> arguments = Win32NativeHelper::get()->getArgumentList();
 
 	PackerMain(Option(arguments)).process();

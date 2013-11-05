@@ -73,28 +73,17 @@ void addPrefixToPath(UNICODE_STRING *string, const wchar_t *path, size_t pathSiz
 	string->Length = pathSize * 2 + 8;
 }
 
-void Win32NativeHelper::init(void *entry)
+void Win32NativeHelper::init()
 {
 	if(g_helper.initialized_ == false)
-		g_helper.init_(entry);
+		g_helper.init_();
 }
 
 Win32NativeHelper *Win32NativeHelper::get()
 {
 	if(g_helper.initialized_ == false)
-		Win32NativeHelper::init(nullptr);
+		Win32NativeHelper::init();
 	return &g_helper;
-}
-
-void Win32NativeHelper::newEntry(size_t newBase)
-{
-#ifndef _DEBUG
-	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->myBase_));
-#endif
-	Win32NativeHelper::get()->myBase_ = newBase;
-	typedef void (*EntryPointType) ();
-	EntryPointType entryPoint = reinterpret_cast<EntryPointType>(newBase + Win32NativeHelper::get()->entry_);
-	entryPoint();
 }
 
 void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
@@ -124,7 +113,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	ntSetInformationFile_ = findItem("NtSetInformationFile");
 }
 
-void Win32NativeHelper::init_(void *entry)
+void Win32NativeHelper::init_()
 {
 	uint32_t pebAddress;
 #ifndef __WIN64 
@@ -145,43 +134,6 @@ void Win32NativeHelper::init_(void *entry)
 
 	initNtdllImport(format);
 	initialized_ = true;
-
-	relocateSelf(entry);
-}
-
-void Win32NativeHelper::relocateSelf(void *entry)
-{
-	if(!entry)
-		return;
-	//relocate self, making space for non-aslr aware executables
-
-#ifndef _DEBUG
-	PEFormat format;
-	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(myBase_)), true);
-
-	size_t tryAddr = 0x10000000;
-	uint8_t *newBase;
-	while(true)
-	{
-		newBase = reinterpret_cast<uint8_t *>(allocateVirtual(tryAddr, static_cast<size_t>(format.getInfo().size), MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-		if(newBase)
-			break;
-		tryAddr += 0x01000000;
-	}
-
-	entry_ = reinterpret_cast<size_t>(entry) - myBase_;
-	copyMemory(newBase, reinterpret_cast<uint8_t *>(myBase_), static_cast<size_t>(format.getInfo().size));
-
-	int diff = -static_cast<int>(myBase_) + reinterpret_cast<int>(newBase);
-	for(auto &j : format.getRelocations())
-		*reinterpret_cast<int32_t *>(newBase + j) += static_cast<int32_t>(diff);
-#else
-	entry_ = reinterpret_cast<size_t>(entry) - myBase_;
-	uint8_t *newBase = reinterpret_cast<uint8_t *>(myBase_);
-#endif
-	typedef void (*EntryType) (size_t newBase);
-	EntryType entryGateway = reinterpret_cast<EntryType>(newBase + reinterpret_cast<uint64_t>(newEntry) - myBase_);
-	entryGateway(reinterpret_cast<size_t>(newBase));
 }
 
 void *Win32NativeHelper::createHeap(size_t baseAddress)

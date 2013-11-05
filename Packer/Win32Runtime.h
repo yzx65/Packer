@@ -42,7 +42,7 @@ private:
 	size_t ntQueryFullAttributesFile_;
 	size_t ntSetInformationFile_;
 
-	void init_(void *entry);
+	void init_();
 	void initNtdllImport(const PEFormat &ntdll);
 	void initHeap();
 	void initModuleList();
@@ -75,7 +75,7 @@ public:
 
 	static void newEntry(size_t newBase);
 	static Win32NativeHelper *get();
-	static void init(void *entry);
+	static void init();
 };
 
 extern "C" void *__cdecl memset(void *, int, size_t);
