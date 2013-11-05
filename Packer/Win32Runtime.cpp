@@ -527,12 +527,12 @@ extern "C"
 	{
 		return 0;
 	}
-#ifdef _DEBUG
-	void *memset(void *dst, int val, size_t size)
+
+#pragma function(memset)
+	void *__cdecl memset(void *dst, int val, size_t size)
 	{
 		for(size_t i = 0; i < size; i ++)
 			*(reinterpret_cast<uint8_t *>(dst) + i) = static_cast<uint8_t>(val);
 		return dst;
 	}
-#endif
 }

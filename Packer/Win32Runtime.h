@@ -78,6 +78,9 @@ public:
 	static void init(void *entry);
 };
 
+extern "C" void *__cdecl memset(void *, int, size_t);
+#pragma intrinsic(memset)
+
 #define GENERIC_READ                     (0x80000000L)
 #define GENERIC_WRITE                    (0x40000000L)
 #define GENERIC_EXECUTE                  (0x20000000L)
