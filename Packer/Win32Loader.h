@@ -51,7 +51,7 @@ private:
 	static size_t __stdcall LdrGetDllHandleExProxy(size_t Flags, wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle);
 	static size_t __stdcall LdrGetProcedureAddressProxy(void *BaseAddress, ANSI_STRING *Name, size_t Ordinal, void **ProcedureAddress);
 public:
-	Win32Loader(Image &image, Vector<Image> &&imports);
+	Win32Loader(Image &image, List<Image> &&imports);
 	virtual ~Win32Loader() {}
 
 	void execute();
