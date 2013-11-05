@@ -67,7 +67,7 @@ void PackerMain::processFile(SharedPtr<File> inputf, SharedPtr<File> output)
 	outputPE(input->serialize(), imports, output);
 }
 
-void PackerMain::outputPE(const Image &image, const List<Image> imports, SharedPtr<File> output)
+void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<File> output)
 {
 	PEFormat resultFormat;
 	Vector<uint8_t> stub(win32StubSize);

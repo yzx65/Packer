@@ -157,7 +157,7 @@ struct Image
 	List<uint64_t> relocations;
 	SharedPtr<DataView> header;
 
-	Vector<uint8_t> serialize() const;
-	static Image unserialize(const Vector<uint8_t> &data);
+	Vector<uint8_t> serialize();
+	static Image unserialize(SharedPtr<DataView> data, size_t *processedSize);
 };
 
