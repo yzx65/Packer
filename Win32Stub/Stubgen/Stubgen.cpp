@@ -129,10 +129,8 @@ void Entry()
 	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
-	Vector<uint8_t> compressedStage2 = compress(data.get(), data.size());
-	simpleCrypt(&compressedStage2[0], compressedStage2.size());
-
-	SharedPtr<MemoryDataSource> compressedStage2Source = MakeShared<MemoryDataSource>(compressedStage2.get());
+	SharedPtr<Vector<uint8_t>> compressedStage2 = MakeShared<Vector<uint8_t>>(compress(data.get(), data.size()));
+	simpleCrypt(compressedStage2->get(), compressedStage2->size());
 
 	//create PE
 	PEFormat resultFormat;
@@ -152,20 +150,19 @@ void Entry()
 	}
 	if(stage2Section.baseAddress == 0)
 		stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
-	stage2Section.size = multipleOf(compressedStage2.size(), 0x100);
+	stage2Section.size = multipleOf(compressedStage2->size(), 0x100);
 	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
 	stage2Section.flag = SectionFlagData | SectionFlagRead | SectionFlagWrite;
-	stage2Section.data = compressedStage2Source->getView(0, compressedStage2.size());
+	stage2Section.data = compressedStage2->getView(0, compressedStage2->size());
 	resultSections.push_back(stage2Section);
 
 	resultFormat.setSections(resultSections);
 
 	size_t resultSize = resultFormat.estimateSize();
-	uint8_t *resultData = new uint8_t[resultSize];
-	SharedPtr<MemoryDataSource> resultDataSource = MakeShared<MemoryDataSource>(resultData);
-	resultFormat.save(resultDataSource);
+	SharedPtr<Vector<uint8_t>> resultData = MakeShared<Vector<uint8_t>>(resultSize);
+	resultFormat.save(resultData);
 	
-	Vector<uint8_t> compressedResult = compress(resultData, resultSize);
+	Vector<uint8_t> compressedResult = compress(resultData->get(), resultSize);
 	const char *hex = "0123456789ABCDEF";
 
 	result->write("#pragma once\n", 13);
@@ -195,6 +192,4 @@ void Entry()
 			result->write("\n", 1);
 	}
 	result->write("};", 2);
-
-	delete [] resultData;
 }

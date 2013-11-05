@@ -5,8 +5,10 @@
 #include "Runtime.h"
 #include "Util.h"
 
+#include "DataSource.h"
+
 template<typename ValueType>
-class Vector
+class Vector : public DataSource, public EnableSharedFromThis<Vector<ValueType>>
 {
 private:
 	size_t alloc_;
@@ -221,5 +223,22 @@ public:
 	const_iterator end() const
 	{
 		return data_ + size_;
+	}
+
+	virtual SharedPtr<DataView> getView(uint64_t offset, size_t size = 0)
+	{
+		if(size == 0)
+			size = size_;
+		return MakeShared<DataView>(sharedFromThis(), offset, size);
+	}
+
+	virtual uint8_t *map(uint64_t offset)
+	{
+		return reinterpret_cast<uint8_t *>(data_ + offset);
+	}
+
+	virtual void unmap()
+	{
+
 	}
 };
