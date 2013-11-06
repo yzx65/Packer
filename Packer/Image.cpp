@@ -70,7 +70,7 @@ Vector<uint8_t> Image::serialize() const
 	{
 		A(i.libraryName);
 		A(static_cast<uint32_t>(i.functions.size()));
-		for(auto j : i.functions)
+		for(auto &j : i.functions)
 		{
 			A(j.iat);
 			A(j.name);

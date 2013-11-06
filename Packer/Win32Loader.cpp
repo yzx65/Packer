@@ -195,7 +195,7 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 				{
 					if(i.libraryName.icompare("ntdll.dll") == 0)
 					{
-						for(auto j : i.functions)
+						for(auto &j : i.functions)
 						{
 							if(j.name.icompare("LdrResolveDelayLoadedAPI") == 0)
 							{
