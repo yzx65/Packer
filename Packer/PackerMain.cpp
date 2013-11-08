@@ -70,37 +70,37 @@ void PackerMain::processFile(SharedPtr<File> inputf, SharedPtr<File> output)
 void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<File> output)
 {
 	PEFormat resultFormat;
-	SharedPtr<Vector<uint8_t>> stub = MakeShared<Vector<uint8_t>>(win32StubSize);
-	decompress(win32StubData, stub->get());
-	resultFormat.load(stub, false);
+	Vector<uint8_t> stub(win32StubSize);
+	decompress(win32StubData, stub.get());
+	resultFormat.load(stub.asDataSource(), false);
 	
 	List<Section> resultSections(resultFormat.getSections());
 	uint64_t lastAddress;
 	for(auto &i : resultSections)
 		lastAddress = i.baseAddress + i.size;
 
-	SharedPtr<Vector<uint8_t>> mainData = MakeShared<Vector<uint8_t>>(image.serialize());
+	Vector<uint8_t> mainData(image.serialize());
 
 	Section mainSection;
 	mainSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	mainSection.flag = SectionFlagData | SectionFlagRead;
 	mainSection.name = WIN32_STUB_MAIN_SECTION_NAME;
-	mainSection.data = mainData->getView(0);
-	mainSection.size = multipleOf(mainData->size(), 0x100);
+	mainSection.data = mainData.getView(0);
+	mainSection.size = multipleOf(mainData.size(), 0x100);
 	resultSections.push_back(mainSection);
 
 	lastAddress += mainSection.size;
 
-	SharedPtr<Vector<uint8_t>> impData = MakeShared<Vector<uint8_t>>();
+	Vector<uint8_t> impData;
 	for(auto &i : imports)
-		impData->append(i.serialize());
+		impData.append(i.serialize());
 
 	Section importSection;
 	importSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	importSection.flag = SectionFlagData | SectionFlagRead;
 	importSection.name = WIN32_STUB_IMP_SECTION_NAME;
-	importSection.data = impData->getView(0);
-	importSection.size = multipleOf(impData->size(), 0x100);
+	importSection.data = impData.getView(0);
+	importSection.size = multipleOf(impData.size(), 0x100);
 	resultSections.push_back(importSection);
 
 	resultFormat.setSections(resultSections);

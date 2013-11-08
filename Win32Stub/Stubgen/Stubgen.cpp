@@ -159,10 +159,10 @@ void Entry()
 	resultFormat.setSections(resultSections);
 
 	size_t resultSize = resultFormat.estimateSize();
-	SharedPtr<Vector<uint8_t>> resultData = MakeShared<Vector<uint8_t>>(resultSize);
-	resultFormat.save(resultData);
+	Vector<uint8_t> resultData(resultSize);
+	resultFormat.save(resultData.asDataSource());
 	
-	Vector<uint8_t> compressedResult = compress(resultData->get(), resultSize);
+	Vector<uint8_t> compressedResult = compress(resultData.get(), resultSize);
 	const char *hex = "0123456789ABCDEF";
 
 	result->write("#pragma once\n", 13);

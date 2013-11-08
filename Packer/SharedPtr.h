@@ -69,7 +69,10 @@ private:
 public:
 	SharedPtr(PointerType *item) : item_(nullptr), refCounter_(nullptr), deleter_(nullptr)
 	{
-		reset(item, new Impl::RefCounter(), new Impl::Deleter<PointerType>());
+		if(!item)
+			reset(nullptr, nullptr, nullptr);
+		else
+			reset(item, new Impl::RefCounter(), new Impl::Deleter<PointerType>());
 	}
 
 	SharedPtr() : item_(nullptr), refCounter_(nullptr), deleter_(nullptr) {}
@@ -123,7 +126,7 @@ public:
 		return *this;
 	}
 
-	void reset(PointerType *item, Impl::RefCounter *refCounter, Impl::DeleterBase *deleter)
+	void reset(PointerType *item = nullptr, Impl::RefCounter *refCounter = nullptr, Impl::DeleterBase *deleter = nullptr)
 	{
 		if(item_)
 		{
@@ -158,6 +161,21 @@ public:
 	PointerType *get()
 	{
 		return item_;
+	}
+
+	const PointerType *const get() const
+	{
+		return item_;
+	}
+
+	size_t getRef()
+	{
+		return refCounter_->refCount();
+	}
+
+	bool operator !() const
+	{
+		return item_ == nullptr;
 	}
 };
 
