@@ -492,4 +492,11 @@ extern "C"
 			*(reinterpret_cast<uint8_t *>(dst) + i) = static_cast<uint8_t>(val);
 		return dst;
 	}
+
+#pragma function(memcpy)
+	void *__cdecl memcpy(void *dst, const void *src, size_t size)
+	{
+		copyMemory(dst, src, size);
+		return dst;
+	}
 }
