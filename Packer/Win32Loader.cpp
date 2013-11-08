@@ -268,64 +268,62 @@ uint64_t Win32Loader::getFunctionAddress(uint8_t *library, const String &functio
 	auto &it = loadedImages_.find(reinterpret_cast<uint64_t>(library));
 	if(it != loadedImages_.end())
 	{
+		uint32_t functionNameHash = fnv1a(functionName.c_str(), functionName.length());
 		const Image *image = it->value;
 		if(image->fileName.icompare("kernel32.dll") == 0 || image->fileName.icompare("kernelbase.dll") == 0)
 		{
-			if(functionName.icompare("LoadLibraryExW") == 0)
+			if(functionNameHash == 0x51fc53b7)
 				return reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
-			else if(functionName.icompare("LoadLibraryExA") == 0)
+			else if(functionNameHash == 0x5ffc69c1)
 				return reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
-			else if(functionName.icompare("LoadLibraryW") == 0)
+			else if(functionNameHash == 0x73d7c450)
 				return reinterpret_cast<uint64_t>(LoadLibraryWProxy);
-			else if(functionName.icompare("LoadLibraryA") == 0)
+			else if(functionNameHash == 0x69d7b492)
 				return reinterpret_cast<uint64_t>(LoadLibraryAProxy);
-			else if(functionName.icompare("GetModuleHandleExW") == 0)
+			else if(functionNameHash == 0xfb5da08)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
-			else if(functionName.icompare("GetModuleHandleExA") == 0)
+			else if(functionNameHash == 0x5b5ca4a)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
-			else if(functionName.icompare("GetModuleHandleW") == 0)
+			else if(functionNameHash == 0x770dcc97)
 				return reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
-			else if(functionName.icompare("GetModuleHandleA") == 0)
+			else if(functionNameHash == 0x850de2a1)
 				return reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
-			else if(functionName.icompare("GetProcAddress") == 0)
+			else if(functionNameHash == 0x75cf7ac)
 				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
-			else if(functionName.icompare("ResolveDelayLoadedAPI") == 0)
+			else if(functionNameHash == 0x901198ee)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
-			else if(functionName.icompare("GetModuleFileNameA") == 0)
+			else if(functionNameHash == 0xf6d9edf8)
 				return reinterpret_cast<uint64_t>(GetModuleFileNameAProxy);
-			else if(functionName.icompare("GetModuleFileNameW") == 0)
+			else if(functionNameHash == 0xcda109a)
 				return reinterpret_cast<uint64_t>(GetModuleFileNameWProxy);
-			else if(functionName.icompare("DisableThreadLibraryCalls") == 0)
+			else if(functionNameHash == 0xc8d6e8a4)
 				return reinterpret_cast<uint64_t>(DisableThreadLibraryCallsProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
-			if(functionName.icompare("LdrAddRefDll") == 0)
+			if(functionNameHash == 0x665ee482)
 				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
-			else if(functionName.icompare("LdrLoadDll") == 0)
+			else if(functionNameHash == 0x9cb4a0e6)
 				return reinterpret_cast<uint64_t>(LdrLoadDllProxy);
-			else if(functionName.icompare("LdrResolveDelayLoadedAPI") == 0)
+			else if(functionNameHash == 0xa06fac4)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
-			else if(functionName.icompare("LdrGetDllHandle") == 0)
+			else if(functionNameHash == 0x79f6ac)
 				return reinterpret_cast<uint64_t>(LdrGetDllHandleProxy);
-			else if(functionName.icompare("LdrGetDllHandleEx") == 0)
+			else if(functionNameHash == 0xbd8329c9)
 				return reinterpret_cast<uint64_t>(LdrGetDllHandleExProxy);
-			else if(functionName.icompare("LdrGetProcedureAddress") == 0)
+			else if(functionNameHash == 0x59e7cdc1)
 				return reinterpret_cast<uint64_t>(LdrGetProcedureAddressProxy);
 		}
 
-		auto item = static_cast<ExportFunction *>(nullptr);
-		if(functionName.length())
+		ExportFunction *item = nullptr;
+		for(auto &i : image->exports)
 		{
-			item = binarySearch(image->exports.begin(), image->exports.begin() + image->nameExportLen, [&](const ExportFunction *a) -> int { return a->name.compare(functionName); });
-			if(item == image->exports.begin() + image->nameExportLen)
-				item = nullptr;
+			if((functionNameHash != 0 && i.nameHash == functionNameHash) || (ordinal != -1 && ordinal == i.ordinal))
+			{
+				item = &i;
+				break;
+			}
 		}
-		if(item == nullptr)
-			if(ordinal != -1)
-				for(auto &i : image->exports)
-					if(i.ordinal == ordinal)
-						item = &i;
 		if(item == nullptr)
 			return 0;
 		if(item->forward.length())

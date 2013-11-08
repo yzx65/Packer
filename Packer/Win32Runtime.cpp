@@ -89,28 +89,33 @@ Win32NativeHelper *Win32NativeHelper::get()
 void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 {
 	auto &exportList = ntdll.getExports();
-	Vector<ExportFunction> exports(exportList.begin(), exportList.end());
-	auto findItem = [&](const char *name) -> size_t
+	auto findItem = [&](uint32_t hash) -> size_t
 	{
-		return static_cast<size_t>(binarySearch(exports.begin(), exports.end(), [&](const ExportFunction *a) -> int { return a->name.compare(name); })->address + ntdllBase_);
+		for(auto &i : exportList)
+		{
+			if(i.nameHash == hash)
+				return static_cast<size_t>(ntdllBase_ + i.address);
+		}
+		return 0;
 	};
 
-	rtlCreateHeap_ = findItem("RtlCreateHeap");
-	rtlDestroyHeap_ = findItem("RtlDestroyHeap");
-	rtlAllocateHeap_ = findItem("RtlAllocateHeap");
-	rtlFreeHeap_ = findItem("RtlFreeHeap");
-	rtlSizeHeap_ = findItem("RtlSizeHeap");
-	ntAllocateVirtualMemory_ = findItem("NtAllocateVirtualMemory");
-	ntProtectVirtualMemory_ = findItem("NtProtectVirtualMemory");
-	ntFreeVirtualMemory_ = findItem("NtFreeVirtualMemory");
-	ntCreateFile_ = findItem("NtCreateFile");
-	ntClose_ = findItem("NtClose");
-	ntCreateSection_ = findItem("NtCreateSection");
-	ntWriteFile_ = findItem("NtWriteFile");
-	ntMapViewOfSection_ = findItem("NtMapViewOfSection");
-	ntUnmapViewOfSection_ = findItem("NtUnmapViewOfSection");
-	ntQueryFullAttributesFile_ = findItem("NtQueryFullAttributesFile");
-	ntSetInformationFile_ = findItem("NtSetInformationFile");
+	//known ntdll exports(until 8.1) doesn't have fnv1a collisions.
+	rtlCreateHeap_ = findItem(0x677a8098);
+	rtlDestroyHeap_ = findItem(0x883a2266);
+	rtlAllocateHeap_ = findItem(0x6122e807);
+	rtlFreeHeap_ = findItem(0xa3deb5fa);
+	rtlSizeHeap_ = findItem(0xab311b29);
+	ntAllocateVirtualMemory_ = findItem(0x2c3893c3);
+	ntProtectVirtualMemory_ = findItem(0x1b95812b);
+	ntFreeVirtualMemory_ = findItem(0xda3ddf4);
+	ntCreateFile_ = findItem(0x19d3ce88);
+	ntClose_ = findItem(0x838d8d46);
+	ntCreateSection_ = findItem(0x53647431);
+	ntWriteFile_ = findItem(0x33290283);
+	ntMapViewOfSection_ = findItem(0x821b2a47);
+	ntUnmapViewOfSection_ = findItem(0x2b7f52a8);
+	ntQueryFullAttributesFile_ = findItem(0x33f3f904);
+	ntSetInformationFile_ = findItem(0x7b5f543a);
 }
 
 void Win32NativeHelper::init_()

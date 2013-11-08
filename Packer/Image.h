@@ -76,17 +76,19 @@ struct Section
 struct ImportFunction
 {
 	ImportFunction() {}
-	ImportFunction(ImportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), iat(operand.iat) {}
+	ImportFunction(ImportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), iat(operand.iat), nameHash(operand.nameHash) {}
 	const ImportFunction &operator =(ImportFunction &&operand)
 	{
 		ordinal = operand.ordinal;
 		name = std::move(operand.name);
+		nameHash = operand.nameHash;
 		iat = operand.iat;
 
 		return *this;
 	}
 	uint16_t ordinal;
 	String name;
+	uint32_t nameHash;
 	uint64_t iat;
 };
 
@@ -108,11 +110,12 @@ struct Import
 struct ExportFunction
 {
 	ExportFunction() {}
-	ExportFunction(ExportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), address(operand.address), forward(std::move(operand.forward)) {}
+	ExportFunction(ExportFunction &&operand) : ordinal(operand.ordinal), name(std::move(operand.name)), address(operand.address), forward(std::move(operand.forward)), nameHash(operand.nameHash) {}
 	const ExportFunction &operator =(ExportFunction &&operand)
 	{
 		ordinal = operand.ordinal;
 		name = std::move(operand.name);
+		nameHash = operand.nameHash;
 		address = operand.address;
 		forward = std::move(operand.forward);
 
@@ -120,6 +123,7 @@ struct ExportFunction
 	}
 	uint16_t ordinal;
 	String name;
+	uint32_t nameHash;
 	uint64_t address;
 	String forward;
 };

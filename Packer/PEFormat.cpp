@@ -209,6 +209,7 @@ void PEFormat::processImport(uint8_t *descriptor_)
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
 				function.name.assign(reinterpret_cast<const char *>(nameEntry->Name));
+				function.nameHash = fnv1a(function.name.c_str(), function.name.length());
 			}
 
 			if(info_.architecture == ArchitectureWin32AMD64)
@@ -257,7 +258,10 @@ void PEFormat::processExport(uint8_t *directory_)
 	{
 		ExportFunction entry;
 		if(addressOfNames && addressOfNames[i])
+		{
 			entry.name.assign(reinterpret_cast<const char *>(getDataPointerOfRVA(addressOfNames[i])));
+			entry.nameHash = fnv1a(entry.name.c_str(), entry.name.length());
+		}
 
 		entry.ordinal = ordinals[i];
 		entry.address = addressOfFunctions[entry.ordinal];

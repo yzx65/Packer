@@ -23,7 +23,7 @@ typename IteratorType binarySearch(IteratorType begin, IteratorType end, Compara
 }
 
 template<typename DestinationType, typename SourceType>
-inline void copyMemory(DestinationType *dest_, const SourceType *src_, size_t size)
+static void copyMemory(DestinationType *dest_, const SourceType *src_, size_t size)
 {
 	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
 	const uint8_t *src = reinterpret_cast<const uint8_t *>(src_);
@@ -40,7 +40,7 @@ inline void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 }
 
 template<typename DestinationType>
-inline void zeroMemory(DestinationType *dest_, size_t size)
+static void zeroMemory(DestinationType *dest_, size_t size)
 {
 	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
 	if(!size)
@@ -55,7 +55,7 @@ inline void zeroMemory(DestinationType *dest_, size_t size)
 		*(dest + i) = 0; //remaining
 }
 
-inline size_t multipleOf(size_t value, size_t n)
+static size_t multipleOf(size_t value, size_t n)
 {
 	return ((value + n - 1) / n) * n;
 }
@@ -139,4 +139,21 @@ static uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedD
 	}
 
 	return resultSize;
+}
+
+static uint32_t fnv1a(const uint8_t *data, size_t size)
+{
+	uint32_t hash = 0;
+	for(size_t i = 0; i < size; i ++)
+	{
+		hash ^= data[i];
+		hash += (hash << 1) + (hash << 4) + (hash << 7) + (hash << 8) + (hash << 24);
+	}
+	return hash;
+}
+
+template<typename T>
+uint32_t fnv1a(const T *data, size_t size)
+{
+	return fnv1a(reinterpret_cast<const uint8_t *>(data), size);
 }

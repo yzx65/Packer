@@ -53,6 +53,7 @@ Vector<uint8_t> Image::serialize() const
 		A(i.address);
 		A(i.forward);
 		A(i.name);
+		A(i.nameHash);
 		A(i.ordinal);
 	}
 
@@ -74,6 +75,7 @@ Vector<uint8_t> Image::serialize() const
 		{
 			A(j.iat);
 			A(j.name);
+			A(j.nameHash);
 			A(j.ordinal);
 		}
 	}
@@ -160,6 +162,7 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 		item.address = R(uint64_t);
 		item.forward = R(String);
 		item.name = R(String);
+		item.nameHash = R(uint32_t);
 		item.ordinal = R(uint16_t);
 
 		result.exports.push_back(std::move(item));
@@ -188,6 +191,7 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 			ImportFunction function;
 			function.iat = R(uint64_t);
 			function.name = R(String);
+			function.nameHash = R(uint32_t);
 			function.ordinal = R(uint16_t);
 
 			item.functions.push_back(std::move(function));
