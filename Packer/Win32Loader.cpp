@@ -197,7 +197,7 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 					{
 						for(auto &j : i.functions)
 						{
-							if(j.name.icompare("LdrResolveDelayLoadedAPI") == 0)
+							if(j.nameHash == 0xa06fac4)
 							{
 								size_t dest = reinterpret_cast<size_t>(baseAddress) + static_cast<size_t>(j.iat);
 								size_t old;
