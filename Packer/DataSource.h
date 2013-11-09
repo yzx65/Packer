@@ -44,7 +44,7 @@ public:
 		return size_;
 	}
 
-	SharedPtr<DataView> getView(uint64_t offset, size_t size)
+	SharedPtr<DataView> getView(uint64_t offset, size_t size) const
 	{
 		return MakeShared<DataView>(source_, offset_ + offset, size);
 	}
