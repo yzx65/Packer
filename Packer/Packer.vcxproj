@@ -82,7 +82,7 @@
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <WholeProgramOptimization>false</WholeProgramOptimization>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
       <OmitFramePointers>true</OmitFramePointers>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
@@ -94,7 +94,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>WindowsEntry</EntryPointSymbol>
-      <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <BaseAddress>
       </BaseAddress>
       <RandomizedBaseAddress>true</RandomizedBaseAddress>
@@ -109,7 +109,9 @@
     <ClCompile Include="Win32File.cpp" />
     <ClCompile Include="Option.cpp" />
     <ClCompile Include="PackerMain.cpp" />
-    <ClCompile Include="Win32Runtime.cpp" />
+    <ClCompile Include="Win32Runtime.cpp">
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Win32Stub\Win32Stub.h" />
