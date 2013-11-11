@@ -101,7 +101,7 @@ public:
 		clear();
 	}
 
-	List(const List &other)
+	List(const List &other) : head_(nullptr)
 	{
 		*this = other;
 	}
@@ -135,6 +135,7 @@ public:
 			}
 			delete head_;
 		}
+		head_ = nullptr;
 	}
 
 	const List &operator =(List &&operand)
@@ -147,6 +148,11 @@ public:
 
 	const List &operator =(const List &operand)
 	{
+		if(!operand.head_)
+		{
+			clear();
+			return *this;
+		}
 		head_ = new ListNodeBase();
 		head_->next = head_;
 		head_->prev = head_;
