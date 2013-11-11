@@ -6,8 +6,6 @@
 
 struct _PEB;
 typedef struct _PEB PEB;
-struct _api_set_header;
-typedef struct _api_set_header API_SET_HEADER;
 class PEFormat;
 
 struct Win32LoadedImage
@@ -48,7 +46,7 @@ private:
 	void initModuleList();
 	void relocateSelf(void *entry);
 public:
-	API_SET_HEADER *getApiSet();
+	uint8_t *getApiSet();
 	void *createHeap(size_t baseAddress);
 	void destroyHeap(void *heap);
 	void *allocateHeap(size_t dwBytes);

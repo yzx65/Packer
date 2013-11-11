@@ -375,7 +375,7 @@ wchar_t *Win32NativeHelper::getEnvironments()
 	return reinterpret_cast<wchar_t *>(myPEB_->ProcessParameters->Environment);
 }
 
-API_SET_HEADER *Win32NativeHelper::getApiSet()
+uint8_t *Win32NativeHelper::getApiSet()
 {
 	return myPEB_->ApiSet;
 }

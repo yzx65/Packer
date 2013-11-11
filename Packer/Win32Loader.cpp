@@ -219,36 +219,69 @@ uint8_t *Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	String temp = normalizedFilename.substr(0, 4);
 	if(temp.icompare("api-") == 0 || temp.icompare("ext-") == 0)
 	{
-		API_SET_HEADER *apiSet = Win32NativeHelper::get()->getApiSet();
-		String temp = filename;
-		temp.resize(temp.length() - 4); //minus .dll
-		auto item = binarySearch(apiSet->Entries, apiSet->Entries + apiSet->NumberOfEntries, 
-			[&](const API_SET_ENTRY *entry) -> int
-			{
-				wchar_t *name = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + entry->Name);
-				size_t i = 0;
-				for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
-					if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(temp[i + 4]))
-						return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(temp[i + 4]);
-				return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(temp[i + 4]);
-			});
-		if(item != apiSet->Entries + apiSet->NumberOfEntries)
+		uint8_t *apiSetBase = Win32NativeHelper::get()->getApiSet();
+		if(*reinterpret_cast<uint32_t *>(apiSetBase) == 2) // <= 8.0
 		{
-			API_SET_HOST_DESCRIPTOR *descriptor = reinterpret_cast<API_SET_HOST_DESCRIPTOR *>(reinterpret_cast<uint8_t *>(apiSet) + item->HostDescriptor);
-			for(size_t i = descriptor->NumberOfHosts - 1; i >= 0 ; i --)
-			{
-				wchar_t *hostName = reinterpret_cast<wchar_t *>(reinterpret_cast<uint8_t *>(apiSet) + descriptor->Hosts[i].HostModuleName);
-				WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
-				uint8_t *library;
-				if((library = reinterpret_cast<uint8_t *>(GetModuleHandleWProxy(moduleName.c_str()))) == 0)
+			API_SET_HEADER *apiSet = reinterpret_cast<API_SET_HEADER *>(apiSetBase);
+			auto item = binarySearch(apiSet->Entries, apiSet->Entries + apiSet->NumberOfEntries, 
+				[&](const API_SET_ENTRY *entry) -> int
 				{
-					library = loadLibrary(WStringToString(moduleName));
-					loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
+					wchar_t *name = reinterpret_cast<wchar_t *>(apiSetBase + entry->Name);
+					size_t i = 0;
+					for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
+						if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(filename[i + 4]))
+							return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
+					return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
+				});
+			if(item != apiSet->Entries + apiSet->NumberOfEntries)
+			{
+				API_SET_HOST_DESCRIPTOR *descriptor = reinterpret_cast<API_SET_HOST_DESCRIPTOR *>(apiSetBase + item->HostDescriptor);
+				for(size_t i = descriptor->NumberOfHosts - 1; i >= 0 ; i --)
+				{
+					wchar_t *hostName = reinterpret_cast<wchar_t *>(apiSetBase + descriptor->Hosts[i].HostModuleName);
+					WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
+					uint8_t *library;
+					if((library = reinterpret_cast<uint8_t *>(GetModuleHandleWProxy(moduleName.c_str()))) == 0)
+					{
+						library = loadLibrary(WStringToString(moduleName));
+						loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
+					}
+					if(library)
+						return library;
 				}
-				if(library)
-					return library;
+				return nullptr;
 			}
-			return nullptr;
+		}
+		else if(*reinterpret_cast<uint32_t *>(apiSetBase) == 4) // > 8.0
+		{
+			API_SET_HEADER2 *apiSet = reinterpret_cast<API_SET_HEADER2 *>(apiSetBase);
+			auto item = binarySearch(apiSet->Entries, apiSet->Entries + apiSet->NumberOfEntries,
+				[&](const API_SET_ENTRY2 *entry) -> int {
+					wchar_t *name = reinterpret_cast<wchar_t *>(apiSetBase + entry->Name);
+					size_t i = 0;
+					for(; i < entry->NameLength / sizeof(wchar_t)- 1; i ++)
+						if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(filename[i + 4]))
+							return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
+					return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
+				});
+			if(item != apiSet->Entries + apiSet->NumberOfEntries)
+			{
+				API_SET_HOST_DESCRIPTOR2 *descriptor = reinterpret_cast<API_SET_HOST_DESCRIPTOR2 *>(apiSetBase + item->HostDescriptor);
+				for(size_t i = descriptor->NumberOfHosts - 1; i >= 0; i --)
+				{
+					wchar_t *hostName = reinterpret_cast<wchar_t *>(apiSetBase + descriptor->Hosts[i].HostModuleName);
+					WString moduleName(hostName, hostName + descriptor->Hosts[i].HostModuleNameLength / sizeof(wchar_t));
+					uint8_t *library;
+					if((library = reinterpret_cast<uint8_t *>(GetModuleHandleWProxy(moduleName.c_str()))) == 0)
+					{
+						library = loadLibrary(WStringToString(moduleName));
+						loadedLibraries_.insert(filename, reinterpret_cast<uint64_t>(library));
+					}
+					if(library)
+						return library;
+				}
+				return nullptr;
+			}
 		}
 	}
 

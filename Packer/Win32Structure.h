@@ -140,29 +140,65 @@ typedef void (*PPEBLOCKROUTINE)(
 	void * PebLock
 	);
 
-typedef struct _api_set_host {
+struct API_SET_HOST {
 	uint32_t           ImportModuleName;
 	uint16_t            ImportModuleNameLength;
 	uint32_t           HostModuleName;
 	uint16_t            HostModuleNameLength;
-} API_SET_HOST;
+} ;
 
-typedef struct _api_set_host_descriptor {
+struct API_SET_HOST_DESCRIPTOR {
 	uint32_t           NumberOfHosts;
 	API_SET_HOST    Hosts[1];
-} API_SET_HOST_DESCRIPTOR;
+};
 
-typedef struct _api_set_entry {
+struct API_SET_ENTRY {
 	uint32_t           Name;
 	uint16_t            NameLength;
 	uint32_t           HostDescriptor;
-} API_SET_ENTRY;
+};
 
-typedef struct _api_set_header {
-	uint32_t           unknown1;
+struct API_SET_HEADER {
+	uint32_t           Version;
 	uint32_t           NumberOfEntries;
 	API_SET_ENTRY   Entries[1];
-} API_SET_HEADER;	
+};
+
+struct API_SET_HOST2
+{
+	uint32_t Unk1;
+	uint32_t Unk2;
+	uint32_t Unk3;
+	uint32_t HostModuleName;
+	uint32_t HostModuleNameLength;
+};
+
+struct API_SET_HOST_DESCRIPTOR2
+{
+	uint32_t Unk1;
+	uint32_t NumberOfHosts;
+	API_SET_HOST2 Hosts[1];
+};
+
+struct API_SET_ENTRY2 
+{
+	uint32_t Unk1;
+	uint32_t Name;
+	uint32_t NameLength;
+	uint32_t Unk2;
+	uint32_t Unk2Length;
+	uint32_t HostDescriptor;
+};
+
+struct API_SET_HEADER2
+{
+	uint32_t Version;
+	uint32_t Unk1;
+	uint32_t Unk2;
+	uint32_t NumberOfEntries;
+	API_SET_ENTRY2 Entries[2];
+};
+
 
 typedef struct _PEB {
 
@@ -183,7 +219,7 @@ typedef struct _PEB {
 	void * KernelCallbackTable;
 	void * EventLogSection;
 	void * EventLog;
-	API_SET_HEADER *ApiSet;
+	uint8_t *ApiSet;
 	uint32_t TlsExpansionCounter;
 	void * TlsBitmap;
 	uint32_t TlsBitmapBits[0x2];
