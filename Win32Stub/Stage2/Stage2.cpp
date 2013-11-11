@@ -31,7 +31,7 @@ int Entry()
 
 	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(WIN32_STUB_BASE_ADDRESS));
 
-	Win32Loader loader(mainImage, std::move(importImages));
+	Win32Loader loader(std::move(mainImage), std::move(importImages));
 	loader.execute();
 	
 	return 0;

@@ -15,7 +15,7 @@
 
 Win32Loader *loaderInstance_;
 
-Win32Loader::Win32Loader(Image &image, List<Image> &&imports) : image_(image), imports_(imports)
+Win32Loader::Win32Loader(Image &&image, List<Image> &&imports) : image_(image), imports_(imports)
 {
 	loaderInstance_ = this;
 }
