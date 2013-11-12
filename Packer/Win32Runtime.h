@@ -11,7 +11,7 @@ class PEFormat;
 struct Win32LoadedImage
 {
 	const wchar_t *fileName;
-	uint8_t *baseAddress;
+	uint64_t baseAddress;
 };
 
 class Win32NativeHelper

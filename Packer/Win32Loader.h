@@ -23,13 +23,13 @@ private:
 	List<uint64_t> entryPointQueue_;
 	Map<uint64_t, const Image *> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
-	uint8_t *loadLibrary(const String &filename, bool asDataFile = false);
-	uint64_t getFunctionAddress(uint8_t *library, const String &functionName, int ordinal = -1);
-	uint8_t *loadImage(Image &image, bool asDataFile = false);
-	uint8_t *mapImage(Image &image);
-	void processImports(uint8_t *baseAddress, const Image &image);
-	void adjustPageProtection(uint8_t *baseAddress, const Image &image);
-	void executeEntryPoint(uint8_t *baseAddress, const Image &image);
+	uint64_t loadLibrary(const String &filename, bool asDataFile = false);
+	uint64_t getFunctionAddress(uint64_t library, const String &functionName, int ordinal = -1);
+	uint64_t loadImage(Image &image, bool asDataFile = false);
+	uint64_t mapImage(Image &image);
+	void processImports(uint64_t baseAddress, const Image &image);
+	void adjustPageProtection(uint64_t baseAddress, const Image &image);
+	void executeEntryPoint(uint64_t baseAddress, const Image &image);
 	void executeEntryPointQueue();
 
 	static uint32_t __stdcall GetModuleFileNameAProxy(void *hModule, char *lpFilename, uint32_t nSize);

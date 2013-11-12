@@ -397,7 +397,7 @@ List<Win32LoadedImage> Win32NativeHelper::getLoadedImages()
 	while(node->BaseAddress)
 	{
 		Win32LoadedImage image;
-		image.baseAddress = reinterpret_cast<uint8_t *>(node->BaseAddress);
+		image.baseAddress = reinterpret_cast<uint64_t>(node->BaseAddress);
 		image.fileName = node->BaseDllName.Buffer;
 		result.push_back(image);
 		node = reinterpret_cast<LDR_MODULE *>(node->InLoadOrderModuleList.Flink);
