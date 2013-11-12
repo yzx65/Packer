@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Packer", "Packer\Packer.vcxproj", "{130F5158-8E3C-48C5-ABD7-3BC93A4DFB34}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PETest", "PETest\PETest.vcxproj", "{37C23896-C95D-43B8-B809-907689B51CC6}"
@@ -10,6 +12,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stage2", "Win32Stub\Stage2\Stage2.vcxproj", "{EA3BC0AC-A01B-43E3-932C-B0F719BC57CC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stubgen", "Win32Stub\Stubgen\Stubgen.vcxproj", "{DF6E3D45-C2BB-4E18-80AC-567DC2FF727D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LoaderTest", "LoaderTest\LoaderTest.vcxproj", "{3473CDAA-D7D8-4D0A-A588-DC12790F47C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +41,10 @@ Global
 		{DF6E3D45-C2BB-4E18-80AC-567DC2FF727D}.Debug|Win32.Build.0 = Debug|Win32
 		{DF6E3D45-C2BB-4E18-80AC-567DC2FF727D}.Release|Win32.ActiveCfg = Release|Win32
 		{DF6E3D45-C2BB-4E18-80AC-567DC2FF727D}.Release|Win32.Build.0 = Release|Win32
+		{3473CDAA-D7D8-4D0A-A588-DC12790F47C6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3473CDAA-D7D8-4D0A-A588-DC12790F47C6}.Debug|Win32.Build.0 = Debug|Win32
+		{3473CDAA-D7D8-4D0A-A588-DC12790F47C6}.Release|Win32.ActiveCfg = Release|Win32
+		{3473CDAA-D7D8-4D0A-A588-DC12790F47C6}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
