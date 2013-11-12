@@ -176,7 +176,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 
 	//check if already loaded
 	auto &images = Win32NativeHelper::get()->getLoadedImages();
-	WString wstrName(StringToWString(filename));
+	WString wstrName(StringToWString(normalizedFilename));
 	for(auto &it = images.begin(); it != images.end(); it ++)
 	{
 		if(wstrName.icompare(it->fileName) == 0)
@@ -184,9 +184,9 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			uint64_t baseAddress = it->baseAddress;
 			PEFormat format;
 			format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(baseAddress)), true);
-			format.setFileName(filename);
+			format.setFileName(normalizedFilename);
 			auto &it = imports_.push_back(format.toImage());
-			loadedLibraries_.insert(filename, baseAddress);
+			loadedLibraries_.insert(normalizedFilename, baseAddress);
 			loadedImages_.insert(baseAddress, &*it);
 
 			if(it->fileName.icompare("kernelbase.dll") == 0 || it->fileName.icompare("kernel32.dll") == 0)
