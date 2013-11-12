@@ -368,7 +368,7 @@ size_t PEFormat::estimateSize() const
 {
 	size_t size = 0x400;
 	for(auto &i : sections_)
-		size += multipleOf(i.data->size(), 0x100);
+		size += multipleOf(i.data->size(), 0x200);
 	return size;
 }
 
