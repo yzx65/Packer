@@ -50,6 +50,9 @@ private:
 	static size_t __stdcall LdrGetDllHandleProxy(wchar_t *DllPath, size_t dllCharacteristics, UNICODE_STRING *dllName, void **dllHandle);
 	static size_t __stdcall LdrGetDllHandleExProxy(size_t Flags, wchar_t *DllPath, size_t DllCharacteristics, UNICODE_STRING *DllName, void **DllHandle);
 	static size_t __stdcall LdrGetProcedureAddressProxy(void *BaseAddress, ANSI_STRING *Name, size_t Ordinal, void **ProcedureAddress);
+	
+	template<typename HeaderType, typename EntryType, typename HostDescriptorType>
+	uint64_t matchApiSet(const String &filename, uint8_t *apiSetBase);
 public:
 	Win32Loader(Image &&image, List<Image> &&imports);
 	virtual ~Win32Loader() {}
