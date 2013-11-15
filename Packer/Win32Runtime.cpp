@@ -116,6 +116,7 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	ntUnmapViewOfSection_ = findItem(0x2b7f52a8);
 	ntQueryFullAttributesFile_ = findItem(0x33f3f904);
 	ntSetInformationFile_ = findItem(0x7b5f543a);
+	ntFlushInstructionCache_ = findItem(0x5c42410e);
 }
 
 void Win32NativeHelper::init_()
@@ -358,6 +359,13 @@ void Win32NativeHelper::setFileSize(void *file, uint64_t size)
 
 	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 20); //FileEndOfFileInfo
 	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 19); //FileAllocationInfo
+}
+
+void Win32NativeHelper::flushInstructionCache(size_t offset, size_t size)
+{
+	typedef int32_t (__stdcall *NtFlushInstructionCacheFunc)(void *ProcessHandle, void *BaseAddress, size_t NumberOfBytesToFlush);
+
+	reinterpret_cast<NtFlushInstructionCacheFunc>(ntFlushInstructionCache_)(NtCurrentProcess(), reinterpret_cast<void *>(offset), size);
 }
 
 wchar_t *Win32NativeHelper::getCommandLine()

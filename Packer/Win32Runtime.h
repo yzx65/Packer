@@ -39,6 +39,7 @@ private:
 	size_t ntUnmapViewOfSection_;
 	size_t ntQueryFullAttributesFile_;
 	size_t ntSetInformationFile_;
+	size_t ntFlushInstructionCache_;
 
 	void init_();
 	void initNtdllImport(const PEFormat &ntdll);
@@ -63,6 +64,7 @@ public:
 	void unmapViewOfSection(void *lpBaseAddress);
 	uint32_t getFileAttributes(const wchar_t *filePath, size_t filePathLen);
 	void setFileSize(void *file, uint64_t size);
+	void flushInstructionCache(size_t offset, size_t size);
 	wchar_t *getCommandLine();
 	wchar_t *getCurrentDirectory();
 	wchar_t *getEnvironments();
