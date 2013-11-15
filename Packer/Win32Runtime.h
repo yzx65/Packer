@@ -55,7 +55,7 @@ public:
 	size_t sizeHeap(void *ptr);
 	void freeVirtual(void *baseAddress);
 	void *allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
-	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection);
+	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection = nullptr);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition);
 	size_t writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize);
 	void closeHandle(void *handle);

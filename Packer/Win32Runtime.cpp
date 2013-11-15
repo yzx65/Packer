@@ -202,6 +202,10 @@ void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, 
 {
 	typedef int32_t (__stdcall *NtProtectVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t *NumberOfBytesToProtect, size_t NewAccessProtection, size_t *OldAccessProtection);
 
+	size_t temp;
+	if(!OldAccessProtection)
+		OldAccessProtection = &temp;
+
 	reinterpret_cast<NtProtectVirtualMemoryPtr>(ntProtectVirtualMemory_)(NtCurrentProcess(), &BaseAddress, &NumberOfBytes, NewAccessProtection, OldAccessProtection);
 }
 

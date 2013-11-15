@@ -64,7 +64,7 @@ void Win32Loader::adjustPageProtection(uint64_t baseAddress, const Image &image)
 {
 	for(auto &i : image.sections)
 	{
-		uint32_t unused, protect = 0;
+		uint32_t protect = 0;
 		if(i.flag & SectionFlagRead)
 			protect = PAGE_READONLY;
 		if(i.flag & SectionFlagWrite)
@@ -77,7 +77,7 @@ void Win32Loader::adjustPageProtection(uint64_t baseAddress, const Image &image)
 				protect = PAGE_EXECUTE_READ;
 		}
 
-		Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size), protect, &unused);
+		Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size), protect);
 		if(i.flag & SectionFlagExecute)
 			Win32NativeHelper::get()->flushInstructionCache(static_cast<size_t>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size));
 	}
