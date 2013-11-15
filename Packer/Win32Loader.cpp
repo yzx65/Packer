@@ -78,6 +78,8 @@ void Win32Loader::adjustPageProtection(uint64_t baseAddress, const Image &image)
 		}
 
 		Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size), protect, &unused);
+		if(i.flag & SectionFlagExecute)
+			Win32NativeHelper::get()->flushInstructionCache(static_cast<size_t>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size));
 	}
 }
 
