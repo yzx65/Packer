@@ -410,8 +410,8 @@ void PEFormat::save(SharedPtr<DataSource> target)
 
 		sectionHeaders.push_back(sectionHeader);
 		rawDataMap.insert(sectionHeader.VirtualAddress, dataOffset);
-		dataOffset += multipleOf(sectionHeader.SizeOfRawData, fileAlignment);
-		imageSize = sectionHeader.VirtualAddress + sectionHeader.VirtualSize;
+		dataOffset += sectionHeader.SizeOfRawData;
+		imageSize = multipleOf(sectionHeader.VirtualAddress + sectionHeader.VirtualSize, sectionAlignment);
 	}
 
 	//2. Write headers
@@ -436,7 +436,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER32 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER32));
-		optionalHeader.SizeOfImage = multipleOf(imageSize, sectionAlignment);
+		optionalHeader.SizeOfImage = imageSize;
 		optionalHeader.FileAlignment = fileAlignment;
 		optionalHeader.SectionAlignment = sectionAlignment;
 
@@ -446,7 +446,7 @@ void PEFormat::save(SharedPtr<DataSource> target)
 	{
 		IMAGE_OPTIONAL_HEADER64 optionalHeader;
 		copyMemory(&optionalHeader, getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(originalHeader, offset), sizeof(IMAGE_OPTIONAL_HEADER64));
-		optionalHeader.SizeOfImage = multipleOf(imageSize, sectionAlignment);
+		optionalHeader.SizeOfImage = sectionAlignment;
 		optionalHeader.FileAlignment = fileAlignment;
 		optionalHeader.SectionAlignment = sectionAlignment;
 

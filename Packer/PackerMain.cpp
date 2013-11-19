@@ -89,7 +89,7 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	mainSection.size = multipleOf(mainData.size(), 0x100);
 	resultSections.push_back(mainSection);
 
-	lastAddress += mainSection.size;
+	lastAddress = mainSection.baseAddress + mainSection.size;
 
 	Vector<uint8_t> impData;
 	for(auto &i : imports)
