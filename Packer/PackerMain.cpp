@@ -92,6 +92,8 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	lastAddress = mainSection.baseAddress + mainSection.size;
 
 	Vector<uint8_t> impData;
+	uint32_t impCount = imports.size();
+	impData.append(reinterpret_cast<uint8_t *>(&impCount), sizeof(impCount));
 	for(auto &i : imports)
 		impData.append(i.serialize());
 

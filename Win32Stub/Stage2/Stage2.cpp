@@ -19,9 +19,15 @@ int Entry()
 			mainImage = Image::unserialize(i.data, nullptr);
 		else if(i.name == WIN32_STUB_IMP_SECTION_NAME)
 		{
+			uint32_t count;
 			size_t off = 0;
 			size_t size = 0;
-			while(off < i.data->size())
+			{
+				auto view = i.data->getView(off, 0);
+				count = *reinterpret_cast<uint32_t *>(view->get());
+				off += sizeof(count);
+			}
+			for(size_t j = 0; j < count; ++ j)
 			{
 				importImages.push_back(Image::unserialize(i.data->getView(off, 0), &size));
 				off += size;
