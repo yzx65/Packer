@@ -23,7 +23,7 @@ int Entry()
 			size_t off = 0;
 			size_t size = 0;
 			{
-				auto view = i.data->getView(off, 0);
+				SharedPtr<DataView> view = i.data->getView(off, 0);
 				count = *reinterpret_cast<uint32_t *>(view->get());
 				off += sizeof(count);
 			}
