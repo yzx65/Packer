@@ -163,6 +163,7 @@ void Entry()
 
 	size_t resultSize = resultFormat.estimateSize();
 	Vector<uint8_t> resultData(resultSize);
+	zeroMemory(resultData.get(), resultData.size());
 	resultFormat.save(resultData.asDataSource());
 	
 	Vector<uint8_t> compressedResult = compress(resultData.get(), resultSize);
