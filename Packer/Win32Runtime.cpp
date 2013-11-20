@@ -100,23 +100,23 @@ void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
 	};
 
 	//known ntdll exports(until 8.1) doesn't have fnv1a collisions.
-	rtlCreateHeap_ = findItem(0x677a8098);
-	rtlDestroyHeap_ = findItem(0x883a2266);
-	rtlAllocateHeap_ = findItem(0x6122e807);
-	rtlFreeHeap_ = findItem(0xa3deb5fa);
-	rtlSizeHeap_ = findItem(0xab311b29);
-	ntAllocateVirtualMemory_ = findItem(0x2c3893c3);
-	ntProtectVirtualMemory_ = findItem(0x1b95812b);
-	ntFreeVirtualMemory_ = findItem(0xda3ddf4);
-	ntCreateFile_ = findItem(0x19d3ce88);
-	ntClose_ = findItem(0x838d8d46);
-	ntCreateSection_ = findItem(0x53647431);
-	ntWriteFile_ = findItem(0x33290283);
-	ntMapViewOfSection_ = findItem(0x821b2a47);
-	ntUnmapViewOfSection_ = findItem(0x2b7f52a8);
-	ntQueryFullAttributesFile_ = findItem(0x33f3f904);
-	ntSetInformationFile_ = findItem(0x7b5f543a);
-	ntFlushInstructionCache_ = findItem(0x5c42410e);
+	rtlCreateHeap_ = findItem(0x7b3f721f);
+	rtlDestroyHeap_ = findItem(0x3ba85fa7);
+	rtlAllocateHeap_ = findItem(0xb3f819f8);
+	rtlFreeHeap_ = findItem(0x7c76ecf5);
+	rtlSizeHeap_ = findItem(0x6d735ff2);
+	ntAllocateVirtualMemory_ = findItem(0xca67b978);
+	ntProtectVirtualMemory_ = findItem(0xbd799926);
+	ntFreeVirtualMemory_ = findItem(0xb51cc567);
+	ntCreateFile_ = findItem(0xa9c5b599);
+	ntClose_ = findItem(0x6b372c05);
+	ntCreateSection_ = findItem(0x3c59f362);
+	ntWriteFile_ = findItem(0xf67464e4);
+	ntMapViewOfSection_ = findItem(0xcbc9e1ae);
+	ntUnmapViewOfSection_ = findItem(0x53b808c5);
+	ntQueryFullAttributesFile_ = findItem(0x71e1c2fb);
+	ntSetInformationFile_ = findItem(0x723a0a33);
+	ntFlushInstructionCache_ = findItem(0x24f8dd09);
 }
 
 void Win32NativeHelper::init_()

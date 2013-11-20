@@ -168,7 +168,7 @@ static uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedD
 
 static uint32_t fnv1a(const uint8_t *data, size_t size)
 {
-	uint32_t hash = 0;
+	uint32_t hash = 0x811c9dc5;
 	for(size_t i = 0; i < size; i ++)
 	{
 		hash ^= data[i];

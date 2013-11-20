@@ -234,7 +234,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 					{
 						for(auto &j : i.functions)
 						{
-							if(j.nameHash == 0xa06fac4)
+							if(j.nameHash == 0x6cac36c1)
 							{
 								size_t dest = static_cast<size_t>(baseAddress + j.iat);
 								size_t old;
@@ -283,46 +283,46 @@ uint64_t Win32Loader::getFunctionAddress(uint64_t library, const String &functio
 		const Image *image = it->value;
 		if(image->fileName.icompare("kernel32.dll") == 0 || image->fileName.icompare("kernelbase.dll") == 0)
 		{
-			if(functionNameHash == 0x51fc53b7)
+			if(functionNameHash == 0x1cd12702)
 				return reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
-			else if(functionNameHash == 0x5ffc69c1)
+			else if(functionNameHash == 0x6d10460)
 				return reinterpret_cast<uint64_t>(LoadLibraryExAProxy);
-			else if(functionNameHash == 0x73d7c450)
+			else if(functionNameHash == 0x41b1eab9)
 				return reinterpret_cast<uint64_t>(LoadLibraryWProxy);
-			else if(functionNameHash == 0x69d7b492)
+			else if(functionNameHash == 0x53b2070f)
 				return reinterpret_cast<uint64_t>(LoadLibraryAProxy);
-			else if(functionNameHash == 0xfb5da08)
+			else if(functionNameHash == 0xa9d0e95d)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExWProxy);
-			else if(functionNameHash == 0x5b5ca4a)
+			else if(functionNameHash == 0xb3d0f91b)
 				return reinterpret_cast<uint64_t>(GetModuleHandleExAProxy);
-			else if(functionNameHash == 0x770dcc97)
+			else if(functionNameHash == 0xd263bde6)
 				return reinterpret_cast<uint64_t>(GetModuleHandleWProxy);
-			else if(functionNameHash == 0x850de2a1)
+			else if(functionNameHash == 0xe463da3c)
 				return reinterpret_cast<uint64_t>(GetModuleHandleAProxy);
-			else if(functionNameHash == 0x75cf7ac)
+			else if(functionNameHash == 0xf8f45725)
 				return reinterpret_cast<uint64_t>(GetProcAddressProxy);
-			else if(functionNameHash == 0x901198ee)
+			else if(functionNameHash == 0x96d3d469)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
-			else if(functionNameHash == 0xf6d9edf8)
+			else if(functionNameHash == 0x99fbc63d)
 				return reinterpret_cast<uint64_t>(GetModuleFileNameAProxy);
-			else if(functionNameHash == 0xcda109a)
+			else if(functionNameHash == 0xa3fbd5fb)
 				return reinterpret_cast<uint64_t>(GetModuleFileNameWProxy);
-			else if(functionNameHash == 0xc8d6e8a4)
+			else if(functionNameHash == 0x1c59c83)
 				return reinterpret_cast<uint64_t>(DisableThreadLibraryCallsProxy);
 		}
 		else if(image->fileName.icompare("ntdll.dll") == 0)
 		{
-			if(functionNameHash == 0x665ee482)
+			if(functionNameHash == 0x7385e79f)
 				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
-			else if(functionNameHash == 0x9cb4a0e6)
+			else if(functionNameHash == 0x7b566b5f)
 				return reinterpret_cast<uint64_t>(LdrLoadDllProxy);
-			else if(functionNameHash == 0xa06fac4)
+			else if(functionNameHash == 0x6cac36c1)
 				return reinterpret_cast<uint64_t>(LdrResolveDelayLoadedAPIProxy);
-			else if(functionNameHash == 0x79f6ac)
+			else if(functionNameHash == 0x9b08d96f)
 				return reinterpret_cast<uint64_t>(LdrGetDllHandleProxy);
-			else if(functionNameHash == 0xbd8329c9)
+			else if(functionNameHash == 0x4738792)
 				return reinterpret_cast<uint64_t>(LdrGetDllHandleExProxy);
-			else if(functionNameHash == 0x59e7cdc1)
+			else if(functionNameHash == 0x1478f484)
 				return reinterpret_cast<uint64_t>(LdrGetProcedureAddressProxy);
 		}
 
