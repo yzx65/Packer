@@ -32,8 +32,6 @@ private:
 
 		virtual SharedPtr<DataView> getView(uint64_t offset, size_t size)
 		{
-			if(size == 0)
-				size = this->size;
 			return MakeShared<DataView>(sharedFromThis(), offset, size);
 		}
 
