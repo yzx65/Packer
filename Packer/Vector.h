@@ -115,6 +115,7 @@ public:
 		 data_->alloc = size;
 		 data_->data = new ValueType[size];
 	}
+
 	~Vector()
 	{
 	}

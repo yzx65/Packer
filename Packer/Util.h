@@ -22,6 +22,41 @@ typename IteratorType binarySearch(IteratorType begin, IteratorType end, Compara
 	return end;
 }
 
+template<int t>
+size_t makePattern(uint8_t val);
+
+template<>
+static size_t makePattern<4>(uint8_t val)
+{
+	return (val << 24) | (val << 16) | (val << 8) | val;
+}
+
+template<>
+static size_t makePattern<8>(uint8_t val)
+{
+	return ((uint64_t)val << 58) | ((uint64_t)val << 52) | ((uint64_t)val << 48) | ((uint64_t)val << 40) | ((uint64_t)val << 32) | (val << 24) | (val << 16) | (val << 8) | val;;
+}
+
+template<typename DestinationType>
+static void setMemory(DestinationType *dest_, uint8_t val, size_t size)
+{
+	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
+	if(!size)
+		return;
+	size_t i;
+	
+	for(i = 0; i < reinterpret_cast<size_t>(dest) % sizeof(size_t); i ++)
+		*(dest + i) = val; //align to boundary
+	if(size > sizeof(size_t))
+	{
+		size_t v = makePattern<sizeof(v)>(val);
+		for(; i < size; i += sizeof(size_t))
+			*reinterpret_cast<size_t *>(dest + i) = v;
+	}
+	for(; i < size; i ++)
+		*(dest + i) = val; //remaining
+}
+
 template<typename DestinationType, typename SourceType>
 static void copyMemory(DestinationType *dest_, const SourceType *src_, size_t size)
 {
@@ -33,7 +68,7 @@ static void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 	for(i = 0; i < reinterpret_cast<size_t>(src) % sizeof(size_t); i ++)
 		*(dest + i) = *(src + i); //align to boundary
 	if(size > sizeof(size_t))
-		for(; i < size - sizeof(size_t); i += sizeof(size_t))
+		for(; i < size; i += sizeof(size_t))
 			*reinterpret_cast<size_t *>(dest + i) = *reinterpret_cast<const size_t *>(src + i);
 	for(; i < size; i ++)
 		*(dest + i) = *(src + i); //remaining
@@ -42,17 +77,7 @@ static void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 template<typename DestinationType>
 static void zeroMemory(DestinationType *dest_, size_t size)
 {
-	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
-	if(!size)
-		return;
-	size_t i;
-	for(i = 0; i < reinterpret_cast<size_t>(dest) % sizeof(size_t); i ++)
-		*(dest + i) = 0; //align to boundary
-	if(i > sizeof(size_t))
-		for(; i < size - sizeof(size_t); i += sizeof(size_t))
-			*reinterpret_cast<size_t *>(dest + i) = 0;
-	for(; i < size; i ++)
-		*(dest + i) = 0; //remaining
+	setMemory(dest_, 0, size);
 }
 
 static size_t multipleOf(size_t value, size_t n)
