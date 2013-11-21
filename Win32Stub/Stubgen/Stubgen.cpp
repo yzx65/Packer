@@ -153,7 +153,7 @@ void Entry()
 	}
 	if(stage2Section.baseAddress == 0)
 		stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
-	stage2Section.size = multipleOf(compressedStage2->size(), 0x100);
+	stage2Section.size = compressedStage2->size();
 	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
 	stage2Section.flag = SectionFlagData | SectionFlagRead | SectionFlagWrite;
 	stage2Section.data = compressedStage2->getView(0, compressedStage2->size());

@@ -86,7 +86,7 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	mainSection.flag = SectionFlagData | SectionFlagRead;
 	mainSection.name = WIN32_STUB_MAIN_SECTION_NAME;
 	mainSection.data = mainData.getView(0, mainData.size());
-	mainSection.size = multipleOf(mainData.size(), 0x100);
+	mainSection.size = mainData.size();
 	resultSections.push_back(mainSection);
 
 	lastAddress = mainSection.baseAddress + mainSection.size;
@@ -102,7 +102,7 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	importSection.flag = SectionFlagData | SectionFlagRead;
 	importSection.name = WIN32_STUB_IMP_SECTION_NAME;
 	importSection.data = impData.getView(0, impData.size());
-	importSection.size = multipleOf(impData.size(), 0x100);
+	importSection.size = impData.size();
 	resultSections.push_back(importSection);
 
 	resultFormat.setSections(resultSections);
