@@ -42,7 +42,7 @@ private:
 	size_t ntFlushInstructionCache_;
 
 	void init_();
-	void initNtdllImport(const PEFormat &ntdll);
+	void initNtdllImport();
 	void initHeap();
 	void initModuleList();
 	void relocateSelf(void *entry);

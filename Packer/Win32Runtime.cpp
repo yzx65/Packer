@@ -86,9 +86,12 @@ Win32NativeHelper *Win32NativeHelper::get()
 	return &g_helper;
 }
 
-void Win32NativeHelper::initNtdllImport(const PEFormat &ntdll)
+void Win32NativeHelper::initNtdllImport()
 {
-	auto &exportList = ntdll.getExports();
+	PEFormat format;
+	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(ntdllBase_)), true);
+
+	auto &exportList = format.getExports();
 	auto findItem = [&](uint32_t hash) -> size_t
 	{
 		for(auto &i : exportList)
@@ -135,10 +138,7 @@ void Win32NativeHelper::init_()
 	myBase_ = reinterpret_cast<size_t>(module->BaseAddress);
 
 	//get exports
-	PEFormat format;
-	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(ntdllBase_)), true);
-
-	initNtdllImport(format);
+	initNtdllImport();
 	initialized_ = true;
 }
 
