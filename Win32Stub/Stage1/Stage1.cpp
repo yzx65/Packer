@@ -9,7 +9,6 @@
 
 #define STAGE2_SIZE 2097152
 
-uint32_t unused;
 uint8_t stage2[STAGE2_SIZE];
 
 inline int unneededCopy(uint8_t *dst, const uint8_t *src)
@@ -21,13 +20,13 @@ inline int unneededCopy(uint8_t *dst, const uint8_t *src)
 
 int __stdcall Handler(EXCEPTION_RECORD *record, void *, CONTEXT *context, void*)
 {
+	size_t temp;
 	if(!context)
 		return 0;
 	if(context->Ecx == 0)
 	{
 		size_t stage2Data = context->Eax;
 		size_t stage2Size = context->Ebx;
-		int temp = context->Eip;
 		_asm
 		{
 			sub esp, 14h
@@ -70,7 +69,7 @@ cont:
 
 	simpleDecrypt(reinterpret_cast<uint8_t *>(context->Edx), context->Ecx);
 	decompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
-	context->Eax = reinterpret_cast<size_t>(&unused); //don't trigger exception again.
+	context->Eax = reinterpret_cast<size_t>(&temp); //don't trigger exception again.
 	return ExceptionContinueExecution;
 }
 
