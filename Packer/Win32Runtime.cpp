@@ -86,10 +86,10 @@ Win32NativeHelper *Win32NativeHelper::get()
 	return &g_helper;
 }
 
-void Win32NativeHelper::initNtdllImport()
+void Win32NativeHelper::initNtdllImport(size_t ntdllBase)
 {
 	PEFormat format;
-	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(ntdllBase_)), true);
+	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(ntdllBase)), true);
 
 	auto &exportList = format.getExports();
 	auto findItem = [&](uint32_t hash) -> size_t
@@ -97,7 +97,7 @@ void Win32NativeHelper::initNtdllImport()
 		for(auto &i : exportList)
 		{
 			if(i.nameHash == hash)
-				return static_cast<size_t>(ntdllBase_ + i.address);
+				return static_cast<size_t>(ntdllBase + i.address);
 		}
 		return 0;
 	};
@@ -133,12 +133,12 @@ void Win32NativeHelper::init_()
 	myPEB_ = reinterpret_cast<PEB *>(pebAddress);
 
 	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink->Flink);
-	ntdllBase_ = reinterpret_cast<size_t>(module->BaseAddress);
+	size_t ntdllBase = reinterpret_cast<size_t>(module->BaseAddress);
 	module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink);
-	myBase_ = reinterpret_cast<size_t>(module->BaseAddress);
+	size_t myBase = reinterpret_cast<size_t>(module->BaseAddress);
 
 	//get exports
-	initNtdllImport();
+	initNtdllImport(ntdllBase);
 	initialized_ = true;
 }
 

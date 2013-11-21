@@ -18,9 +18,6 @@ class Win32NativeHelper
 {
 private:
 	bool initialized_;
-	size_t ntdllBase_;
-	size_t myBase_;
-	size_t entry_;
 	PEB *myPEB_;
 
 	size_t rtlCreateHeap_;
@@ -42,7 +39,7 @@ private:
 	size_t ntFlushInstructionCache_;
 
 	void init_();
-	void initNtdllImport();
+	void initNtdllImport(size_t ntdllBase);
 	void initHeap();
 	void initModuleList();
 	void relocateSelf(void *entry);
