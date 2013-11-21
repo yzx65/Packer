@@ -56,6 +56,9 @@ inline void simpleDecrypt(uint8_t *data, size_t size)
 		lastData = reinterpret_cast<uint32_t *>(data)[i / 4];
 		reinterpret_cast<uint32_t *>(data)[i / 4] ^= seed;
 	}
+	seed += lastData;
+	seed = (seed >> 16) | (seed << 16);
+	seed ^= lastData;
 	for(; i < size; i ++)
 		data[i] ^= seed;
 }

@@ -83,10 +83,7 @@ Vector<uint8_t> compress(const uint8_t *source, size_t size)
 	if(nonSuccessionCount > 1)
 		control.append(encodeSize(0, nonSuccessionCount - 1));
 	if(successionCount > 1)
-	{
 		control.append(encodeSize(1, successionCount));
-		data.push_back(static_cast<uint8_t>(lastData));
-	}
 
 	Vector<uint8_t> result(4);
 	*reinterpret_cast<uint32_t *>(result.get()) = control.size();
