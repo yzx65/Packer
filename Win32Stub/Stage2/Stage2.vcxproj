@@ -66,8 +66,9 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>Entry</EntryPointSymbol>
-      <BaseAddress>0x50000000</BaseAddress>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <BaseAddress>
+      </BaseAddress>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <FixedBaseAddress>false</FixedBaseAddress>
     </Link>
   </ItemDefinitionGroup>
@@ -95,8 +96,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
       <EntryPointSymbol>Entry</EntryPointSymbol>
-      <BaseAddress>0x50000000</BaseAddress>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <BaseAddress>
+      </BaseAddress>
+      <RandomizedBaseAddress>true</RandomizedBaseAddress>
       <FixedBaseAddress>false</FixedBaseAddress>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
