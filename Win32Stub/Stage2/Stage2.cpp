@@ -4,8 +4,8 @@
 #include "../../Packer/Win32Loader.h"
 #include "../Win32Stub.h"
 
-Image *mainImage;
-List<Image> *importImages;
+uint8_t *mainData;
+uint8_t *impData;
 
 void Execute();
 
@@ -13,9 +13,6 @@ int Entry()
 {
 	Win32StubStage2Header *stage2Header;
 	Win32NativeHelper::get()->init();
-
-	mainImage = new Image();
-	importImages = new List<Image>();
 
 	size_t myBase = Win32NativeHelper::get()->getMyBase();
 	PEFormat format;
@@ -25,18 +22,14 @@ int Entry()
 	for(auto &i : format.getSections())
 	{
 		if(i.name == WIN32_STUB_MAIN_SECTION_NAME)
-			*mainImage = Image::unserialize(i.data, nullptr);
+		{
+			mainData = new uint8_t[i.data->size()];
+			copyMemory(mainData, i.data->get(), i.data->size());
+		}
 		else if(i.name == WIN32_STUB_IMP_SECTION_NAME)
 		{
-			uint32_t count = *reinterpret_cast<uint32_t *>(i.data->get());
-			size_t off = sizeof(count);
-			size_t size = 0;
-
-			for(size_t j = 0; j < count; ++ j)
-			{
-				importImages->push_back(Image::unserialize(i.data->getView(off, 0), &size));
-				off += size;
-			}
+			impData = new uint8_t[i.data->size()];
+			copyMemory(impData, i.data->get(), i.data->size());
 		}
 		else
 		{
@@ -65,6 +58,23 @@ void Execute()
 {
 	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->getMyBase()));
 
-	Win32Loader loader(std::move(*mainImage), std::move(*importImages));
+	Image mainImage = Image::unserialize(MakeShared<MemoryDataSource>(mainData)->getView(0), nullptr);
+
+	List<Image> importImages;
+	if(impData)
+	{
+		SharedPtr<MemoryDataSource> impDataSource = MakeShared<MemoryDataSource>(impData);
+		uint32_t count = *reinterpret_cast<uint32_t *>(&impData[0]);
+		size_t off = sizeof(count);
+		size_t size = 0;
+
+		for(size_t j = 0; j < count; ++ j)
+		{
+			importImages.push_back(Image::unserialize(impDataSource->getView(off), &size));
+			off += size;
+		}
+	}
+
+	Win32Loader loader(std::move(mainImage), std::move(importImages));
 	loader.execute();
 }
