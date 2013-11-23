@@ -19,6 +19,7 @@ class Win32NativeHelper
 private:
 	bool initialized_;
 	PEB *myPEB_;
+	size_t myBase_;
 
 	size_t rtlCreateHeap_;
 	size_t rtlDestroyHeap_;
@@ -70,7 +71,8 @@ public:
 	List<Win32LoadedImage> getLoadedImages();
 	List<String> getArgumentList();
 
-	static void newEntry(size_t newBase);
+	size_t getMyBase();
+
 	static Win32NativeHelper *get();
 	static void init();
 };

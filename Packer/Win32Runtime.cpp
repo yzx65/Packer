@@ -135,11 +135,16 @@ void Win32NativeHelper::init_()
 	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink->Flink);
 	size_t ntdllBase = reinterpret_cast<size_t>(module->BaseAddress);
 	module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink);
-	size_t myBase = reinterpret_cast<size_t>(module->BaseAddress);
+	myBase_ = reinterpret_cast<size_t>(module->BaseAddress);
 
 	//get exports
 	initNtdllImport(ntdllBase);
 	initialized_ = true;
+}
+
+size_t Win32NativeHelper::getMyBase()
+{
+	return myBase_;
 }
 
 void *Win32NativeHelper::createHeap(size_t baseAddress)
