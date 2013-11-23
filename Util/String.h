@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "Runtime.h"
+#include "TypeTraits.h"
 #include "Vector.h"
 
 template<typename CharacterType=char>

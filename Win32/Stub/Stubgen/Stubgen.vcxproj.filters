@@ -15,22 +15,19 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Stage2.cpp">
+    <ClCompile Include="Stubgen.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Packer\Win32Runtime.cpp">
+    <ClCompile Include="..\..\Win32File.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Packer\PEFormat.cpp">
+    <ClCompile Include="..\..\Win32Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Packer\Win32File.cpp">
+    <ClCompile Include="..\..\Win32Runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Packer\Win32Loader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Packer\Image.cpp">
+    <ClCompile Include="..\..\..\Runtime\PEFormat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

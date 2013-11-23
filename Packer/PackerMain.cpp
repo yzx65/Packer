@@ -1,11 +1,11 @@
 #include "PackerMain.h"
 
-#include "Vector.h"
-#include "FormatBase.h"
-#include "PEFormat.h"
-#include "Signature.h"
-#include "../Win32Stub/Win32Stub.h"
-#include "../Win32Stub/StubData.h"
+#include "../Runtime/FormatBase.h"
+#include "../Runtime/PEFormat.h"
+#include "../Win32/Stub/Win32Stub.h"
+#include "../Win32/Stub/StubData.h"
+#include "../Util/Vector.h"
+#include "../Runtime/Signature.h"
 
 PackerMain::PackerMain(const Option &option) : option_(option)
 {

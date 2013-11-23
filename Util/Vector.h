@@ -1,8 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <type_traits> //for is_pod
-#include "Runtime.h"
+#include "TypeTraits.h"
 #include "Util.h"
 #include "SharedPtr.h"
 

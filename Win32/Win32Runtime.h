@@ -1,8 +1,8 @@
 #pragma once
 
 #include <cstdint>
-#include "List.h"
-#include "String.h"
+#include "../Util/List.h"
+#include "../Util/String.h"
 
 struct _PEB;
 typedef struct _PEB PEB;

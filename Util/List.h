@@ -2,7 +2,7 @@
 
 //replacement of std::list, to get rid of external dependency.
 
-#include "Runtime.h"
+#include "TypeTraits.h"
 
 template<typename ValueType>
 class List

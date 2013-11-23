@@ -1,7 +1,7 @@
-#include "../../Packer/PEFormat.h"
-#include "../../Packer/Win32Runtime.h"
-#include "../../Packer/DataSource.h"
-#include "../../Packer/Win32Loader.h"
+#include "../../../Runtime/PEFormat.h"
+#include "../../Win32Runtime.h"
+#include "../../../Util/DataSource.h"
+#include "../../Win32Loader.h"
 #include "../Win32Stub.h"
 
 uint8_t *mainData;

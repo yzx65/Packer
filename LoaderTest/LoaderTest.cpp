@@ -1,6 +1,6 @@
-#include "../Packer/Win32Runtime.h"
-#include "../Packer/PEFormat.h"
-#include "../Packer/Win32Loader.h"
+#include "../Win32/Win32Runtime.h"
+#include "../Win32/Win32Loader.h"
+#include "../Runtime/PEFormat.h"
 
 void Entry()
 {

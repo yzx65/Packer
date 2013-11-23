@@ -2,11 +2,11 @@
 
 #include "Signature.h"
 #include "PEHeader.h"
-#include "Util.h"
-#include "Map.h"
+#include "../Util/Util.h"
+#include "../Util/Map.h"
 
 #ifdef _WIN32
-#include "Win32Runtime.h" //for path search.
+#include "../Win32/Win32Runtime.h" //for path search.
 #endif
 
 template<typename T>

@@ -1,8 +1,8 @@
-#include "../../Packer/Win32Runtime.h"
-#include "../../Packer/PEFormat.h"
-#include "../../Packer/Win32File.h"
-#include "../../Packer/Util.h"
-#include "../../Packer/Vector.h"
+#include "../../Win32Runtime.h"
+#include "../../Win32File.h"
+#include "../../../Runtime/PEFormat.h"
+#include "../../../Util/Util.h"
+#include "../../../Util/Vector.h"
 
 #include "../Win32Stub.h"
 

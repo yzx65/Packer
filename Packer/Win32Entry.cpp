@@ -1,6 +1,6 @@
 #include "PackerMain.h"
-#include "Win32Runtime.h"
-#include "Util.h"
+#include "../Win32/Win32Runtime.h"
+#include "../Util/Util.h"
 
 void WindowsEntry()
 {

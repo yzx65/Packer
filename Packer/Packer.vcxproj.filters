@@ -15,93 +15,87 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Option.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Win32File.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="PackerMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PEFormat.cpp">
+    <ClCompile Include="..\Win32\Win32File.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Win32Loader.cpp">
+    <ClCompile Include="..\Win32\Win32Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Win32Runtime.cpp">
+    <ClCompile Include="..\Win32\Win32Runtime.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Win32Entry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Image.cpp">
+    <ClCompile Include="..\Runtime\Option.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Runtime\PEFormat.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Runtime\Image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Option.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Win32File.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="File.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PackerMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PEHeader.h">
+    <ClInclude Include="..\Win32\Win32Runtime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Signature.h">
+    <ClInclude Include="..\Win32\Win32Structure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PEFormat.h">
+    <ClInclude Include="..\Win32\Win32File.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FormatBase.h">
+    <ClInclude Include="..\Win32\Win32Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util.h">
+    <ClInclude Include="..\Util\SharedPtr.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Win32Loader.h">
+    <ClInclude Include="..\Util\String.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Image.h">
+    <ClInclude Include="..\Util\Util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="List.h">
+    <ClInclude Include="..\Util\Vector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vector.h">
+    <ClInclude Include="..\Util\List.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Win32Runtime.h">
+    <ClInclude Include="..\Util\Map.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Map.h">
+    <ClInclude Include="..\Util\DataSource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="String.h">
+    <ClInclude Include="..\Runtime\Option.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SharedPtr.h">
+    <ClInclude Include="..\Runtime\PEFormat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Runtime.h">
+    <ClInclude Include="..\Runtime\PEHeader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Win32Structure.h">
+    <ClInclude Include="..\Runtime\File.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DataSource.h">
+    <ClInclude Include="..\Runtime\FormatBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Win32Stub\Win32Stub.h">
+    <ClInclude Include="..\Runtime\Image.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Runtime\Signature.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

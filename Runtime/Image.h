@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-#include "Runtime.h"
-#include "Vector.h"
-#include "List.h"
-#include "String.h"
-#include "DataSource.h"
+#include "../Util/TypeTraits.h"
+#include "../Util/Vector.h"
+#include "../Util/List.h"
+#include "../Util/String.h"
+#include "../Util/DataSource.h"
 
 enum ArchitectureType
 {

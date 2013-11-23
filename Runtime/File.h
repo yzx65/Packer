@@ -2,9 +2,9 @@
 
 #include <cstdint>
 
-#include "String.h"
-#include "SharedPtr.h"
-#include "DataSource.h"
+#include "../Util/String.h"
+#include "../Util/SharedPtr.h"
+#include "../Util/DataSource.h"
 
 class File : public DataSource, public EnableSharedFromThis<File>
 {

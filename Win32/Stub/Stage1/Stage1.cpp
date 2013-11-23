@@ -1,8 +1,8 @@
 #include <cstdint>
 #include "../Win32Stub.h"
-#include "../../Packer/Win32Structure.h"
-#include "../../Packer/PEHeader.h"
-#include "../../Packer/Util.h"
+#include "../../Win32Structure.h"
+#include "../../../Runtime/PEHeader.h"
+#include "../../../Util/Util.h"
 #include <intrin.h>
 
 #pragma warning(disable:4733) //we don't use safeseh.

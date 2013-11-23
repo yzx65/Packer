@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Vector.h"
-#include "String.h"
-#include "List.h"
-#include "Map.h"
-#include "Image.h"
+#include "../Util/Vector.h"
+#include "../Util/String.h"
+#include "../Util/List.h"
+#include "../Util/Map.h"
+#include "../Runtime/Image.h"
 
 struct _UNICODE_STRING;
 typedef _UNICODE_STRING UNICODE_STRING;

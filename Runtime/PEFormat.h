@@ -2,9 +2,9 @@
 
 #include "FormatBase.h"
 #include "File.h"
-#include "SharedPtr.h"
-#include "List.h"
-#include "DataSource.h"
+#include "../Util/SharedPtr.h"
+#include "../Util/List.h"
+#include "../Util/DataSource.h"
 
 class PEFormat : public FormatBase
 {

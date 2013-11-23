@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Runtime.h"
+#include "TypeTraits.h"
 
 template<typename ValueType>
 class DefaultComparator

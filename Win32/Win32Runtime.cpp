@@ -2,11 +2,11 @@
 
 #include <cstdint>
 
-#include "PEHeader.h"
+#include "../Runtime/PEHeader.h"
+#include "../Runtime/PEFormat.h"
+#include "../Util/String.h"
+#include "../Util/Util.h"
 #include "Win32Structure.h"
-#include "PEFormat.h"
-#include "String.h"
-#include "Util.h"
 
 #include <intrin.h>
 

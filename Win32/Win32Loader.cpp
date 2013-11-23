@@ -1,12 +1,12 @@
 #include "Win32Loader.h"
 
-#include "FormatBase.h"
+#include "../Runtime/FormatBase.h"
 #include "Win32Runtime.h"
 #include "Win32Structure.h"
-#include "Util.h"
-#include "File.h"
-#include "PEFormat.h"
-#include "PEHeader.h"
+#include "../Util/Util.h"
+#include "../Runtime/File.h"
+#include "../Runtime/PEFormat.h"
+#include "../Runtime/PEHeader.h"
 
 #define DLL_PROCESS_ATTACH   1    
 #define DLL_THREAD_ATTACH    2    

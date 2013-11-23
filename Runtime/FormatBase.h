@@ -1,10 +1,10 @@
 #pragma once
 
-#include "List.h"
 #include "Image.h"
-#include "String.h"
-#include "SharedPtr.h"
-#include "DataSource.h"
+#include "../Util/List.h"
+#include "../Util/String.h"
+#include "../Util/SharedPtr.h"
+#include "../Util/DataSource.h"
 
 class FormatBase
 {

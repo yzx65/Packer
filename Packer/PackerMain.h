@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Option.h"
-#include "List.h"
-#include "SharedPtr.h"
+#include "../Runtime/Option.h"
+#include "../Util/List.h"
+#include "../Util/SharedPtr.h"
 
 class File;
 class FormatBase;

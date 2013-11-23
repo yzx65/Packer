@@ -102,39 +102,35 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Image.cpp" />
-    <ClCompile Include="Win32Entry.cpp" />
-    <ClCompile Include="Win32Loader.cpp" />
-    <ClCompile Include="PEFormat.cpp" />
-    <ClCompile Include="Win32File.cpp" />
-    <ClCompile Include="Option.cpp" />
+    <ClCompile Include="..\Runtime\Image.cpp" />
+    <ClCompile Include="..\Runtime\Option.cpp" />
+    <ClCompile Include="..\Runtime\PEFormat.cpp" />
+    <ClCompile Include="..\Win32\Win32File.cpp" />
+    <ClCompile Include="..\Win32\Win32Loader.cpp" />
+    <ClCompile Include="..\Win32\Win32Runtime.cpp" />
     <ClCompile Include="PackerMain.cpp" />
-    <ClCompile Include="Win32Runtime.cpp">
-      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
-    </ClCompile>
+    <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Win32Stub\Win32Stub.h" />
-    <ClInclude Include="DataSource.h" />
-    <ClInclude Include="Map.h" />
-    <ClInclude Include="Runtime.h" />
-    <ClInclude Include="SharedPtr.h" />
-    <ClInclude Include="String.h" />
-    <ClInclude Include="Win32Runtime.h" />
-    <ClInclude Include="Vector.h" />
-    <ClInclude Include="File.h" />
-    <ClInclude Include="FormatBase.h" />
-    <ClInclude Include="Image.h" />
-    <ClInclude Include="List.h" />
-    <ClInclude Include="Win32Loader.h" />
-    <ClInclude Include="Util.h" />
-    <ClInclude Include="PEFormat.h" />
-    <ClInclude Include="PEHeader.h" />
-    <ClInclude Include="Signature.h" />
-    <ClInclude Include="Win32File.h" />
-    <ClInclude Include="Option.h" />
+    <ClInclude Include="..\Runtime\File.h" />
+    <ClInclude Include="..\Runtime\FormatBase.h" />
+    <ClInclude Include="..\Runtime\Image.h" />
+    <ClInclude Include="..\Runtime\Option.h" />
+    <ClInclude Include="..\Runtime\PEFormat.h" />
+    <ClInclude Include="..\Runtime\PEHeader.h" />
+    <ClInclude Include="..\Runtime\Signature.h" />
+    <ClInclude Include="..\Util\DataSource.h" />
+    <ClInclude Include="..\Util\List.h" />
+    <ClInclude Include="..\Util\Map.h" />
+    <ClInclude Include="..\Util\SharedPtr.h" />
+    <ClInclude Include="..\Util\String.h" />
+    <ClInclude Include="..\Util\Util.h" />
+    <ClInclude Include="..\Util\Vector.h" />
+    <ClInclude Include="..\Win32\Win32File.h" />
+    <ClInclude Include="..\Win32\Win32Loader.h" />
+    <ClInclude Include="..\Win32\Win32Runtime.h" />
+    <ClInclude Include="..\Win32\Win32Structure.h" />
     <ClInclude Include="PackerMain.h" />
-    <ClInclude Include="Win32Structure.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
