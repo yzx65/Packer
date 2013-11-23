@@ -147,6 +147,12 @@ size_t Win32NativeHelper::getMyBase()
 	return myBase_;
 }
 
+void Win32NativeHelper::setMyBase(size_t address)
+{
+	myBase_ = address;;
+	myPEB_->ImageBaseAddress = reinterpret_cast<void *>(address);
+}
+
 void *Win32NativeHelper::createHeap(size_t baseAddress)
 {
 	typedef void *(__stdcall *RtlCreateHeapPtr)(size_t Flags, void *HeapBase, size_t Reservesize, size_t Commitsize, void *Lock, void *Parameters);

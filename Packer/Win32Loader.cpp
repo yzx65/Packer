@@ -13,7 +13,7 @@
 #define DLL_THREAD_DETACH    3    
 #define DLL_PROCESS_DETACH   0  
 
-Win32Loader *loaderInstance_;
+Win32Loader *loaderInstance_; //TODO: Remove global instance;
 
 Win32Loader::Win32Loader(Image &&image, List<Image> &&imports) : image_(image), imports_(imports)
 {
@@ -155,7 +155,7 @@ uint64_t Win32Loader::loadImage(Image &image, bool asDataFile)
 void Win32Loader::execute()
 {
 	uint64_t baseAddress = mapImage(image_);
-	Win32NativeHelper::get()->getPEB()->ImageBaseAddress = reinterpret_cast<void *>(baseAddress);
+	Win32NativeHelper::get()->setMyBase(static_cast<size_t>(baseAddress));
 	processImports(baseAddress, image_);
 	adjustPageProtection(baseAddress, image_);
 

@@ -72,6 +72,7 @@ public:
 	List<String> getArgumentList();
 
 	size_t getMyBase();
+	void setMyBase(size_t address);
 
 	static Win32NativeHelper *get();
 	static void init();
