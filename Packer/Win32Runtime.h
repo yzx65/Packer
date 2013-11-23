@@ -71,7 +71,7 @@ public:
 	List<Win32LoadedImage> getLoadedImages();
 	List<String> getArgumentList();
 
-	size_t getMyBase();
+	size_t getMyBase() const;
 	void setMyBase(size_t address);
 
 	static Win32NativeHelper *get();

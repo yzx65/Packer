@@ -1,7 +1,5 @@
 #pragma once
 
-#define WIN32_STUB_BASE_ADDRESS 0x00400000
-
 #define WIN32_STUB_MAIN_SECTION_NAME ".main"
 #define WIN32_STUB_IMP_SECTION_NAME ".imp"
 #define WIN32_STUB_STAGE2_SECTION_NAME ".stage2"

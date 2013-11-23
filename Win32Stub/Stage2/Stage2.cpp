@@ -17,8 +17,9 @@ int Entry()
 	mainImage = new Image();
 	importImages = new List<Image>();
 
+	size_t myBase = Win32NativeHelper::get()->getMyBase();
 	PEFormat format;
-	SharedPtr<MemoryDataSource> selfImageSource = MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(WIN32_STUB_BASE_ADDRESS), 0);
+	SharedPtr<MemoryDataSource> selfImageSource = MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(myBase), 0);
 	format.load(selfImageSource, true);
 
 	for(auto &i : format.getSections())
@@ -40,7 +41,7 @@ int Entry()
 		else
 		{
 			size_t entryAddress = reinterpret_cast<size_t>(Entry);
-			if(i.baseAddress < entryAddress && entryAddress < i.baseAddress + i.size)
+			if(i.baseAddress + myBase < entryAddress && entryAddress < i.baseAddress + i.size + myBase)
 				stage2Header = reinterpret_cast<Win32StubStage2Header *>(i.data->get());
 		}
 	}
@@ -62,7 +63,7 @@ int Entry()
 
 void Execute()
 {
-	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(WIN32_STUB_BASE_ADDRESS));
+	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->getMyBase()));
 
 	Win32Loader loader(std::move(*mainImage), std::move(*importImages));
 	loader.execute();

@@ -142,7 +142,7 @@ void Win32NativeHelper::init_()
 	initialized_ = true;
 }
 
-size_t Win32NativeHelper::getMyBase()
+size_t Win32NativeHelper::getMyBase() const
 {
 	return myBase_;
 }
