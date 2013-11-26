@@ -38,6 +38,7 @@ private:
 	size_t ntQueryFullAttributesFile_;
 	size_t ntSetInformationFile_;
 	size_t ntFlushInstructionCache_;
+	size_t ntFlushBuffersFile_;
 
 	void init_();
 	void initNtdllImport(size_t ntdllBase);
@@ -56,6 +57,7 @@ public:
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection = nullptr);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition);
 	size_t writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize);
+	void flushFile(void *fileHandle);
 	void closeHandle(void *handle);
 	void *createSection(void *file, uint32_t flProtect, uint64_t sectionSize, wchar_t *lpName, size_t NameLength);
 	void *mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, size_t lpBaseAddress);

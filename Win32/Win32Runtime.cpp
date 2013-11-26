@@ -120,6 +120,7 @@ void Win32NativeHelper::initNtdllImport(size_t ntdllBase)
 	ntQueryFullAttributesFile_ = findItem(0x71e1c2fb);
 	ntSetInformationFile_ = findItem(0x723a0a33);
 	ntFlushInstructionCache_ = findItem(0x24f8dd09);
+	ntFlushBuffersFile_ = findItem(0x45830108);
 }
 
 void Win32NativeHelper::init_()
@@ -254,6 +255,15 @@ void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filen
 	freeUnicodeString(&name);
 
 	return result;
+}
+
+void Win32NativeHelper::flushFile(void *fileHandle)
+{
+	typedef int32_t (__stdcall *NtFlushBuffersFilePtr)(void *FileHandle, PIO_STATUS_BLOCK IoStatusBlock);
+
+	IO_STATUS_BLOCK statusBlock;
+
+	reinterpret_cast<NtFlushBuffersFilePtr>(ntFlushBuffersFile_)(fileHandle, &statusBlock);
 }
 
 size_t Win32NativeHelper::writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize)

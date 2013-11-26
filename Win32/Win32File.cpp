@@ -80,6 +80,7 @@ void *Win32File::getHandle()
 void Win32File::write(const uint8_t *data, size_t size)
 {
 	Win32NativeHelper::get()->writeFile(fileHandle_, data, size);
+	Win32NativeHelper::get()->flushFile(fileHandle_);
 }
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
