@@ -58,8 +58,13 @@ void Win32File::resize(uint64_t newSize)
 
 void Win32File::close() 
 {
-	Win32NativeHelper::get()->closeHandle(mapHandle_);
-	Win32NativeHelper::get()->closeHandle(fileHandle_);
+	if(mapHandle_ != INVALID_HANDLE_VALUE)
+		Win32NativeHelper::get()->closeHandle(mapHandle_);
+	if(fileHandle_ != INVALID_HANDLE_VALUE)
+	{
+		Win32NativeHelper::get()->flushFile(fileHandle_);
+		Win32NativeHelper::get()->closeHandle(fileHandle_);
+	}
 }
 
 String Win32File::getFileName()
@@ -80,7 +85,6 @@ void *Win32File::getHandle()
 void Win32File::write(const uint8_t *data, size_t size)
 {
 	Win32NativeHelper::get()->writeFile(fileHandle_, data, size);
-	Win32NativeHelper::get()->flushFile(fileHandle_);
 }
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
