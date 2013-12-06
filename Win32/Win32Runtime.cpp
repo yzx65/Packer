@@ -10,10 +10,26 @@
 
 #include <intrin.h>
 
+uint16_t Win5152x64SystemCalls[SystemCallMax] =  {0x0015, 0x001b, 0x004d, 0x0052, 0x0005, 0x000c, 0x0047, 0x0025, 0x0027, 0x00ce, 0x0024, 0x0048, 0x0098}; //XP, Server 2003
+uint16_t Win60SP0x64SystemCalls[SystemCallMax] = {0x0015, 0x001b, 0x004d, 0x0052, 0x0005, 0x000c, 0x0047, 0x0025, 0x0027, 0x0112, 0x0024, 0x0048, 0x00c1}; //Vista SP0
+uint16_t Win60SP1x64SystemCalls[SystemCallMax] = {0x0015, 0x001b, 0x004d, 0x0052, 0x0005, 0x000c, 0x0047, 0x0025, 0x0027, 0x010d, 0x0024, 0x0048, 0x00bf}; //Vista SP1~, Server 2008
+uint16_t Win61x64SystemCalls[SystemCallMax] =    {0x0015, 0x001b, 0x004d, 0x0052, 0x0005, 0x000c, 0x0047, 0x0025, 0x0027, 0x0113, 0x0024, 0x0048, 0x00c2}; //7
+uint16_t Win62x64SystemCalls[SystemCallMax] =    {0x0016, 0x001c, 0x004e, 0x0053, 0x0006, 0x000d, 0x0048, 0x0026, 0x0028, 0x0125, 0x0025, 0x0049, 0x00d4}; //Server 2012, 8
+uint16_t Win63x64SystemCalls[SystemCallMax] =    {0x0017, 0x001d, 0x004f, 0x0054, 0x0007, 0x000e, 0x0049, 0x0027, 0x0029, 0x0128, 0x0026, 0x004a, 0x00d6}; //8.1
+
+uint16_t Win51x86SystemCalls[SystemCallMax] =    {0x0011, 0x0053, 0x0089, 0x0025, 0x0112, 0x0019, 0x0032, 0x006c, 0x010b, 0x0095, 0x00e0, 0x004d, 0x004e}; //XP
+uint16_t Win52x86SystemCalls[SystemCallMax] =    {0x0012, 0x0057, 0x008f, 0x0027, 0x011c, 0x001b, 0x0034, 0x0071, 0x0115, 0x009c, 0x00e9, 0x0051, 0x0052}; //Server 2003
+uint16_t Win60SP0x86SystemCalls[SystemCallMax] = {0x0012, 0x0093, 0x00d2, 0x003c, 0x0167, 0x0030, 0x004b, 0x00b1, 0x0160, 0x00df, 0x0131, 0x008c, 0x008d}; //Vista SP0
+uint16_t Win60SP1x86SystemCalls[SystemCallMax] = {0x0012, 0x0093, 0x00d2, 0x003c, 0x0163, 0x0030, 0x004b, 0x00b1, 0x015c, 0x00df, 0x012d, 0x008c, 0x008d}; //Vista SP1~, Server 2008
+uint16_t Win61x86SystemCalls[SystemCallMax] =    {0x0013, 0x0083, 0x00d7, 0x0042, 0x018c, 0x0032, 0x0054, 0x00a8, 0x0181, 0x00e4, 0x0149, 0x007b, 0x007d}; //7
+uint16_t Win62x86SystemCalls[SystemCallMax] =    {0x0196, 0x0118, 0x00c3, 0x0163, 0x0005, 0x0174, 0x0150, 0x00f3, 0x0013, 0x00b6, 0x004e, 0x0120, 0x011e}; //8
+uint16_t Win63x86SystemCalls[SystemCallMax] =    {0x019b, 0x011c, 0x00c6, 0x0168, 0x0006, 0x0179, 0x0154, 0x00f6, 0x0013, 0x00b9, 0x0051, 0x0124, 0x0122}; //8.1
+
 Win32NativeHelper g_helper;
 
 //utilites
-#define NtCurrentProcess() reinterpret_cast<void *>(-1)
+#define NtCurrentProcess() 0xffffffff
+#define NtCurrentProcess64() 0xffffffffffffffff
 
 uint8_t tempHeap[655350]; //temporary heap during initialization.
 uint32_t tempHeapPtr = 0;
@@ -36,7 +52,8 @@ void heapFree(void *ptr)
 	Win32NativeHelper::get()->freeHeap(ptr);
 }
 
-void copyUnicodeString(UNICODE_STRING *dest, UNICODE_STRING *src)
+template<typename UnicodeStringType = UNICODE_STRING>
+void copyUnicodeString(UnicodeStringType *dest, UnicodeStringType *src)
 {
 	dest->Length = src->Length;
 	dest->MaximumLength = src->Length;
@@ -46,7 +63,8 @@ void copyUnicodeString(UNICODE_STRING *dest, UNICODE_STRING *src)
 		copyMemory(dest->Buffer, src->Buffer, sizeof(wchar_t) * src->Length + 2);
 }
 
-void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataSize, size_t length = 0)
+template<typename UnicodeStringType = UNICODE_STRING>
+void initializeUnicodeString(UnicodeStringType *string, wchar_t *data, size_t dataSize, size_t length = 0)
 {
 	if(length == 0)
 		length = dataSize;
@@ -59,12 +77,14 @@ void initializeUnicodeString(UNICODE_STRING *string, wchar_t *data, size_t dataS
 	string->Buffer[dataSize] = 0;
 }
 
-void freeUnicodeString(UNICODE_STRING *string)
+template<typename UnicodeStringType = UNICODE_STRING>
+void freeUnicodeString(UnicodeStringType *string)
 {
 	Win32NativeHelper::get()->freeHeap(string->Buffer);
 }
 
-void addPrefixToPath(UNICODE_STRING *string, const wchar_t *path, size_t pathSize)
+template<typename UnicodeStringType = UNICODE_STRING>
+void getPrefixedPathUnicodeString(UnicodeStringType *string, const wchar_t *path, size_t pathSize)
 {
 	initializeUnicodeString(string, L"\\??\\", 4, pathSize + 4);
 	for(size_t i = 4; i < pathSize + 4; i ++)
@@ -103,40 +123,119 @@ void Win32NativeHelper::initNtdllImport(size_t ntdllBase)
 	};
 
 	//known ntdll exports(until 8.1) doesn't have fnv1a collisions.
-	rtlCreateHeap_ = findItem(0x7b3f721f);
-	rtlDestroyHeap_ = findItem(0x3ba85fa7);
 	rtlAllocateHeap_ = findItem(0xb3f819f8);
 	rtlFreeHeap_ = findItem(0x7c76ecf5);
-	rtlSizeHeap_ = findItem(0x6d735ff2);
-	ntAllocateVirtualMemory_ = findItem(0xca67b978);
-	ntProtectVirtualMemory_ = findItem(0xbd799926);
-	ntFreeVirtualMemory_ = findItem(0xb51cc567);
-	ntCreateFile_ = findItem(0xa9c5b599);
-	ntClose_ = findItem(0x6b372c05);
-	ntCreateSection_ = findItem(0x3c59f362);
-	ntWriteFile_ = findItem(0xf67464e4);
-	ntMapViewOfSection_ = findItem(0xcbc9e1ae);
-	ntUnmapViewOfSection_ = findItem(0x53b808c5);
-	ntQueryFullAttributesFile_ = findItem(0x71e1c2fb);
-	ntSetInformationFile_ = findItem(0x723a0a33);
-	ntFlushInstructionCache_ = findItem(0x24f8dd09);
-	ntFlushBuffersFile_ = findItem(0x45830108);
+}
+
+uint32_t __declspec(naked) Win32NativeHelper::executeWin32Syscall(uint32_t syscallno, uint32_t *argv)
+{
+	_asm
+	{
+		push ebp
+		mov ebp, esp
+
+		mov ecx, esp
+		mov esp, dword ptr [argv] //setup stack as if we called ntdll function directly.
+		sub esp, 4
+
+		mov eax, syscallno
+		mov edx, 0x7ffe0300 //SharedUserData!SystemCallStub
+		call [edx]
+
+		mov esp, ecx
+
+		pop ebp
+		ret
+	}
+}
+
+uint32_t __declspec(naked) Win32NativeHelper::executeWoW64Syscall(uint32_t syscallno, uint64_t *argv)
+{
+	_asm
+	{
+		push ebp
+		mov ebp, esp
+		push ebx
+
+		push 0x33
+		push offset x64
+		call fword ptr [esp] //jump to x64 mode
+		add esp, 8
+
+		pop ebx
+		pop ebp
+		ret
+x64:
+		mov eax, syscallno
+
+		dec eax
+		mov ebx, esp //mov rbx, rsp
+
+		mov esp, dword ptr [argv]
+		sub esp, 8
+
+		dec esp //setup stack and register as if we called ntdll function directly.
+		mov edx, [esp + 8] //mov r10, a1
+		dec eax
+		mov edx, [esp + 16] //mov rdx, a2
+		dec esp
+		mov eax, [esp + 24] //mov r8, a3
+		dec esp
+		mov ecx, [esp + 32] //mov r9, a4
+
+		__asm __emit 0x0f __asm __emit 0x05 //syscall
+		dec eax
+		mov esp, ebx //mov rsp, rbx
+
+		retf //return to x32
+	}
 }
 
 void Win32NativeHelper::init_()
 {
-	uint32_t pebAddress;
-#ifndef __WIN64 
-	pebAddress = __readfsdword(0x30);
-#elif defined(__WIN32)
-	pebAddress = __readgsqword(0x60);
-#endif
-	myPEB_ = reinterpret_cast<PEB *>(pebAddress);
+	myPEB_ = reinterpret_cast<PEB *>(__readfsdword(0x30));
 
 	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink->Flink);
 	size_t ntdllBase = reinterpret_cast<size_t>(module->BaseAddress);
 	module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink);
 	myBase_ = reinterpret_cast<size_t>(module->BaseAddress);
+
+	KUSER_SHARED_DATA *sharedData = reinterpret_cast<KUSER_SHARED_DATA *>(0x7ffe0000);
+	systemCalls_ = nullptr;
+	if(__readfsdword(0xC0) != 0)
+	{
+		isWoW64_ = true;
+		if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 3)
+			systemCalls_ = Win63x64SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 2)
+			systemCalls_ = Win62x64SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 1)
+			systemCalls_ = Win61x64SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 0 && myPEB_->OSBuildNumber == 6000)
+			systemCalls_ = Win60SP0x64SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 0)
+			systemCalls_ = Win60SP1x64SystemCalls;
+		else if(sharedData->NtMajorVersion == 5)
+			systemCalls_ = Win5152x64SystemCalls;
+	}
+	else
+	{
+		isWoW64_ = false;
+		if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 3)
+			systemCalls_ = Win63x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 2)
+			systemCalls_ = Win62x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 1)
+			systemCalls_ = Win61x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 0 && myPEB_->OSBuildNumber == 6000)
+			systemCalls_ = Win60SP0x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 6 && sharedData->NtMinorVersion == 0)
+			systemCalls_ = Win60SP1x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 5 && sharedData->NtMinorVersion == 1)
+			systemCalls_ = Win51x86SystemCalls;
+		else if(sharedData->NtMajorVersion == 5 && sharedData->NtMinorVersion == 2)
+			systemCalls_ = Win52x86SystemCalls;
+	}
 
 	//get exports
 	initNtdllImport(ntdllBase);
@@ -152,19 +251,6 @@ void Win32NativeHelper::setMyBase(size_t address)
 {
 	myBase_ = address;;
 	myPEB_->ImageBaseAddress = reinterpret_cast<void *>(address);
-}
-
-void *Win32NativeHelper::createHeap(size_t baseAddress)
-{
-	typedef void *(__stdcall *RtlCreateHeapPtr)(size_t Flags, void *HeapBase, size_t Reservesize, size_t Commitsize, void *Lock, void *Parameters);
-	//flag 2: HEAP_GROWABLE
-	return reinterpret_cast<RtlCreateHeapPtr>(rtlCreateHeap_)(2, reinterpret_cast<void *>(baseAddress), 0, 0, 0, 0);
-}
-
-void Win32NativeHelper::destroyHeap(void *heap)
-{
-	typedef void (__stdcall *RtlDestroyHeapPtr)(void *heap);
-	reinterpret_cast<RtlDestroyHeapPtr>(rtlDestroyHeap_)(heap);
 }
 
 void *Win32NativeHelper::allocateHeap(size_t dwBytes)
@@ -183,128 +269,180 @@ bool Win32NativeHelper::freeHeap(void *ptr)
 	return reinterpret_cast<RtlFreeHeapPtr>(rtlFreeHeap_)(myPEB_->ProcessHeap, 0, ptr);
 }
 
-size_t Win32NativeHelper::sizeHeap(void *ptr)
+void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
 {
-	typedef size_t (__stdcall *RtlSizeHeapPtr)(void *hHeap, size_t flags, void *ptr);
-
-	return reinterpret_cast<RtlSizeHeapPtr>(rtlSizeHeap_)(myPEB_->ProcessHeap, 0, ptr);
-}
-
-void *Win32NativeHelper::allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
-{
-	typedef int32_t (__stdcall *NtAllocateVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t ZeroBits, size_t *RegionSize, size_t AllocationType, size_t Protect);
-
-	void **result = reinterpret_cast<void **>(&desiredAddress);
-	int code = reinterpret_cast<NtAllocateVirtualMemoryPtr>(ntAllocateVirtualMemory_)(NtCurrentProcess(), result, 0, &RegionSize, AllocationType, Protect);
-	if(code < 0)
+	uint64_t address = DesiredAddress;
+	uint64_t size = RegionSize;
+	uint32_t result;
+	if(isWoW64_)
+	{
+		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(&address), 0x7ffeffff, reinterpret_cast<uint64_t>(&size), AllocationType, Protect};
+		//passing big ZeroBits limits its address.
+		result = executeWoW64Syscall(systemCalls_[NtAllocateVirtualMemory], args);
+	}
+	else
+	{
+		uint32_t args[] = {NtCurrentProcess(), reinterpret_cast<uint32_t>(&address), 0, reinterpret_cast<uint32_t>(&size), AllocationType, Protect};
+		result = executeWin32Syscall(systemCalls_[NtAllocateVirtualMemory], args);
+	}
+	if(result < 0)
 		return 0;
-	
-	return *result;
+	return reinterpret_cast<void *>(address);
 }
 
-void Win32NativeHelper::freeVirtual(void *baseAddress)
+void Win32NativeHelper::freeVirtual(void *BaseAddress)
 {
-	typedef int32_t (__stdcall *NtFreeVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t *RegionSize, size_t FreeType);
-
-	size_t regionSize = 0;
-	int result = reinterpret_cast<NtFreeVirtualMemoryPtr>(ntFreeVirtualMemory_)(NtCurrentProcess(), &baseAddress, &regionSize, MEM_RELEASE);
+	uint64_t RegionSize = 0;
+	if(isWoW64_)
+	{
+		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(&BaseAddress), reinterpret_cast<uint64_t>(&RegionSize), MEM_RELEASE};
+		executeWoW64Syscall(systemCalls_[NtFreeVirtualMemory], args);
+	}
+	else
+	{
+		uint32_t args[] = {NtCurrentProcess(), reinterpret_cast<uint32_t>(&BaseAddress), reinterpret_cast<uint32_t>(&RegionSize), MEM_RELEASE};
+		executeWin32Syscall(systemCalls_[NtFreeVirtualMemory], args);
+	}
 }
 
 void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection)
 {
-	typedef int32_t (__stdcall *NtProtectVirtualMemoryPtr)(void *ProcessHandle, void **BaseAddress, size_t *NumberOfBytesToProtect, size_t NewAccessProtection, size_t *OldAccessProtection);
-
-	size_t temp;
+	uint64_t temp;
 	if(!OldAccessProtection)
-		OldAccessProtection = &temp;
-
-	reinterpret_cast<NtProtectVirtualMemoryPtr>(ntProtectVirtualMemory_)(NtCurrentProcess(), &BaseAddress, &NumberOfBytes, NewAccessProtection, OldAccessProtection);
+		OldAccessProtection = reinterpret_cast<size_t *>(&temp);
+	if(isWoW64_)
+	{
+		uint64_t baseAddress64 = reinterpret_cast<uint64_t>(BaseAddress);
+		uint64_t numberOfBytes64 = NumberOfBytes;
+		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(&baseAddress64), reinterpret_cast<uint64_t>(&numberOfBytes64), 
+			NewAccessProtection, reinterpret_cast<uint64_t>(OldAccessProtection)};
+		executeWoW64Syscall(systemCalls_[NtProtectVirtualMemory], args);
+	}
+	else
+	{
+		uint32_t args[] = {NtCurrentProcess(), reinterpret_cast<uint32_t>(&BaseAddress), reinterpret_cast<uint32_t>(&NumberOfBytes), 
+			NewAccessProtection, reinterpret_cast<uint32_t>(OldAccessProtection)};
+		executeWin32Syscall(systemCalls_[NtProtectVirtualMemory], args);
+	}
 }
 
 void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition)
 {
-	typedef int32_t (__stdcall *NtCreateFilePtr)(void **FileHandle, uint32_t DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PIO_STATUS_BLOCK IoStatusBlock, PLARGE_INTEGER AllocationSize, size_t FileAttributes, size_t ShareAccess, size_t CreateDisposition, size_t CreateOptions, void *EaBuffer, size_t EaLength);
-
-	void *result = nullptr;
-	OBJECT_ATTRIBUTES attributes;
-	IO_STATUS_BLOCK statusBlock;
-	UNICODE_STRING name;
+	uint64_t __declspec(align(8)) result = 0;
 	uint32_t desiredAccess = 0;
-	uint32_t CreateOptions = 0;
-	
-	//Prefix
-	addPrefixToPath(&name, Filename, FilenameLength);
-
-	attributes.Length = sizeof(attributes);
-	attributes.RootDirectory = nullptr;
-	attributes.ObjectName = &name;
-	attributes.Attributes = OBJ_CASE_INSENSITIVE;
-	attributes.SecurityDescriptor = nullptr;
-	attributes.SecurityQualityOfService = nullptr;
+	uint32_t createOptions = 0;
 
 	if(DesiredAccess & GENERIC_READ)
 		desiredAccess |= FILE_GENERIC_READ;
 	if(DesiredAccess & GENERIC_WRITE)
 	{
 		desiredAccess |= FILE_GENERIC_WRITE;
-		CreateOptions = 0x00000010; //FILE_SYNCHRONOUS_IO_ALERT;
+		createOptions = 0x00000010; //FILE_SYNCHRONOUS_IO_ALERT;
 	}
 
-	reinterpret_cast<NtCreateFilePtr>(ntCreateFile_)(&result, desiredAccess, &attributes, &statusBlock, nullptr, 0, ShareAccess, CreateDisposition, CreateOptions, nullptr, 0);
+	if(isWoW64_)
+	{
+		OBJECT_ATTRIBUTES64 attributes = {0, };
+		IO_STATUS_BLOCK64 statusBlock = {0, };
+		UNICODE_STRING64 name = {0, };
+		getPrefixedPathUnicodeString(&name, Filename, FilenameLength);
 
-	freeUnicodeString(&name);
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = OBJ_CASE_INSENSITIVE;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
 
-	return result;
+		uint64_t args[] = {reinterpret_cast<uint64_t>(&result), desiredAccess, reinterpret_cast<uint64_t>(&attributes), reinterpret_cast<uint64_t>(&statusBlock),
+			0, 0, ShareAccess, CreateDisposition, createOptions, 0, 0};
+		executeWoW64Syscall(systemCalls_[NtCreateFile], args);
+
+		freeUnicodeString(&name);
+	}
+	else
+	{
+		OBJECT_ATTRIBUTES attributes;
+		IO_STATUS_BLOCK statusBlock;
+		UNICODE_STRING name;
+		getPrefixedPathUnicodeString(&name, Filename, FilenameLength);
+
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = OBJ_CASE_INSENSITIVE;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
+
+		uint32_t args[] = {reinterpret_cast<uint32_t>(&result), desiredAccess, reinterpret_cast<uint32_t>(&attributes), reinterpret_cast<uint32_t>(&statusBlock),
+			0, 0, ShareAccess, CreateDisposition, createOptions, 0, 0};
+		executeWin32Syscall(systemCalls_[NtCreateFile], args);
+
+		freeUnicodeString(&name);
+	}
+
+	return reinterpret_cast<void *>(result);
 }
 
 void Win32NativeHelper::flushFile(void *fileHandle)
 {
-	typedef int32_t (__stdcall *NtFlushBuffersFilePtr)(void *FileHandle, PIO_STATUS_BLOCK IoStatusBlock);
+	if(isWoW64_)
+	{
+		IO_STATUS_BLOCK64 statusBlock;
 
-	IO_STATUS_BLOCK statusBlock;
+		uint64_t args[] = {reinterpret_cast<uint64_t>(fileHandle), reinterpret_cast<uint64_t>(&statusBlock)};
+		executeWoW64Syscall(systemCalls_[NtFlushBuffersFile], args);
+	}
+	else
+	{
+		IO_STATUS_BLOCK statusBlock;
 
-	reinterpret_cast<NtFlushBuffersFilePtr>(ntFlushBuffersFile_)(fileHandle, &statusBlock);
+		uint32_t args[] = {reinterpret_cast<uint32_t>(fileHandle), reinterpret_cast<uint32_t>(&statusBlock)};
+		executeWin32Syscall(systemCalls_[NtFlushBuffersFile], args);
+	}
 }
 
 size_t Win32NativeHelper::writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize)
 {
-	typedef int32_t (__stdcall *NtWriteFilePtr)(void *fileHandle, void *event, void *, void *, IO_STATUS_BLOCK *statusBlock, const void *buffer, size_t length, LARGE_INTEGER *byteOffset, size_t *key);
+	if(isWoW64_)
+	{
+		IO_STATUS_BLOCK64 statusBlock;
+		uint64_t args[] = {reinterpret_cast<uint64_t>(fileHandle), 0, 0, 0, reinterpret_cast<uint64_t>(&statusBlock), reinterpret_cast<uint64_t>(buffer), bufferSize, 0, 0};
+		executeWoW64Syscall(systemCalls_[NtWriteFile], args);
 
-	IO_STATUS_BLOCK statusBlock;
-	reinterpret_cast<NtWriteFilePtr>(ntWriteFile_)(fileHandle, nullptr, nullptr, nullptr, &statusBlock, buffer, bufferSize, nullptr, nullptr);
+		return reinterpret_cast<size_t>(statusBlock.Information);
+	}
+	else
+	{
+		IO_STATUS_BLOCK statusBlock;
+		uint32_t args[] = {reinterpret_cast<uint32_t>(fileHandle), 0, 0, 0, reinterpret_cast<uint32_t>(&statusBlock), reinterpret_cast<uint32_t>(buffer), bufferSize, 0, 0};
+		executeWin32Syscall(systemCalls_[NtWriteFile], args);
 
-	return reinterpret_cast<size_t>(statusBlock.Information);
+		return reinterpret_cast<size_t>(statusBlock.Information);
+	}
 }
 
 void Win32NativeHelper::closeHandle(void *handle)
 {
-	typedef int32_t (__stdcall *NtClosePtr)(void *handle);
-
-	reinterpret_cast<NtClosePtr>(ntClose_)(handle);
+	if(isWoW64_)
+	{
+		uint64_t args[] = {reinterpret_cast<uint64_t>(handle)};
+		executeWoW64Syscall(systemCalls_[NtClose], args);
+	}
+	else
+	{
+		uint32_t args[] = {reinterpret_cast<uint32_t>(handle)};
+		executeWin32Syscall(systemCalls_[NtClose], args);
+	}
 }
 
 void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint64_t sectionSize, wchar_t *lpName, size_t NameLength)
 {
-	typedef int32_t (__stdcall *NtCreateSectionPtr)(void **SectionHandle, uint32_t DesiredAccess, POBJECT_ATTRIBUTES ObjectAttributes, PLARGE_INTEGER MaximumSize, size_t SectionPageProtection, size_t AllocationAttributes, void *FileHandle);
-
-	void *result;
+	uint64_t __declspec(align(8)) result;
 	uint32_t desiredAccess = STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ;
-	OBJECT_ATTRIBUTES attributes;
 	PLARGE_INTEGER size = nullptr;
 	LARGE_INTEGER localSize;
 	uint32_t allocationAttributes = SEC_COMMIT;
-	UNICODE_STRING name;
-
-	name.Buffer = lpName;
-	name.Length = NameLength * 2;
-	name.MaximumLength = NameLength * 2;
-
-	attributes.Length = sizeof(attributes);
-	attributes.RootDirectory = nullptr;
-	attributes.ObjectName = &name;
-	attributes.Attributes = 0;
-	attributes.SecurityDescriptor = nullptr;
-	attributes.SecurityQualityOfService = nullptr;
 
 	if(sectionSize)
 	{
@@ -312,16 +450,53 @@ void *Win32NativeHelper::createSection(void *file, uint32_t flProtect, uint64_t 
 		localSize.QuadPart = sectionSize;
 	}
 
-	reinterpret_cast<NtCreateSectionPtr>(ntCreateSection_)(&result, SECTION_ALL_ACCESS, &attributes, size, flProtect, allocationAttributes, file);
+	if(isWoW64_)
+	{
+		OBJECT_ATTRIBUTES64 attributes = {0, };
+		UNICODE_STRING64 name = {0, };
 
-	return result;
+		name.Buffer = lpName;
+		name.Length = NameLength * 2;
+		name.MaximumLength = NameLength * 2;
+
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = 0;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
+
+		uint64_t args[] = {reinterpret_cast<uint64_t>(&result), SECTION_ALL_ACCESS, reinterpret_cast<uint64_t>(&attributes), 
+			reinterpret_cast<uint64_t>(size), flProtect, allocationAttributes, reinterpret_cast<uint64_t>(file)};
+		executeWoW64Syscall(systemCalls_[NtCreateSection], args);
+	}
+	else
+	{
+		OBJECT_ATTRIBUTES attributes;
+		UNICODE_STRING name;
+
+		name.Buffer = lpName;
+		name.Length = NameLength * 2;
+		name.MaximumLength = NameLength * 2;
+
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = 0;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
+
+		uint32_t args[] = {reinterpret_cast<uint64_t>(&result), SECTION_ALL_ACCESS, reinterpret_cast<uint32_t>(&attributes),
+			reinterpret_cast<uint32_t>(size), flProtect, allocationAttributes, reinterpret_cast<uint32_t>(file)};
+		executeWin32Syscall(systemCalls_[NtCreateSection], args);
+	}
+
+	return reinterpret_cast<void *>(result);
 }
 
 void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAccess, uint64_t offset, size_t dwNumberOfBytesToMap, size_t lpBaseAddress)
 {
-	typedef int32_t (__stdcall *NtMapViewOfSectionPtr)(void *SectionHandle, void *ProcessHandle, void **BaseAddress, uint32_t *ZeroBits, size_t CommitSize, PLARGE_INTEGER SectionOffset, size_t *ViewSize, uint32_t InheritDisposition, size_t AlllocationType, size_t AccessProtection);
-	
-	void **result = reinterpret_cast<void **>(&lpBaseAddress);
+	uint64_t result = lpBaseAddress;
 	LARGE_INTEGER sectionOffset;
 	size_t viewSize;
 	size_t protect;
@@ -335,39 +510,78 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 	else if(dwDesiredAccess & FILE_MAP_READ)
 		protect = dwDesiredAccess & FILE_MAP_EXECUTE ? PAGE_EXECUTE_READ : PAGE_READONLY;
 
-	reinterpret_cast<NtMapViewOfSectionPtr>(ntMapViewOfSection_)(section, NtCurrentProcess(), result, 0, 0, &sectionOffset, &viewSize, 1, 0, protect);
+	if(isWoW64_)
+	{
+		uint64_t args[] = {reinterpret_cast<uint64_t>(section), NtCurrentProcess64(), reinterpret_cast<uint64_t>(&result), 0x7ffeffff, 0, 
+			reinterpret_cast<uint64_t>(&sectionOffset), reinterpret_cast<uint64_t>(&viewSize), 1, 0, protect};
+		executeWoW64Syscall(systemCalls_[NtMapViewOfSection], args);
+	}
+	else
+	{
+		uint32_t args[] = {reinterpret_cast<uint32_t>(section), NtCurrentProcess(), reinterpret_cast<uint32_t>(&result), 0, 0,
+			reinterpret_cast<uint32_t>(&sectionOffset), reinterpret_cast<uint32_t>(&viewSize), 1, 0, protect};
+		executeWin32Syscall(systemCalls_[NtMapViewOfSection], args);
+	}
 
-	return *result;
+	return reinterpret_cast<void *>(result);
 }
 
 void Win32NativeHelper::unmapViewOfSection(void *lpBaseAddress)
 {
-	typedef int32_t (__stdcall *NtUnmapViewOfSectionPtr)(void *ProcessHandle, void *BaseAddress);
-
-	reinterpret_cast<NtUnmapViewOfSectionPtr>(ntUnmapViewOfSection_)(NtCurrentProcess(), lpBaseAddress);
+	if(isWoW64_)
+	{
+		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(lpBaseAddress)};
+		executeWoW64Syscall(systemCalls_[NtUnmapViewOfSection], args);
+	}
+	else
+	{
+		uint32_t args[] = {NtCurrentProcess(), reinterpret_cast<uint32_t>(lpBaseAddress)};
+		executeWin32Syscall(systemCalls_[NtUnmapViewOfSection], args);
+	}
 }
 
 uint32_t Win32NativeHelper::getFileAttributes(const wchar_t *filePath, size_t filePathLen)
 {
-	typedef int32_t (__stdcall *NtQueryFullAttributesFilePtr)(POBJECT_ATTRIBUTES ObjectAttributes, PFILE_NETWORK_OPEN_INFORMATION FileInformation);
-
-	OBJECT_ATTRIBUTES attributes;
-	UNICODE_STRING name;
 	uint32_t desiredAccess = 0;
 	FILE_NETWORK_OPEN_INFORMATION result;
+	int32_t status;
+	
+	if(isWoW64_)
+	{
+		OBJECT_ATTRIBUTES64 attributes = {0, };
+		UNICODE_STRING64 name = {0, };
 
-	addPrefixToPath(&name, filePath, filePathLen);
+		getPrefixedPathUnicodeString(&name, filePath, filePathLen);
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = OBJ_CASE_INSENSITIVE;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
 
-	attributes.Length = sizeof(attributes);
-	attributes.RootDirectory = nullptr;
-	attributes.ObjectName = &name;
-	attributes.Attributes = OBJ_CASE_INSENSITIVE;
-	attributes.SecurityDescriptor = nullptr;
-	attributes.SecurityQualityOfService = nullptr;
+		uint64_t args[] = {reinterpret_cast<uint64_t>(&attributes), reinterpret_cast<uint64_t>(&result)};
+		status = executeWoW64Syscall(systemCalls_[NtQueryFullAttributesFile], args);
 
-	int32_t status = reinterpret_cast<NtQueryFullAttributesFilePtr>(ntQueryFullAttributesFile_)(&attributes, &result);
+		freeUnicodeString(&name);
+	}
+	else
+	{
+		OBJECT_ATTRIBUTES attributes;
+		UNICODE_STRING name;
 
-	freeUnicodeString(&name);
+		getPrefixedPathUnicodeString(&name, filePath, filePathLen);
+		attributes.Length = sizeof(attributes);
+		attributes.RootDirectory = nullptr;
+		attributes.ObjectName = &name;
+		attributes.Attributes = OBJ_CASE_INSENSITIVE;
+		attributes.SecurityDescriptor = nullptr;
+		attributes.SecurityQualityOfService = nullptr;
+		uint32_t args[] = {reinterpret_cast<uint32_t>(&attributes), reinterpret_cast<uint32_t>(&result)};
+
+		status = executeWin32Syscall(systemCalls_[NtQueryFullAttributesFile], args);
+
+		freeUnicodeString(&name);
+	}
 
 	if(status < 0)
 		return INVALID_FILE_ATTRIBUTES;
@@ -376,21 +590,38 @@ uint32_t Win32NativeHelper::getFileAttributes(const wchar_t *filePath, size_t fi
 
 void Win32NativeHelper::setFileSize(void *file, uint64_t size)
 {
-	typedef int32_t (__stdcall *NtSetInformationFilePtr)(void *FileHandle, PIO_STATUS_BLOCK IoStatusBlock, void *FileInformation, size_t Length, size_t FileInformationClass);
-	
 	LARGE_INTEGER largeSize;
 	IO_STATUS_BLOCK result;
 	largeSize.QuadPart = size;
 
-	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 20); //FileEndOfFileInfo
-	reinterpret_cast<NtSetInformationFilePtr>(ntSetInformationFile_)(file, &result, &largeSize, sizeof(largeSize), 19); //FileAllocationInfo
+	if(isWoW64_)
+	{
+		uint64_t args[] = {reinterpret_cast<uint64_t>(file), reinterpret_cast<uint64_t>(&result), reinterpret_cast<uint64_t>(&largeSize), sizeof(largeSize), 20};//FileEndOfFileInfo
+		executeWoW64Syscall(systemCalls_[NtSetInformationFile], args);
+		args[4] = 19;//FileAllocationInfo
+		executeWoW64Syscall(systemCalls_[NtSetInformationFile], args);
+	}
+	else
+	{
+		uint32_t args[] = {reinterpret_cast<uint32_t>(file), reinterpret_cast<uint32_t>(&result), reinterpret_cast<uint32_t>(&largeSize), sizeof(largeSize), 20};
+		executeWin32Syscall(systemCalls_[NtSetInformationFile], args);
+		args[4] = 19;
+		executeWin32Syscall(systemCalls_[NtSetInformationFile], args);
+	}
 }
 
 void Win32NativeHelper::flushInstructionCache(size_t offset, size_t size)
 {
-	typedef int32_t (__stdcall *NtFlushInstructionCacheFunc)(void *ProcessHandle, void *BaseAddress, size_t NumberOfBytesToFlush);
-
-	reinterpret_cast<NtFlushInstructionCacheFunc>(ntFlushInstructionCache_)(NtCurrentProcess(), reinterpret_cast<void *>(offset), size);
+	if(isWoW64_)
+	{
+		uint64_t args[] = {NtCurrentProcess64(), offset, size};
+		executeWoW64Syscall(systemCalls_[NtFlushInstructionCache], args);
+	}
+	else
+	{
+		uint32_t args[] = {NtCurrentProcess(), offset, size};
+		executeWin32Syscall(systemCalls_[NtFlushInstructionCache], args);
+	}
 }
 
 wchar_t *Win32NativeHelper::getCommandLine()

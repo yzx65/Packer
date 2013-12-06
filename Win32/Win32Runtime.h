@@ -14,46 +14,50 @@ struct Win32LoadedImage
 	uint64_t baseAddress;
 };
 
+enum SystemCall
+{
+	NtAllocateVirtualMemory,
+	NtFreeVirtualMemory,
+	NtProtectVirtualMemory,
+	NtCreateFile,
+	NtWriteFile,
+	NtClose,
+	NtCreateSection,
+	NtMapViewOfSection,
+	NtUnmapViewOfSection,
+	NtQueryFullAttributesFile,
+	NtSetInformationFile,
+	NtFlushBuffersFile,
+	NtFlushInstructionCache,
+
+	SystemCallMax
+};
+
 class Win32NativeHelper
 {
 private:
 	bool initialized_;
 	PEB *myPEB_;
 	size_t myBase_;
+	bool isWoW64_;
+	uint16_t *systemCalls_;
 
-	size_t rtlCreateHeap_;
-	size_t rtlDestroyHeap_;
 	size_t rtlAllocateHeap_;
 	size_t rtlFreeHeap_;
-	size_t rtlSizeHeap_;
-	size_t ntAllocateVirtualMemory_;
-	size_t ntFreeVirtualMemory_;
-	size_t ntProtectVirtualMemory_;
-	size_t ntCreateFile_;
-	size_t ntWriteFile_;
-	size_t ntClose_;
-	size_t ntCreateSection_;
-	size_t ntMapViewOfSection_;
-	size_t ntUnmapViewOfSection_;
-	size_t ntQueryFullAttributesFile_;
-	size_t ntSetInformationFile_;
-	size_t ntFlushInstructionCache_;
-	size_t ntFlushBuffersFile_;
 
 	void init_();
 	void initNtdllImport(size_t ntdllBase);
 	void initHeap();
 	void initModuleList();
 	void relocateSelf(void *entry);
+	static uint32_t __cdecl executeWin32Syscall(uint32_t syscallno, uint32_t *argv);
+	static uint32_t __cdecl executeWoW64Syscall(uint32_t syscallno, uint64_t *argv);
 public:
 	uint8_t *getApiSet();
-	void *createHeap(size_t baseAddress);
-	void destroyHeap(void *heap);
 	void *allocateHeap(size_t dwBytes);
 	bool freeHeap(void *ptr);
-	size_t sizeHeap(void *ptr);
-	void freeVirtual(void *baseAddress);
-	void *allocateVirtual(size_t desiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
+	void freeVirtual(void *BaseAddress);
+	void *allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection = nullptr);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition);
 	size_t writeFile(void *fileHandle, const uint8_t *buffer, size_t bufferSize);

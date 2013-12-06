@@ -6,7 +6,7 @@
 typedef struct _UNICODE_STRING {
 	uint16_t Length;
 	uint16_t MaximumLength;
-	wchar_t *  Buffer;
+	wchar_t *Buffer;
 } UNICODE_STRING;
 typedef UNICODE_STRING *PUNICODE_STRING;
 typedef const UNICODE_STRING *PCUNICODE_STRING;
@@ -28,13 +28,55 @@ typedef struct _OBJECT_ATTRIBUTES {
 	void *           SecurityQualityOfService;
 }  OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
 
-typedef struct _IO_STATUS_BLOCK {
-	union {
+typedef struct _IO_STATUS_BLOCK
+{
+	union
+	{
 		uint32_t Status;
 		void *    Pointer;
 	};
 	uint32_t *Information;
 } IO_STATUS_BLOCK, *PIO_STATUS_BLOCK;
+
+#pragma pack(push, 8)
+typedef struct __declspec(align(8)) _UNICODE_STRING64 //to use 64bit UNICODE_STRING on 32bit.
+{
+	union
+	{
+		struct 
+		{
+			uint16_t Length;
+			uint16_t MaximumLength;
+		};
+		__declspec(align(8)) uint32_t LengthData;
+	};
+	__declspec(align(8)) wchar_t *Buffer;
+} UNICODE_STRING64;
+typedef UNICODE_STRING64 *PUNICODE_STRING64;
+typedef const UNICODE_STRING64 *PCUNICODE_STRING64;
+
+typedef struct __declspec(align(8)) _OBJECT_ATTRIBUTES64
+{
+	__declspec(align(8)) uint32_t           Length;
+	__declspec(align(8)) void *          RootDirectory;
+	__declspec(align(8)) PUNICODE_STRING64 ObjectName;
+	__declspec(align(8)) uint32_t           Attributes;
+	__declspec(align(8)) void *           SecurityDescriptor;
+	__declspec(align(8)) void *           SecurityQualityOfService;
+}  OBJECT_ATTRIBUTES64, *POBJECT_ATTRIBUTES64;
+
+
+typedef struct __declspec(align(8)) _IO_STATUS_BLOCK64
+{
+	union
+	{
+		__declspec(align(8)) uint64_t Status;
+		__declspec(align(8)) void *    Pointer;
+	};
+	__declspec(align(8)) uint64_t *Information;
+} IO_STATUS_BLOCK64, *PIO_STATUS_BLOCK64;
+
+#pragma pack(pop, 8)
 
 typedef union _LARGE_INTEGER {
 	struct {
@@ -452,3 +494,90 @@ typedef enum _EXCEPTION_DISPOSITION {
 	ExceptionNestedException,
 	ExceptionCollidedUnwind
 } EXCEPTION_DISPOSITION;
+
+typedef struct _KSYSTEM_TIME
+{
+	uint32_t LowPart;
+	int32_t High1Time;
+	int32_t High2Time;
+} KSYSTEM_TIME, *PKSYSTEM_TIME;
+
+typedef enum _ALTERNATIVE_ARCHITECTURE_TYPE
+{
+	StandardDesign = 0,
+	NEC98x86 = 1,
+	EndAlternatives = 2
+} ALTERNATIVE_ARCHITECTURE_TYPE;
+
+typedef enum _NT_PRODUCT_TYPE
+{
+	NtProductWinNt = 1,
+	NtProductLanManNt = 2,
+	NtProductServer = 3
+} NT_PRODUCT_TYPE;
+
+typedef struct _KUSER_SHARED_DATA
+{
+	uint32_t TickCountLowDeprecated;
+	uint32_t TickCountMultiplier;
+	KSYSTEM_TIME InterruptTime;
+	KSYSTEM_TIME SystemTime;
+	KSYSTEM_TIME TimeZoneBias;
+	uint16_t ImageNumberLow;
+	uint16_t ImageNumberHigh;
+	wchar_t NtSystemRoot[260];
+	uint32_t MaxStackTraceDepth;
+	uint32_t CryptoExponent;
+	uint32_t TimeZoneId;
+	uint32_t LargePageMinimum;
+	uint32_t Reserved2[7];
+	NT_PRODUCT_TYPE NtProductType;
+	uint8_t ProductTypeIsValid;
+	uint32_t NtMajorVersion;
+	uint32_t NtMinorVersion;
+	uint8_t ProcessorFeatures[64];
+	uint32_t Reserved1;
+	uint32_t Reserved3;
+	uint32_t TimeSlip;
+	ALTERNATIVE_ARCHITECTURE_TYPE AlternativeArchitecture;
+	LARGE_INTEGER SystemExpirationDate;
+	uint32_t SuiteMask;
+	uint8_t KdDebuggerEnabled;
+	uint8_t NXSupportPolicy;
+	uint32_t ActiveConsoleId;
+	uint32_t DismountCount;
+	uint32_t ComPlusPackage;
+	uint32_t LastSystemRITEventTickCount;
+	uint32_t NumberOfPhysicalPages;
+	uint8_t SafeBootMode;
+	uint32_t SharedDataFlags;
+	uint32_t DbgErrorPortPresent: 1;
+	uint32_t DbgElevationEnabled: 1;
+	uint32_t DbgVirtEnabled: 1;
+	uint32_t DbgInstallerDetectEnabled: 1;
+	uint32_t SystemDllRelocated: 1;
+	uint32_t SpareBits: 27;
+	uint64_t TestRetInstruction;
+	uint32_t SystemCall;
+	uint32_t SystemCallReturn;
+	uint64_t SystemCallPad[3];
+	union
+	{
+		KSYSTEM_TIME TickCount;
+		uint64_t TickCountQuad;
+	};
+	uint32_t Cookie;
+	int64_t ConsoleSessionForegroundProcessId;
+	uint32_t Wow64SharedInformation[16];
+	uint16_t UserModeGlobalLogger[8];
+	uint32_t HeapTracingPid[2];
+	uint32_t CritSecTracingPid[2];
+	uint32_t ImageFileExecutionOptions;
+	union
+	{
+		uint64_t AffinityPad;
+		uint32_t ActiveProcessorAffinity;
+	};
+	uint64_t InterruptTimeBias;
+} KUSER_SHARED_DATA, *PKUSER_SHARED_DATA;
+
