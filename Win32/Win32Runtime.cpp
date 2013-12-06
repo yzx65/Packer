@@ -591,11 +591,11 @@ uint32_t Win32NativeHelper::getFileAttributes(const wchar_t *filePath, size_t fi
 void Win32NativeHelper::setFileSize(void *file, uint64_t size)
 {
 	LARGE_INTEGER largeSize;
-	IO_STATUS_BLOCK result;
 	largeSize.QuadPart = size;
 
 	if(isWoW64_)
 	{
+		IO_STATUS_BLOCK64 result;
 		uint64_t args[] = {reinterpret_cast<uint64_t>(file), reinterpret_cast<uint64_t>(&result), reinterpret_cast<uint64_t>(&largeSize), sizeof(largeSize), 20};//FileEndOfFileInfo
 		executeWoW64Syscall(systemCalls_[NtSetInformationFile], args);
 		args[4] = 19;//FileAllocationInfo
@@ -603,6 +603,7 @@ void Win32NativeHelper::setFileSize(void *file, uint64_t size)
 	}
 	else
 	{
+		IO_STATUS_BLOCK result;
 		uint32_t args[] = {reinterpret_cast<uint32_t>(file), reinterpret_cast<uint32_t>(&result), reinterpret_cast<uint32_t>(&largeSize), sizeof(largeSize), 20};
 		executeWin32Syscall(systemCalls_[NtSetInformationFile], args);
 		args[4] = 19;
