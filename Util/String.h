@@ -169,6 +169,10 @@ public:
 
 	int compare(const StringBase &operand) const
 	{
+		if(operand.size() > size())
+			return -1;
+		else if(operand.size() < size())
+			return 1;
 		return compare(operand.c_str());
 	}
 
@@ -190,6 +194,10 @@ public:
 
 	int icompare(const StringBase &operand) const
 	{
+		if(operand.size() > size())
+			return -1;
+		else if(operand.size() < size())
+			return 1;
 		return icompare(operand.c_str());
 	}
 
