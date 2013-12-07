@@ -107,7 +107,9 @@
     <ClCompile Include="..\Runtime\PEFormat.cpp" />
     <ClCompile Include="..\Win32\Win32File.cpp" />
     <ClCompile Include="..\Win32\Win32Loader.cpp" />
-    <ClCompile Include="..\Win32\Win32Runtime.cpp" />
+    <ClCompile Include="..\Win32\Win32Runtime.cpp">
+      <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
+    </ClCompile>
     <ClCompile Include="PackerMain.cpp" />
     <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
