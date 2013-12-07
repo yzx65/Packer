@@ -105,11 +105,12 @@
     <ClCompile Include="..\Runtime\Image.cpp" />
     <ClCompile Include="..\Runtime\Option.cpp" />
     <ClCompile Include="..\Runtime\PEFormat.cpp" />
-    <ClCompile Include="..\Win32\Win32File.cpp" />
-    <ClCompile Include="..\Win32\Win32Loader.cpp" />
-    <ClCompile Include="..\Win32\Win32Runtime.cpp">
+    <ClCompile Include="..\Win32\MSVCHelper.cpp">
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>
     </ClCompile>
+    <ClCompile Include="..\Win32\Win32File.cpp" />
+    <ClCompile Include="..\Win32\Win32Loader.cpp" />
+    <ClCompile Include="..\Win32\Win32Runtime.cpp" />
     <ClCompile Include="PackerMain.cpp" />
     <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
