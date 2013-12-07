@@ -40,7 +40,7 @@ private:
 	PEB *myPEB_;
 	size_t myBase_;
 	bool isWoW64_;
-	uint16_t *systemCalls_;
+	const uint16_t *systemCalls_;
 
 	size_t rtlAllocateHeap_;
 	size_t rtlFreeHeap_;
@@ -83,11 +83,6 @@ public:
 	static Win32NativeHelper *get();
 	static void init();
 };
-
-extern "C" void *__cdecl memset(void *, int, size_t);
-#pragma intrinsic(memset)
-extern "C" void *__cdecl memcpy(void *dst, const void *src, size_t size);
-#pragma intrinsic(memcpy)
 
 #define GENERIC_READ                     (0x80000000L)
 #define GENERIC_WRITE                    (0x40000000L)
