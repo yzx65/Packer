@@ -190,7 +190,7 @@ void PEFormat::processImport(uint8_t *descriptor_)
 				break;
 
 			ImportFunction function;
-			function.ordinal = 0;
+			function.ordinal = -1;
 			function.iat = iat;
 
 			if((info_.architecture == ArchitectureWin32AMD64 && (*reinterpret_cast<uint64_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG64)) || (*reinterpret_cast<uint32_t *>(nameEntryPtr) & IMAGE_ORDINAL_FLAG32))
@@ -208,6 +208,7 @@ void PEFormat::processImport(uint8_t *descriptor_)
 				else
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
+				function.ordinal = nameEntry->Hint;
 				function.name.assign(reinterpret_cast<const char *>(nameEntry->Name));
 				function.nameHash = fnv1a(function.name.c_str(), function.name.length());
 			}
