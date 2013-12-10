@@ -182,3 +182,5 @@ uint32_t fnv1a(const T *data, size_t size)
 {
 	return fnv1a(reinterpret_cast<const uint8_t *>(data), size);
 }
+
+#define max(a, b) ((a) < (b) ? (b) : (a))

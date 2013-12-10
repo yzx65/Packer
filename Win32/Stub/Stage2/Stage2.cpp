@@ -12,7 +12,6 @@ void Execute();
 int Entry()
 {
 	Win32StubStage2Header *stage2Header;
-	Win32NativeHelper::get()->init();
 
 	size_t myBase = Win32NativeHelper::get()->getMyBase();
 	PEFormat format;

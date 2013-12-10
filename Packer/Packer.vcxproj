@@ -102,6 +102,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\Runtime\Allocator.cpp" />
     <ClCompile Include="..\Runtime\Image.cpp" />
     <ClCompile Include="..\Runtime\Option.cpp" />
     <ClCompile Include="..\Runtime\PEFormat.cpp" />
@@ -115,6 +116,7 @@
     <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Runtime\Allocator.h" />
     <ClInclude Include="..\Runtime\File.h" />
     <ClInclude Include="..\Runtime\FormatBase.h" />
     <ClInclude Include="..\Runtime\Image.h" />

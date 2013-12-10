@@ -42,6 +42,9 @@
     <ClCompile Include="..\Win32\MSVCHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\Runtime\Allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PackerMain.h">
@@ -99,6 +102,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Runtime\Signature.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Runtime\Allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

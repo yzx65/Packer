@@ -91,6 +91,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Runtime\Allocator.cpp" />
     <ClCompile Include="..\..\..\Runtime\PEFormat.cpp" />
     <ClCompile Include="..\..\MSVCHelper.cpp">
       <WholeProgramOptimization Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</WholeProgramOptimization>

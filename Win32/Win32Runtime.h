@@ -6,7 +6,6 @@
 
 struct _PEB;
 typedef struct _PEB PEB;
-class PEFormat;
 
 struct Win32LoadedImage
 {
@@ -36,26 +35,20 @@ enum SystemCall
 class Win32NativeHelper
 {
 private:
-	bool initialized_;
 	PEB *myPEB_;
 	size_t myBase_;
 	bool isWoW64_;
 	const uint16_t *systemCalls_;
 
-	size_t rtlAllocateHeap_;
-	size_t rtlFreeHeap_;
-
-	void init_();
-	void initNtdllImport(size_t ntdllBase);
 	void initHeap();
 	void initModuleList();
 	void relocateSelf(void *entry);
 	static uint32_t __cdecl executeWin32Syscall(uint32_t syscallno, uint32_t *argv);
 	static uint32_t __cdecl executeWoW64Syscall(uint32_t syscallno, uint64_t *argv);
 public:
+	Win32NativeHelper();
 	uint8_t *getApiSet();
-	void *allocateHeap(size_t dwBytes);
-	bool freeHeap(void *ptr);
+
 	void freeVirtual(void *BaseAddress);
 	void *allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection = nullptr);
@@ -72,7 +65,6 @@ public:
 	wchar_t *getCommandLine();
 	wchar_t *getCurrentDirectory();
 	wchar_t *getEnvironments();
-	bool isInitialized();
 	PEB *getPEB();
 	List<Win32LoadedImage> getLoadedImages();
 	List<String> getArgumentList();
@@ -81,7 +73,6 @@ public:
 	void setMyBase(size_t address);
 
 	static Win32NativeHelper *get();
-	static void init();
 };
 
 #define GENERIC_READ                     (0x80000000L)

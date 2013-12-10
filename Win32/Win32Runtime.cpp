@@ -2,10 +2,9 @@
 
 #include <cstdint>
 
-#include "../Runtime/PEHeader.h"
-#include "../Runtime/PEFormat.h"
 #include "../Util/String.h"
 #include "../Util/Util.h"
+#include "../Runtime/Allocator.h"
 #include "Win32Structure.h"
 
 #include <intrin.h>
@@ -25,32 +24,9 @@ const uint16_t Win61x86SystemCalls[SystemCallMax] =    {0x0013, 0x0083, 0x00d7, 
 const uint16_t Win62x86SystemCalls[SystemCallMax] =    {0x0196, 0x0118, 0x00c3, 0x0163, 0x0005, 0x0174, 0x0150, 0x00f3, 0x0013, 0x00b6, 0x004e, 0x0120, 0x011e}; //8
 const uint16_t Win63x86SystemCalls[SystemCallMax] =    {0x019b, 0x011c, 0x00c6, 0x0168, 0x0006, 0x0179, 0x0154, 0x00f6, 0x0013, 0x00b9, 0x0051, 0x0124, 0x0122}; //8.1
 
-Win32NativeHelper g_helper;
-
 //utilites
 #define NtCurrentProcess() 0xffffffff
 #define NtCurrentProcess64() 0xffffffffffffffff
-
-uint8_t tempHeap[655350]; //temporary heap during initialization.
-uint32_t tempHeapPtr = 0;
-
-void *heapAlloc(size_t size)
-{
-	if(!g_helper.isInitialized())
-	{
-		void *result = tempHeap + tempHeapPtr;
-		tempHeapPtr += size;
-		return result;
-	}
-	return Win32NativeHelper::get()->allocateHeap(size);
-}
-
-void heapFree(void *ptr)
-{
-	if(!g_helper.isInitialized())
-		return;
-	Win32NativeHelper::get()->freeHeap(ptr);
-}
 
 template<typename UnicodeStringType = UNICODE_STRING>
 void copyUnicodeString(UnicodeStringType *dest, UnicodeStringType *src)
@@ -80,7 +56,7 @@ void initializeUnicodeString(UnicodeStringType *string, wchar_t *data, size_t da
 template<typename UnicodeStringType = UNICODE_STRING>
 void freeUnicodeString(UnicodeStringType *string)
 {
-	Win32NativeHelper::get()->freeHeap(string->Buffer);
+	heapFree(string->Buffer);
 }
 
 template<typename UnicodeStringType = UNICODE_STRING>
@@ -93,38 +69,10 @@ void getPrefixedPathUnicodeString(UnicodeStringType *string, const wchar_t *path
 	string->Length = pathSize * 2 + 8;
 }
 
-void Win32NativeHelper::init()
-{
-	if(g_helper.initialized_ == false)
-		g_helper.init_();
-}
-
 Win32NativeHelper *Win32NativeHelper::get()
 {
-	if(g_helper.initialized_ == false)
-		Win32NativeHelper::init();
-	return &g_helper;
-}
-
-void Win32NativeHelper::initNtdllImport(size_t ntdllBase)
-{
-	PEFormat format;
-	format.load(MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(ntdllBase)), true);
-
-	auto &exportList = format.getExports();
-	auto findItem = [&](uint32_t hash) -> size_t
-	{
-		for(auto &i : exportList)
-		{
-			if(i.nameHash == hash)
-				return static_cast<size_t>(ntdllBase + i.address);
-		}
-		return 0;
-	};
-
-	//known ntdll exports(until 8.1) doesn't have fnv1a collisions.
-	rtlAllocateHeap_ = findItem(0xb3f819f8);
-	rtlFreeHeap_ = findItem(0x7c76ecf5);
+	static Win32NativeHelper helper;
+	return &helper;
 }
 
 uint32_t __declspec(naked) Win32NativeHelper::executeWin32Syscall(uint32_t syscallno, uint32_t *argv)
@@ -191,14 +139,10 @@ x64:
 	}
 }
 
-void Win32NativeHelper::init_()
+Win32NativeHelper::Win32NativeHelper()
 {
 	myPEB_ = reinterpret_cast<PEB *>(__readfsdword(0x30));
-
-	LDR_MODULE *module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink->Flink);
-	size_t ntdllBase = reinterpret_cast<size_t>(module->BaseAddress);
-	module = reinterpret_cast<LDR_MODULE *>(myPEB_->LoaderData->InLoadOrderModuleList.Flink);
-	myBase_ = reinterpret_cast<size_t>(module->BaseAddress);
+	myBase_ = reinterpret_cast<size_t>(myPEB_->ImageBaseAddress);
 
 	KUSER_SHARED_DATA *sharedData = reinterpret_cast<KUSER_SHARED_DATA *>(0x7ffe0000);
 	systemCalls_ = nullptr;
@@ -236,10 +180,6 @@ void Win32NativeHelper::init_()
 		else if(sharedData->NtMajorVersion == 5 && sharedData->NtMinorVersion == 2)
 			systemCalls_ = Win52x86SystemCalls;
 	}
-
-	//get exports
-	initNtdllImport(ntdllBase);
-	initialized_ = true;
 }
 
 size_t Win32NativeHelper::getMyBase() const
@@ -251,22 +191,6 @@ void Win32NativeHelper::setMyBase(size_t address)
 {
 	myBase_ = address;;
 	myPEB_->ImageBaseAddress = reinterpret_cast<void *>(address);
-}
-
-void *Win32NativeHelper::allocateHeap(size_t dwBytes)
-{
-	typedef void *(__stdcall *RtlAllocateHeapPtr)(void *hHeap, uint32_t dwFlags, size_t dwBytes);
-
-	return reinterpret_cast<RtlAllocateHeapPtr>(rtlAllocateHeap_)(myPEB_->ProcessHeap, 0, dwBytes);
-}
-
-bool Win32NativeHelper::freeHeap(void *ptr)
-{
-	if(ptr > tempHeap && ptr < tempHeap + tempHeapPtr)
-		return true;
-	typedef bool (__stdcall *RtlFreeHeapPtr)(void *hHeap, uint32_t dwFlags, void *ptr);
-
-	return reinterpret_cast<RtlFreeHeapPtr>(rtlFreeHeap_)(myPEB_->ProcessHeap, 0, ptr);
 }
 
 void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
@@ -643,11 +567,6 @@ wchar_t *Win32NativeHelper::getEnvironments()
 uint8_t *Win32NativeHelper::getApiSet()
 {
 	return myPEB_->ApiSet;
-}
-
-bool Win32NativeHelper::isInitialized()
-{
-	return initialized_;
 }
 
 PEB *Win32NativeHelper::getPEB()

@@ -104,6 +104,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\Runtime\Allocator.cpp" />
     <ClCompile Include="..\..\..\Runtime\Image.cpp" />
     <ClCompile Include="..\..\..\Runtime\PEFormat.cpp" />
     <ClCompile Include="..\..\MSVCHelper.cpp">
