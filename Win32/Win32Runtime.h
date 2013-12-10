@@ -46,7 +46,7 @@ private:
 	static uint32_t __cdecl executeWin32Syscall(uint32_t syscallno, uint32_t *argv);
 	static uint32_t __cdecl executeWoW64Syscall(uint32_t syscallno, uint64_t *argv);
 public:
-	Win32NativeHelper();
+	void init();
 	uint8_t *getApiSet();
 
 	void freeVirtual(void *BaseAddress);

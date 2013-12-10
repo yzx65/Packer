@@ -95,6 +95,8 @@ Vector<uint8_t> compress(const uint8_t *source, size_t size)
 
 void Entry()
 {
+	Win32NativeHelper::get()->init();
+
 	List<String> arguments = Win32NativeHelper::get()->getArgumentList();
 
 	if(arguments.size() < 4)

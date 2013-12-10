@@ -139,7 +139,7 @@ x64:
 	}
 }
 
-Win32NativeHelper::Win32NativeHelper()
+void Win32NativeHelper::init()
 {
 	myPEB_ = reinterpret_cast<PEB *>(__readfsdword(0x30));
 	myBase_ = reinterpret_cast<size_t>(myPEB_->ImageBaseAddress);

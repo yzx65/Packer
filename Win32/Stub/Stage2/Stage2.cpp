@@ -11,6 +11,8 @@ void Execute();
 
 int Entry()
 {
+	Win32NativeHelper::get()->init();
+
 	Win32StubStage2Header *stage2Header;
 
 	size_t myBase = Win32NativeHelper::get()->getMyBase();

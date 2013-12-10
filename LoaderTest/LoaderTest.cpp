@@ -4,6 +4,8 @@
 
 void Entry()
 {
+	Win32NativeHelper::get()->init();
+
 	List<String> arguments = Win32NativeHelper::get()->getArgumentList();
 
 	SharedPtr<File> file = File::open(*(++ arguments.begin()));
