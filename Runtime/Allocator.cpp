@@ -81,9 +81,6 @@ void *heapAlloc(size_t size)
 			*currentBucket = reinterpret_cast<Bucket *>(allocateVirtual(newSize));
 			(*currentBucket)->capacity = newSize;
 			lastBucket[bucketNo] = (*currentBucket);
-			bucketCapacity[bucketNo] *= 2;
-			if(bucketCapacity[bucketNo] > 0x01000000)
-				bucketCapacity[bucketNo] = 0x01000000;
 		}
 
 		uint8_t *result = searchEmpty(*currentBucket, size, bucketSizes[bucketNo]);
