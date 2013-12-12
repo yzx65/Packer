@@ -49,7 +49,7 @@ public:
 	void init();
 	uint8_t *getApiSet();
 
-	void freeVirtual(void *BaseAddress);
+	bool freeVirtual(void *BaseAddress);
 	void *allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
 	void protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection = nullptr);
 	void *createFile(uint32_t DesiredAccess, const wchar_t *Filename, size_t FilenameLength, size_t ShareAccess, size_t CreateDisposition);

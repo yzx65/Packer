@@ -214,19 +214,23 @@ void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSiz
 	return reinterpret_cast<void *>(address);
 }
 
-void Win32NativeHelper::freeVirtual(void *BaseAddress)
+bool Win32NativeHelper::freeVirtual(void *BaseAddress)
 {
 	uint64_t RegionSize = 0;
+	uint32_t result;
 	if(isWoW64_)
 	{
 		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(&BaseAddress), reinterpret_cast<uint64_t>(&RegionSize), MEM_RELEASE};
-		executeWoW64Syscall(systemCalls_[NtFreeVirtualMemory], args);
+		result = executeWoW64Syscall(systemCalls_[NtFreeVirtualMemory], args);
 	}
 	else
 	{
 		uint32_t args[] = {NtCurrentProcess(), reinterpret_cast<uint32_t>(&BaseAddress), reinterpret_cast<uint32_t>(&RegionSize), MEM_RELEASE};
-		executeWin32Syscall(systemCalls_[NtFreeVirtualMemory], args);
+		result = executeWin32Syscall(systemCalls_[NtFreeVirtualMemory], args);
 	}
+	if(result < 0)
+		return false;
+	return true;
 }
 
 void Win32NativeHelper::protectVirtual(void *BaseAddress, size_t NumberOfBytes, size_t NewAccessProtection, size_t *OldAccessProtection)

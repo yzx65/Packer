@@ -23,10 +23,10 @@ struct Bucket
 };
 #pragma pack(pop)
 
-#define BUCKET_COUNT 11
-const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 0};
+#define BUCKET_COUNT 13
+const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0};
 Bucket *bucket[BUCKET_COUNT];
-size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0};
+size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0x100000, 0x100000, 0};
 Bucket *lastBucket[BUCKET_COUNT];
 
 uint8_t *allocateVirtual(size_t size)
@@ -34,9 +34,9 @@ uint8_t *allocateVirtual(size_t size)
 	return reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, multipleOf(size, 4096), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 }
 
-void freeVirtual(void *ptr)
+bool freeVirtual(void *ptr)
 {
-	Win32NativeHelper::get()->freeVirtual(ptr);
+	return Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
 uint8_t *searchEmpty(Bucket *bucket, size_t size, size_t bucketSize)
@@ -95,8 +95,8 @@ void *heapAlloc(size_t size)
 
 void heapFree(void *ptr)
 {
-	if((reinterpret_cast<size_t>(ptr) & 0xFFFF) == 0)
-		freeVirtual(ptr);
-	else
-		reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
+	if((reinterpret_cast<size_t>(ptr) & 0xFFFF) == 0 && freeVirtual(ptr))
+		return;
+
+	reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
 }
