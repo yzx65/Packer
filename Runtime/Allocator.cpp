@@ -15,12 +15,19 @@ struct MemoryInfo
 	unsigned int size : 31;
 #endif
 };
+struct Bucket
+{
+	Bucket *nextBucket;
+	size_t capacity;
+	uint8_t bucketData[1];
+};
 #pragma pack(pop)
 
-#define BUCKET_COUNT 13
-const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0};
-uint8_t *bucket[BUCKET_COUNT];
-size_t bucketCapacity[BUCKET_COUNT] = {0, };
+#define BUCKET_COUNT 11
+const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 0};
+Bucket *bucket[BUCKET_COUNT];
+size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0};
+Bucket *lastBucket[BUCKET_COUNT];
 
 uint8_t *allocateVirtual(size_t size)
 {
@@ -32,6 +39,24 @@ void freeVirtual(void *ptr)
 	Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
+uint8_t *searchEmpty(Bucket *bucket, size_t size, size_t bucketSize)
+{
+	uint8_t *ptr = bucket->bucketData;
+	while(true)
+	{
+		MemoryInfo *info = reinterpret_cast<MemoryInfo *>(ptr);
+		if(!info->inUse && (bucketSize != 0 || (bucketSize == 0 && info->size >= size)))
+		{
+			info->inUse = 1;
+			info->size = size;
+			return ptr + sizeof(MemoryInfo);
+		}
+		ptr += sizeof(MemoryInfo) + bucketSize;
+		if(ptr + sizeof(MemoryInfo) + bucketSize > reinterpret_cast<uint8_t *>(bucket) + bucket->capacity)
+			return nullptr;
+	}
+}
+
 void *heapAlloc(size_t size)
 {
 	size_t bucketNo;
@@ -39,45 +64,39 @@ void *heapAlloc(size_t size)
 		if(bucketSizes[bucketNo] >= size || bucketSizes[bucketNo] == 0)
 			break;
 
-	if(!bucket[bucketNo])
+	if(bucketSizes[bucketNo] == 0)
+		return allocateVirtual(multipleOf(size, 4096));
+	if(lastBucket[bucketNo])
 	{
-		bucketCapacity[bucketNo] = 0x00100000;
-		size_t newSize = multipleOf(max(bucketCapacity[bucketNo], size + sizeof(MemoryInfo) + sizeof(uint8_t *) + sizeof(uint32_t)), 4096);
-		bucket[bucketNo] = allocateVirtual(newSize);
-		*reinterpret_cast<uint32_t *>(bucket[bucketNo] + sizeof(uint8_t *)) = newSize;
+		uint8_t *result = searchEmpty(lastBucket[bucketNo], size, bucketSizes[bucketNo]);
+		if(result)
+			return result;
 	}
-
-	uint8_t *base = bucket[bucketNo];
-	uint8_t *ptr = base + sizeof(uint8_t *) + sizeof(size_t);
-	size_t capacity = *reinterpret_cast<uint32_t *>(base + sizeof(uint8_t *));
+	Bucket **currentBucket = &bucket[bucketNo];
 	while(true)
 	{
-		MemoryInfo *info = reinterpret_cast<MemoryInfo *>(ptr);
-		if(!info->inUse && (bucketCapacity[bucketNo] != 0 || (bucketCapacity[bucketNo] == 0 && info->size >= size)))
+		if(!*currentBucket)
 		{
-			info->inUse = 1;
-			info->size = size;
-			return ptr + sizeof(MemoryInfo);
+			size_t newSize = multipleOf(bucketCapacity[bucketNo], 4096);
+			*currentBucket = reinterpret_cast<Bucket *>(allocateVirtual(newSize));
+			(*currentBucket)->capacity = newSize;
+			lastBucket[bucketNo] = (*currentBucket);
+			bucketCapacity[bucketNo] *= 2;
+			if(bucketCapacity[bucketNo] > 0x01000000)
+				bucketCapacity[bucketNo] = 0x01000000;
 		}
-		ptr += sizeof(MemoryInfo) + bucketSizes[bucketNo];
-		if(ptr + sizeof(MemoryInfo) + bucketSizes[bucketNo] > base + capacity)
-		{
-			if(!*reinterpret_cast<uint8_t **>(base))
-			{
-				size_t newSize = multipleOf(max(bucketCapacity[bucketNo], size + sizeof(MemoryInfo) + sizeof(uint8_t *) + sizeof(uint32_t)), 4096);
-				*reinterpret_cast<uint8_t **>(base) = allocateVirtual(newSize);
-				*reinterpret_cast<uint32_t *>(base + sizeof(uint8_t *)) = newSize;
-				bucketCapacity[bucketNo] *= 2;
-				if(bucketCapacity[bucketNo] > 0x01000000)
-					bucketCapacity[bucketNo] = 0x01000000;
-			}
-			base = *reinterpret_cast<uint8_t **>(base);
-			ptr = base + sizeof(uint8_t *) + sizeof(size_t);
-		}
+
+		uint8_t *result = searchEmpty(*currentBucket, size, bucketSizes[bucketNo]);
+		if(result)
+			return result;
+		currentBucket = &((*currentBucket)->nextBucket);
 	}
 }
 
 void heapFree(void *ptr)
 {
-	reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
+	if((reinterpret_cast<size_t>(ptr) & 0xFFFF) == 0)
+		freeVirtual(ptr);
+	else
+		reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
 }
