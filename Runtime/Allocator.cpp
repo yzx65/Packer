@@ -26,7 +26,7 @@ struct Bucket
 #define BUCKET_COUNT 13
 const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0};
 Bucket *bucket[BUCKET_COUNT];
-size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0x100000, 0x100000, 0};
+const size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0x100000, 0x100000, 0};
 Bucket *lastBucket[BUCKET_COUNT];
 
 uint8_t *allocateVirtual(size_t size)
