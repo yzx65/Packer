@@ -171,9 +171,9 @@ uint64_t Win32Loader::matchApiSet(const String &filename, uint8_t *apiSetBase)
 							 [&](const EntryType *entry) -> int {
 		wchar_t *name = reinterpret_cast<wchar_t *>(apiSetBase + entry->Name);
 		size_t i = 0;
-		for(; i < entry->NameLength / sizeof(wchar_t)- 1; i ++)
-		if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(filename[i + 4]))
-			return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
+		for(; i < entry->NameLength / sizeof(wchar_t) - 1; i ++)
+			if(static_cast<char>(WString::to_lower(name[i])) != String::to_lower(filename[i + 4]))
+				return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
 		return static_cast<char>(WString::to_lower(name[i])) - String::to_lower(filename[i + 4]);
 	});
 	if(item != apiSet->Entries + apiSet->NumberOfEntries)
