@@ -208,7 +208,6 @@ void PEFormat::processImport(uint8_t *descriptor_)
 				else
 					nameEntry = reinterpret_cast<IMAGE_IMPORT_BY_NAME *>(getDataPointerOfRVA(*reinterpret_cast<uint32_t *>(nameEntryPtr)));
 
-				function.ordinal = nameEntry->Hint;
 				function.name.assign(reinterpret_cast<const char *>(nameEntry->Name));
 				function.nameHash = fnv1a(function.name.c_str(), function.name.length());
 			}
