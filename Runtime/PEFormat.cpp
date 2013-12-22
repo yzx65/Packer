@@ -480,20 +480,25 @@ bool PEFormat::isSystemLibrary(const String &filename)
 	return false;
 }
 
-SharedPtr<FormatBase> loadImport(const String &path)
+SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 {
+	if(!File::isPathExists(path))
+		return SharedPtr<FormatBase>(nullptr);
+
 	SharedPtr<File> file = File::open(path);
 	SharedPtr<FormatBase> result = MakeShared<PEFormat>();
 	result->load(file, false);
+	if(architecture && result->getInfo().architecture != architecture)
+		return SharedPtr<FormatBase>(nullptr);
 	result->setFileName(file->getFileName());
 	result->setFilePath(file->getFilePath());
 	return result;
 }
 
-SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint)
+SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint, int architecture)
 {
 	if(File::isPathExists(filename))
-		return ::loadImport(filename);
+		return ::loadImport(filename, architecture);
 
 	List<String> searchPaths;
 	if(hint.length())
@@ -529,19 +534,27 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 		e = path.find(L';', e + 1);
 		if(e == -1)
 			break;
-		searchPaths.push_back(WStringToString(path.substr(s, e - s)));
+		String currentPath = WStringToString(path.substr(s, e - s));
+		if(architecture == ArchitectureWin32 && currentPath.icompare(Win32NativeHelper::get()->getSystem32Directory()) == 0)
+			currentPath = Win32NativeHelper::get()->getSysWOW64Directory();
+		searchPaths.push_back(currentPath);
 		s = e + 1;
 	}
 #endif
 	for(auto &i : searchPaths)
 	{
 		String path = File::combinePath(i, filename);
-		if(File::isPathExists(path))
-			return loadImport(path);
-		if(path.substr(path.length() - 4).icompare(".dll") != 0)
-			path.append(".dll");
-		if(File::isPathExists(path))
-			return loadImport(path);
+		SharedPtr<FormatBase> result = ::loadImport(path, architecture);
+		if(!result)
+		{
+			if(path.substr(path.length() - 4).icompare(".dll") != 0)
+			{
+				path.append(".dll");
+				result = ::loadImport(path, architecture);
+			}
+		}
+		if(result.get())
+			return result;
 	}
 	return SharedPtr<FormatBase>(nullptr);
 }

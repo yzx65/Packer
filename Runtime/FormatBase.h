@@ -33,5 +33,5 @@ public:
 
 	virtual bool isSystemLibrary(const String &filename) = 0;
 
-	static SharedPtr<FormatBase> loadImport(const String &filename, const String &hint = String(""));
+	static SharedPtr<FormatBase> loadImport(const String &filename, const String &hint = String(""), int architecture = 0);
 };

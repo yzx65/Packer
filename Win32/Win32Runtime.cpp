@@ -646,6 +646,22 @@ List<String> Win32NativeHelper::getArgumentList()
 	return items;
 }
 
+String Win32NativeHelper::getSystem32Directory() const
+{
+	KUSER_SHARED_DATA *sharedData = reinterpret_cast<KUSER_SHARED_DATA *>(0x7ffe0000);
+
+	String SystemRoot(WStringToString(sharedData->NtSystemRoot));
+	return SystemRoot + "\\System32";
+}
+
+String Win32NativeHelper::getSysWOW64Directory() const
+{
+	KUSER_SHARED_DATA *sharedData = reinterpret_cast<KUSER_SHARED_DATA *>(0x7ffe0000);
+
+	String SystemRoot(WStringToString(sharedData->NtSystemRoot));
+	return SystemRoot + "\\SysWOW64";
+}
+
 void* operator new(size_t num)
 {
 	return heapAlloc(num);

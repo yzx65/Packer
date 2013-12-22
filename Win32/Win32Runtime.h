@@ -73,6 +73,9 @@ public:
 	void setMyBase(size_t address);
 
 	static Win32NativeHelper *get();
+
+	String getSystem32Directory() const;
+	String getSysWOW64Directory() const;
 };
 
 #define GENERIC_READ                     (0x80000000L)
