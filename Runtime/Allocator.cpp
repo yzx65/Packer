@@ -10,15 +10,16 @@ struct MemoryInfo
 {
 	unsigned int inUse : 1;
 #ifdef _WIN64
-	unsigned int size : 63;
+	unsigned int bucketPtr : 63;
 #else
-	unsigned int size : 31;
+	unsigned int bucketPtr : 31;
 #endif
 };
 struct Bucket
 {
 	Bucket *nextBucket;
 	size_t capacity;
+	size_t usedCnt;
 	uint8_t bucketData[1];
 };
 #pragma pack(pop)
@@ -39,16 +40,19 @@ bool freeVirtual(void *ptr)
 	return Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
-uint8_t *searchEmpty(Bucket *bucket, size_t size, size_t bucketSize)
+uint8_t *searchEmpty(Bucket *bucket, size_t bucketSize)
 {
+	if(bucket->usedCnt > bucket->capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
+		return nullptr;
 	uint8_t *ptr = bucket->bucketData;
 	while(true)
 	{
 		MemoryInfo *info = reinterpret_cast<MemoryInfo *>(ptr);
-		if(!info->inUse && (bucketSize != 0 || (bucketSize == 0 && info->size >= size)))
+		if(!info->inUse)
 		{
 			info->inUse = 1;
-			info->size = size;
+			info->bucketPtr = reinterpret_cast<unsigned int>(bucket);
+			bucket->usedCnt ++;
 			return ptr + sizeof(MemoryInfo);
 		}
 		ptr += sizeof(MemoryInfo) + bucketSize;
@@ -68,7 +72,7 @@ void *heapAlloc(size_t size)
 		return allocateVirtual(multipleOf(size, 4096));
 	if(lastBucket[bucketNo])
 	{
-		uint8_t *result = searchEmpty(lastBucket[bucketNo], size, bucketSizes[bucketNo]);
+		uint8_t *result = searchEmpty(lastBucket[bucketNo], bucketSizes[bucketNo]);
 		if(result)
 			return result;
 	}
@@ -83,7 +87,7 @@ void *heapAlloc(size_t size)
 			lastBucket[bucketNo] = (*currentBucket);
 		}
 
-		uint8_t *result = searchEmpty(*currentBucket, size, bucketSizes[bucketNo]);
+		uint8_t *result = searchEmpty(*currentBucket, bucketSizes[bucketNo]);
 		if(result)
 			return result;
 		currentBucket = &((*currentBucket)->nextBucket);
@@ -96,4 +100,5 @@ void heapFree(void *ptr)
 		return;
 
 	reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
+	reinterpret_cast<Bucket *>(reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->bucketPtr)->usedCnt --;
 }
