@@ -496,8 +496,14 @@ SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 
 SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint, int architecture)
 {
-	if(File::isPathExists(filename))
-		return ::loadImport(filename, architecture);
+	String newFilename = filename;
+#ifdef _WIN32
+	String system32Directory = Win32NativeHelper::get()->getSystem32Directory();
+	if(architecture == ArchitectureWin32 && filename.substr(0, system32Directory.length()).icompare(system32Directory) == 0)
+		newFilename = Win32NativeHelper::get()->getSysWOW64Directory() + "\\" + filename.substr(system32Directory.length() + 1);
+#endif
+	if(File::isPathExists(newFilename))
+		return ::loadImport(newFilename, architecture);
 
 	List<String> searchPaths;
 	if(hint.length())
@@ -542,7 +548,7 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 #endif
 	for(auto &i : searchPaths)
 	{
-		String path = File::combinePath(i, filename);
+		String path = File::combinePath(i, newFilename);
 		SharedPtr<FormatBase> result = ::loadImport(path, architecture);
 		if(!result)
 		{
