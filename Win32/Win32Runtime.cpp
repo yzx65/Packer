@@ -201,7 +201,7 @@ void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSiz
 	if(isWoW64_)
 	{
 		uint64_t args[] = {NtCurrentProcess64(), reinterpret_cast<uint64_t>(&address), 0x7ffeffff, reinterpret_cast<uint64_t>(&size), AllocationType, Protect};
-		//passing big ZeroBits limits its address.
+		//passing big ZeroBits acts as bit mask.
 		result = executeWoW64Syscall(systemCalls_[NtAllocateVirtualMemory], args);
 	}
 	else
