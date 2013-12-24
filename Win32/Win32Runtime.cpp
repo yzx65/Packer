@@ -426,7 +426,7 @@ void *Win32NativeHelper::mapViewOfSection(void *section, uint32_t dwDesiredAcces
 {
 	uint64_t result = lpBaseAddress;
 	LARGE_INTEGER sectionOffset;
-	size_t viewSize;
+	uint64_t viewSize;
 	size_t protect;
 
 	sectionOffset.QuadPart = offset;
