@@ -27,7 +27,7 @@ struct Bucket
 #define BUCKET_COUNT 13
 const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0};
 Bucket *bucket[BUCKET_COUNT];
-const size_t bucketCapacity[BUCKET_COUNT] = {0x1000, 0x1000, 0x1000, 0x1000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0x100000, 0x100000, 0};
+const size_t bucketCapacity[BUCKET_COUNT] = {0x10000, 0x10000, 0x10000, 0x10000, 0x10000, 0x10000, 0x10000, 0x100000, 0x100000, 0x100000, 0x100000, 0x100000, 0};
 Bucket *lastBucket[BUCKET_COUNT];
 
 uint8_t *allocateVirtual(size_t size)
@@ -40,13 +40,12 @@ bool freeVirtual(void *ptr)
 	return Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
-uint8_t *searchEmpty(Bucket *bucket, size_t bucketSize)
+uint8_t *allocate(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
 {
-	if(bucket->usedCnt > bucket->capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
-		return nullptr;
-	uint8_t *ptr = bucket->bucketData;
 	while(true)
 	{
+		if(ptr + sizeof(MemoryInfo) + bucketSize > reinterpret_cast<uint8_t *>(bucket) + bucket->capacity)
+			break;
 		MemoryInfo *info = reinterpret_cast<MemoryInfo *>(ptr);
 		if(!info->inUse)
 		{
@@ -56,9 +55,19 @@ uint8_t *searchEmpty(Bucket *bucket, size_t bucketSize)
 			return ptr + sizeof(MemoryInfo);
 		}
 		ptr += sizeof(MemoryInfo) + bucketSize;
-		if(ptr + sizeof(MemoryInfo) + bucketSize > reinterpret_cast<uint8_t *>(bucket) + bucket->capacity)
-			return nullptr;
 	}
+	return nullptr;
+}
+
+uint8_t *searchEmpty(Bucket *bucket, size_t bucketSize)
+{
+	if(bucket->usedCnt > bucket->capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
+		return nullptr;
+	uint8_t *ptr = bucket->bucketData + bucket->usedCnt * (bucketSize + sizeof(MemoryInfo));
+	uint8_t *result = allocate(bucket, ptr, bucketSize);
+	if(!result)
+		result = allocate(bucket, bucket->bucketData, bucketSize);
+	return result;
 }
 
 void *heapAlloc(size_t size)
