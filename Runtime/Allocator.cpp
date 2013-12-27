@@ -24,6 +24,7 @@ struct Bucket
 };
 #pragma pack(pop)
 
+#define BIGHEAP_TAG 0xdeadbeef
 #define BUCKET_COUNT 13
 const uint16_t bucketSizes[BUCKET_COUNT] = {4, 16, 32, 64, 128, 512, 1024, 2048, 4096, 8192, 16384, 32768, 0};
 Bucket *bucket[BUCKET_COUNT];
@@ -78,7 +79,11 @@ void *heapAlloc(size_t size)
 			break;
 
 	if(bucketSizes[bucketNo] == 0)
-		return allocateVirtual(multipleOf(size, 4096));
+	{
+		uint8_t *alloc = allocateVirtual(multipleOf(size + 4, 4096));
+		*reinterpret_cast<uint32_t *>(alloc) = BIGHEAP_TAG;
+		return alloc + 4;
+	}
 	if(lastBucket[bucketNo])
 	{
 		uint8_t *result = searchEmpty(lastBucket[bucketNo], bucketSizes[bucketNo]);
@@ -105,7 +110,7 @@ void *heapAlloc(size_t size)
 
 void heapFree(void *ptr)
 {
-	if((reinterpret_cast<size_t>(ptr) & 0xFFFF) == 0 && freeVirtual(ptr))
+	if(*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(ptr) - 4) == BIGHEAP_TAG && ((reinterpret_cast<size_t>(ptr) - 4) & 0xFFFF) == 0 && freeVirtual(ptr))
 		return;
 
 	reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
