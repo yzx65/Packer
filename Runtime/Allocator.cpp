@@ -41,7 +41,7 @@ bool freeVirtual(void *ptr)
 	return Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
-uint8_t *allocate(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
+uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
 {
 	while(true)
 	{
@@ -60,14 +60,14 @@ uint8_t *allocate(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
 	return nullptr;
 }
 
-uint8_t *searchEmpty(Bucket *bucket, size_t bucketSize)
+uint8_t *allocate(Bucket *bucket, size_t bucketSize)
 {
 	if(bucket->usedCnt > bucket->capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
 		return nullptr;
 	uint8_t *ptr = bucket->bucketData + bucket->usedCnt * (bucketSize + sizeof(MemoryInfo));
-	uint8_t *result = allocate(bucket, ptr, bucketSize);
+	uint8_t *result = searchEmpty(bucket, ptr, bucketSize);
 	if(!result)
-		result = allocate(bucket, bucket->bucketData, bucketSize);
+		result = searchEmpty(bucket, bucket->bucketData, bucketSize);
 	return result;
 }
 
@@ -86,7 +86,7 @@ void *heapAlloc(size_t size)
 	}
 	if(lastBucket[bucketNo])
 	{
-		uint8_t *result = searchEmpty(lastBucket[bucketNo], bucketSizes[bucketNo]);
+		uint8_t *result = allocate(lastBucket[bucketNo], bucketSizes[bucketNo]);
 		if(result)
 			return result;
 	}
@@ -101,7 +101,7 @@ void *heapAlloc(size_t size)
 			lastBucket[bucketNo] = (*currentBucket);
 		}
 
-		uint8_t *result = searchEmpty(*currentBucket, bucketSizes[bucketNo]);
+		uint8_t *result = allocate(*currentBucket, bucketSizes[bucketNo]);
 		if(result)
 			return result;
 		currentBucket = &((*currentBucket)->nextBucket);
