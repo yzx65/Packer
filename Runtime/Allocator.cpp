@@ -18,8 +18,8 @@ struct MemoryInfo
 struct Bucket
 {
 	Bucket *nextBucket;
-	size_t capacity;
 	size_t usedCnt;
+	uint8_t *lastPtr;
 	uint8_t bucketData[1];
 };
 #pragma pack(pop)
@@ -41,11 +41,11 @@ bool freeVirtual(void *ptr)
 	return Win32NativeHelper::get()->freeVirtual(ptr);
 }
 
-uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
+uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize, size_t capacity)
 {
 	while(true)
 	{
-		if(ptr + sizeof(MemoryInfo) + bucketSize > reinterpret_cast<uint8_t *>(bucket) + bucket->capacity)
+		if(ptr + sizeof(MemoryInfo) + bucketSize > reinterpret_cast<uint8_t *>(bucket) + capacity)
 			break;
 		MemoryInfo *info = reinterpret_cast<MemoryInfo *>(ptr);
 		if(!info->inUse)
@@ -53,6 +53,7 @@ uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
 			info->inUse = 1;
 			info->bucketPtr = reinterpret_cast<unsigned int>(bucket);
 			bucket->usedCnt ++;
+			bucket->lastPtr = ptr + sizeof(MemoryInfo) + bucketSize;
 			return ptr + sizeof(MemoryInfo);
 		}
 		ptr += sizeof(MemoryInfo) + bucketSize;
@@ -60,15 +61,20 @@ uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize)
 	return nullptr;
 }
 
-uint8_t *allocate(Bucket *bucket, size_t bucketSize)
+uint8_t *allocate(Bucket *bucket, size_t bucketSize, size_t capacity)
 {
-	if(bucket->usedCnt > bucket->capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
+	if(bucket->usedCnt > capacity / (bucketSize + sizeof(MemoryInfo)) - 1)
 		return nullptr;
+	uint8_t *result = searchEmpty(bucket, bucket->lastPtr, bucketSize, capacity);
+	if(result)
+		return result;
+
 	uint8_t *ptr = bucket->bucketData + bucket->usedCnt * (bucketSize + sizeof(MemoryInfo));
-	uint8_t *result = searchEmpty(bucket, ptr, bucketSize);
-	if(!result)
-		result = searchEmpty(bucket, bucket->bucketData, bucketSize);
-	return result;
+	result = searchEmpty(bucket, ptr, bucketSize, capacity);
+	if(result)
+		return result;
+
+	return searchEmpty(bucket, bucket->bucketData, bucketSize, capacity);
 }
 
 void *heapAlloc(size_t size)
@@ -86,7 +92,7 @@ void *heapAlloc(size_t size)
 	}
 	if(lastBucket[bucketNo])
 	{
-		uint8_t *result = allocate(lastBucket[bucketNo], bucketSizes[bucketNo]);
+		uint8_t *result = allocate(lastBucket[bucketNo], bucketSizes[bucketNo], bucketCapacity[bucketNo]);
 		if(result)
 			return result;
 	}
@@ -97,11 +103,11 @@ void *heapAlloc(size_t size)
 		{
 			size_t newSize = multipleOf(bucketCapacity[bucketNo], 4096);
 			*currentBucket = reinterpret_cast<Bucket *>(allocateVirtual(newSize));
-			(*currentBucket)->capacity = newSize;
+			(*currentBucket)->lastPtr = (*currentBucket)->bucketData;
 			lastBucket[bucketNo] = (*currentBucket);
 		}
 
-		uint8_t *result = allocate(*currentBucket, bucketSizes[bucketNo]);
+		uint8_t *result = allocate(*currentBucket, bucketSizes[bucketNo], bucketCapacity[bucketNo]);
 		if(result)
 			return result;
 		currentBucket = &((*currentBucket)->nextBucket);
@@ -113,6 +119,8 @@ void heapFree(void *ptr)
 	if(*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(ptr) - 4) == BIGHEAP_TAG && ((reinterpret_cast<size_t>(ptr) - 4) & 0xFFFF) == 0 && freeVirtual(ptr))
 		return;
 
-	reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->inUse = 0;
-	reinterpret_cast<Bucket *>(reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo))->bucketPtr)->usedCnt --;
+	MemoryInfo *infoPtr = reinterpret_cast<MemoryInfo *>(reinterpret_cast<uint8_t *>(ptr) - sizeof(MemoryInfo));
+	infoPtr->inUse = 0;
+	reinterpret_cast<Bucket *>(infoPtr->bucketPtr)->usedCnt --;
+	reinterpret_cast<Bucket *>(infoPtr->bucketPtr)->lastPtr = reinterpret_cast<uint8_t *>(infoPtr);
 }
