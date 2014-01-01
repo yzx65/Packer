@@ -135,7 +135,7 @@ struct Image
 		info(operand.info), sections(std::move(operand.sections)), 
 		imports(std::move(operand.imports)), relocations(std::move(operand.relocations)),
 		fileName(std::move(operand.fileName)), filePath(std::move(operand.filePath)), 
-		exports(std::move(operand.exports)), nameExportLen(operand.nameExportLen), 
+		exports(std::move(operand.exports)), 
 		header(std::move(operand.header)){}
 	const Image &operator =(Image &&operand)
 	{
@@ -147,7 +147,6 @@ struct Image
 		filePath = std::move(operand.filePath);
 		exports = std::move(operand.exports);
 		header = std::move(operand.header);
-		nameExportLen = operand.nameExportLen;
 
 		return *this;
 	}

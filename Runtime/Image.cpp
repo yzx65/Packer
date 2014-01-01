@@ -46,7 +46,6 @@ Vector<uint8_t> Image::serialize() const
 	A(filePath);
 	A(fileName);
 
-	A(nameExportLen);
 	A(static_cast<uint32_t>(exports.size()));
 	for(auto &i : exports)
 	{
@@ -153,7 +152,6 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 	result.filePath = R(String);
 	result.fileName = R(String);
 
-	result.nameExportLen = R(uint32_t);
 	uint32_t exportLen = R(uint32_t);
 	result.exports.reserve(exportLen);
 	for(size_t i = 0; i < exportLen; ++ i)

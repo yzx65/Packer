@@ -18,10 +18,10 @@ public:
 	virtual const String &getFileName() const = 0;
 	virtual const String &getFilePath() const = 0;
 	virtual Image toImage() = 0;
-	virtual const List<Import> &getImports() const = 0;
-	virtual const List<ExportFunction> &getExports() const = 0;
+	virtual const List<Import> &getImports() = 0;
+	virtual const List<ExportFunction> &getExports() = 0;
 	virtual const ImageInfo &getInfo() const = 0;
-	virtual const List<uint64_t> &getRelocations() const = 0;
+	virtual const List<uint64_t> &getRelocations() = 0;
 	virtual const List<Section> &getSections() const = 0;
 
 	virtual void setSections(const List<Section> &sections) = 0;

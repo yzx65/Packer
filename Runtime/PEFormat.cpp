@@ -15,7 +15,7 @@ inline T *getStructureAtOffset(uint8_t *data, size_t offset)
 	return reinterpret_cast<T *>(data + offset);
 }
 
-PEFormat::PEFormat() : nameExportLen_(0)
+PEFormat::PEFormat() : processedExport_(false), processedImport_(false), processedRelocation_(false)
 {
 	
 }
@@ -67,6 +67,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	{
 		IMAGE_OPTIONAL_HEADER32 *optionalHeader = getStructureAtOffset<IMAGE_OPTIONAL_HEADER32>(data, offset);
 		dataDirectory = optionalHeader->DataDirectory;
+		dataDirectoryBase_ = reinterpret_cast<uint8_t *>(dataDirectory) - data;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		info_.architecture = ArchitectureWin32;
@@ -76,15 +77,13 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	{
 		IMAGE_OPTIONAL_HEADER64 *optionalHeader = getStructureAtOffset<IMAGE_OPTIONAL_HEADER64>(data, offset);
 		dataDirectory = optionalHeader->DataDirectory;
+		dataDirectoryBase_ = reinterpret_cast<uint8_t *>(dataDirectory) - data;
 		info_.baseAddress = optionalHeader->ImageBase;
 		info_.size = optionalHeader->SizeOfImage;
 		headerSize = optionalHeader->SizeOfHeaders;
 		info_.architecture = ArchitectureWin32AMD64;
 	}
 	offset += fileHeader->SizeOfOptionalHeader;
-
-	exportTableBase_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress;
-	exportTableSize_ = dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].Size;
 
 	IMAGE_SECTION_HEADER *sectionHeaders = getStructureAtOffset<IMAGE_SECTION_HEADER>(data, offset);
 	for(int i = 0; i < fileHeader->NumberOfSections; i ++)
@@ -116,10 +115,6 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 		sections_.push_back(std::move(section));
 	}
 
-	processImport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress));
-	processExport(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_EXPORT].VirtualAddress));
-	processRelocation(getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].VirtualAddress), dataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC].Size);
-
 	uint8_t *loadConfig = getDataPointerOfRVA(dataDirectory[IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG].VirtualAddress);
 	if(loadConfig)
 	{
@@ -143,14 +138,24 @@ uint8_t *PEFormat::getDataPointerOfRVA(uint32_t rva)
 	return nullptr;
 }
 
-void PEFormat::processRelocation(uint8_t *info_, size_t size)
+IMAGE_DATA_DIRECTORY *PEFormat::getDataDirectory(size_t index)
 {
-	IMAGE_BASE_RELOCATION *info = reinterpret_cast<IMAGE_BASE_RELOCATION *>(info_);
+	uint8_t *headerBase = header_->get();
+	IMAGE_DATA_DIRECTORY *dataDirectory = reinterpret_cast<IMAGE_DATA_DIRECTORY *>(headerBase + dataDirectoryBase_);
+	return dataDirectory + index;
+}
+
+void PEFormat::processRelocation()
+{
+	IMAGE_DATA_DIRECTORY *relocationDirectory = getDataDirectory(IMAGE_DIRECTORY_ENTRY_BASERELOC);
+	size_t relocationSize = relocationDirectory->Size;
+	IMAGE_BASE_RELOCATION *info = reinterpret_cast<IMAGE_BASE_RELOCATION *>(getDataPointerOfRVA(relocationDirectory->VirtualAddress));
+
 	if(!info)
 		return;
 	while(true)
 	{
-		if(reinterpret_cast<size_t>(info) >= reinterpret_cast<size_t>(info_) + size || info->SizeOfBlock == 0)
+		if(reinterpret_cast<size_t>(info) >= reinterpret_cast<size_t>(info) + relocationSize || info->SizeOfBlock == 0)
 			break;
 		uint16_t *ptr = reinterpret_cast<uint16_t *>(info + 1);
 		for(size_t i = 0; i < (info->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(uint16_t); i ++)
@@ -166,9 +171,11 @@ void PEFormat::processRelocation(uint8_t *info_, size_t size)
 	}
 }
 
-void PEFormat::processImport(uint8_t *descriptor_)
+void PEFormat::processImport()
 {
-	IMAGE_IMPORT_DESCRIPTOR *descriptor = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR *>(descriptor_);
+	IMAGE_DATA_DIRECTORY *importDirectory = getDataDirectory(IMAGE_DIRECTORY_ENTRY_IMPORT);
+	IMAGE_IMPORT_DESCRIPTOR *descriptor = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR *>(getDataPointerOfRVA(importDirectory->VirtualAddress));
+
 	if(!descriptor)
 		return;
 	while(true)
@@ -232,18 +239,23 @@ void PEFormat::processImport(uint8_t *descriptor_)
 	}
 }
 
-String PEFormat::checkExportForwarder(uint64_t address)
+String PEFormat::checkExportForwarder(uint64_t address, size_t exportTableBase, size_t exportTableSize)
 {
-	if(address >= exportTableBase_ && address < exportTableBase_ + exportTableSize_)
+	if(address >= exportTableBase && address < exportTableBase + exportTableSize)
 		for(auto &i : sections_)
 			if(address >= i.baseAddress && address < i.baseAddress + i.size)
 				return String(reinterpret_cast<const char *>(i.data->get() + static_cast<uint32_t>(address - i.baseAddress)));
 	return String();
 }
 
-void PEFormat::processExport(uint8_t *directory_)
+void PEFormat::processExport()
 {
-	IMAGE_EXPORT_DIRECTORY *directory = reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(directory_);
+	IMAGE_DATA_DIRECTORY *exportDirectory = getDataDirectory(IMAGE_DIRECTORY_ENTRY_EXPORT);
+	IMAGE_EXPORT_DIRECTORY *directory = reinterpret_cast<IMAGE_EXPORT_DIRECTORY *>(getDataPointerOfRVA(exportDirectory->VirtualAddress));
+
+	size_t exportTableBase = exportDirectory->VirtualAddress;
+	size_t exportTableSize = exportDirectory->Size;
+
 	if(!directory)
 		return;
 
@@ -267,12 +279,11 @@ void PEFormat::processExport(uint8_t *directory_)
 		entry.address = addressOfFunctions[entry.ordinal];
 		checker[entry.ordinal] = true;
 		entry.ordinal += directory->Base;
-		entry.forward = checkExportForwarder(entry.address);
+		entry.forward = checkExportForwarder(entry.address, exportTableBase, exportTableSize);
 
 		exports_.push_back(std::move(entry));
 	}
 
-	nameExportLen_ = exports_.size();
 	for(size_t i = 0; i < directory->NumberOfFunctions; i ++)
 	{
 		if(checker[i] == true)
@@ -281,7 +292,7 @@ void PEFormat::processExport(uint8_t *directory_)
 		ExportFunction entry;
 		entry.ordinal = i + directory->Base;
 		entry.address = addressOfFunctions[i];
-		entry.forward = checkExportForwarder(entry.address);
+		entry.forward = checkExportForwarder(entry.address, exportTableBase, exportTableSize);
 
 		exports_.push_back(std::move(entry));
 	}
@@ -308,13 +319,23 @@ const String &PEFormat::getFilePath() const
 	return filePath_;
 }
 
-const List<Import> &PEFormat::getImports() const
+const List<Import> &PEFormat::getImports()
 {
+	if(processedImport_ == false)
+	{
+		processedImport_ = true;
+		processImport();
+	}
 	return imports_;
 }
 
-const List<ExportFunction> &PEFormat::getExports() const
+const List<ExportFunction> &PEFormat::getExports()
 {
+	if(processedExport_ == false)
+	{
+		processedExport_ = true;
+		processExport();
+	}
 	return exports_;
 }
 
@@ -323,8 +344,14 @@ const ImageInfo &PEFormat::getInfo() const
 	return info_;
 }
 
-const List<uint64_t> &PEFormat::getRelocations() const
+const List<uint64_t> &PEFormat::getRelocations()
 {
+	if(processedRelocation_ == false)
+	{
+		processedRelocation_ = true;
+		processRelocation();
+	}
+
 	return relocations_;
 }
 
@@ -335,6 +362,10 @@ const List<Section> &PEFormat::getSections() const
 
 Image PEFormat::toImage()
 {
+	getImports();
+	getExports();
+	getRelocations();
+
 	Image image;
 	image.fileName = getFileName();
 	image.filePath = getFilePath();
@@ -344,7 +375,6 @@ Image PEFormat::toImage()
 	image.relocations = std::move(relocations_);
 	image.header = std::move(header_);
 	image.exports.assign_move(exports_.begin(), exports_.end());
-	image.nameExportLen = nameExportLen_;
 
 	return image;
 }
