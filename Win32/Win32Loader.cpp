@@ -133,10 +133,8 @@ void Win32Loader::executeEntryPointQueue()
 {
 	for(auto &i = entryPointQueue_.begin(); i != entryPointQueue_.end(); )
 	{
-		auto oldi = i;
 		uint64_t baseAddress = *i;
-		i ++;
-		entryPointQueue_.remove(oldi);
+		i = entryPointQueue_.remove(i);
 		executeEntryPoint(baseAddress, *loadedImages_[baseAddress]);
 	}
 }
@@ -227,7 +225,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 
 			if(it->fileName.icompare("kernelbase.dll") == 0 || it->fileName.icompare("kernel32.dll") == 0)
 			{
-				//We need to patch ResolveDelayLoadedAPI
+				//We need to patch ResolveDelayLoadedAPI, as kernelbase itself uses delay loaded dll.
 				for(auto &i : it->imports)
 				{
 					if(i.libraryName.icompare("ntdll.dll") == 0)

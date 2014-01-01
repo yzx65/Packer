@@ -184,19 +184,22 @@ public:
 		return iterator(item);
 	}
 
-	void remove(iterator at)
+	iterator remove(iterator at)
 	{
 		if(at.item_->prev == nullptr && at.item_->next == nullptr)
 		{
 			delete at.item_;
 			delete head_;
 			head_ = nullptr;
-			return;
+			return iterator(nullptr);
 		}
 		ListNodeBase *item = at.item_;
+		iterator next(item->next);
+
 		item->prev->next = item->next;
 		item->next->prev = item->prev;
 		delete static_cast<ListNode *>(item);
+		return next;
 	}
 
 	template<typename InputIterator>
