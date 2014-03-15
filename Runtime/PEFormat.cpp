@@ -526,7 +526,7 @@ SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 	SharedPtr<File> file = File::open(newPath);
 	SharedPtr<FormatBase> result = MakeShared<PEFormat>();
 	result->load(file, false);
-	if(architecture && result->getInfo().architecture != architecture)
+	if(architecture != -1 && result->getInfo().architecture != architecture)
 		return SharedPtr<FormatBase>(nullptr);
 	result->setFileName(file->getFileName());
 	result->setFilePath(file->getFilePath());
