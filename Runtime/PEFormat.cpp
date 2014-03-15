@@ -511,10 +511,19 @@ bool PEFormat::isSystemLibrary(const String &filename)
 
 SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 {
-	if(!File::isPathExists(path))
+	String newPath = path;
+#ifdef _WIN32
+	if(Win32NativeHelper::get()->isWoW64())
+	{
+		String system32Directory = Win32NativeHelper::get()->getSystem32Directory();
+		if(architecture == ArchitectureWin32 && path.substr(0, system32Directory.length()).icompare(system32Directory) == 0)
+			newPath = Win32NativeHelper::get()->getSysWOW64Directory() + "\\" + path.substr(system32Directory.length() + 1);
+	}
+#endif
+	if(!File::isPathExists(newPath))
 		return SharedPtr<FormatBase>(nullptr);
 
-	SharedPtr<File> file = File::open(path);
+	SharedPtr<File> file = File::open(newPath);
 	SharedPtr<FormatBase> result = MakeShared<PEFormat>();
 	result->load(file, false);
 	if(architecture && result->getInfo().architecture != architecture)
@@ -526,14 +535,8 @@ SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 
 SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint, int architecture)
 {
-	String newFilename = filename;
-#ifdef _WIN32
-	String system32Directory = Win32NativeHelper::get()->getSystem32Directory();
-	if(architecture == ArchitectureWin32 && filename.substr(0, system32Directory.length()).icompare(system32Directory) == 0)
-		newFilename = Win32NativeHelper::get()->getSysWOW64Directory() + "\\" + filename.substr(system32Directory.length() + 1);
-#endif
-	if(File::isPathExists(newFilename))
-		return ::loadImport(newFilename, architecture);
+	if(File::isPathExists(filename))
+		return ::loadImport(filename, architecture);
 
 	List<String> searchPaths;
 	if(hint.length())
@@ -578,7 +581,7 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 #endif
 	for(auto &i : searchPaths)
 	{
-		String path = File::combinePath(i, newFilename);
+		String path = File::combinePath(i, filename);
 		SharedPtr<FormatBase> result = ::loadImport(path, architecture);
 		if(!result)
 		{

@@ -76,6 +76,8 @@ public:
 
 	String getSystem32Directory() const;
 	String getSysWOW64Directory() const;
+
+	bool isWoW64();
 };
 
 #define GENERIC_READ                     (0x80000000L)

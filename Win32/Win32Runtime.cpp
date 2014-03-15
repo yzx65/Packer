@@ -662,6 +662,11 @@ String Win32NativeHelper::getSysWOW64Directory() const
 	return SystemRoot + "\\SysWOW64";
 }
 
+bool Win32NativeHelper::isWoW64()
+{
+	return isWoW64_;
+}
+
 void* operator new(size_t num)
 {
 	return heapAlloc(num);
