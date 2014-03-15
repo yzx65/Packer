@@ -11,42 +11,45 @@ void Execute();
 
 int Entry()
 {
-	Win32NativeHelper::get()->init();
-
-	Win32StubStage2Header *stage2Header;
-
-	size_t myBase = Win32NativeHelper::get()->getMyBase();
-	PEFormat format;
-	SharedPtr<MemoryDataSource> selfImageSource = MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(myBase), 0);
-	format.load(selfImageSource, true);
-
-	for(auto &i : format.getSections())
+	uint8_t *newLocation, *stage2Start;
 	{
-		if(i.name == WIN32_STUB_MAIN_SECTION_NAME)
-		{
-			mainData = new uint8_t[i.data->size()];
-			copyMemory(mainData, i.data->get(), i.data->size());
-		}
-		else if(i.name == WIN32_STUB_IMP_SECTION_NAME)
-		{
-			impData = new uint8_t[i.data->size()];
-			copyMemory(impData, i.data->get(), i.data->size());
-		}
-		else
-		{
-			size_t entryAddress = reinterpret_cast<size_t>(Entry);
-			if(i.baseAddress + myBase < entryAddress && entryAddress < i.baseAddress + i.size + myBase)
-				stage2Header = reinterpret_cast<Win32StubStage2Header *>(i.data->get());
-		}
-	}
+		Win32NativeHelper::get()->init();
 
-	//self relocation
-	uint8_t *newLocation = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, stage2Header->imageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
-	uint8_t *stage2Start = reinterpret_cast<uint8_t *>(stage2Header) + sizeof(Win32StubStage2Header);
-	copyMemory(newLocation, stage2Start, stage2Header->imageSize);
-	uint64_t *relocationData = reinterpret_cast<uint64_t *>(stage2Start + stage2Header->imageSize);
-	for(size_t i = 0; i < stage2Header->numberOfRelocations; ++ i)
-		*reinterpret_cast<int32_t *>(newLocation + relocationData[i]) += -reinterpret_cast<int32_t>(stage2Start) + reinterpret_cast<int32_t>(newLocation);
+		Win32StubStage2Header *stage2Header;
+
+		size_t myBase = Win32NativeHelper::get()->getMyBase();
+		PEFormat format;
+		SharedPtr<MemoryDataSource> selfImageSource = MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(myBase), 0);
+		format.load(selfImageSource, true);
+
+		for(auto &i : format.getSections())
+		{
+			if(i.name == WIN32_STUB_MAIN_SECTION_NAME)
+			{
+				mainData = new uint8_t[i.data->size()];
+				copyMemory(mainData, i.data->get(), i.data->size());
+			}
+			else if(i.name == WIN32_STUB_IMP_SECTION_NAME)
+			{
+				impData = new uint8_t[i.data->size()];
+				copyMemory(impData, i.data->get(), i.data->size());
+			}
+			else
+			{
+				size_t entryAddress = reinterpret_cast<size_t>(Entry);
+				if(i.baseAddress + myBase < entryAddress && entryAddress < i.baseAddress + i.size + myBase)
+					stage2Header = reinterpret_cast<Win32StubStage2Header *>(i.data->get());
+			}
+		}
+
+		//self relocation
+		newLocation = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, stage2Header->imageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+		stage2Start = reinterpret_cast<uint8_t *>(stage2Header) + sizeof(Win32StubStage2Header);
+		copyMemory(newLocation, stage2Start, stage2Header->imageSize);
+		uint64_t *relocationData = reinterpret_cast<uint64_t *>(stage2Start + stage2Header->imageSize);
+		for(size_t i = 0; i < stage2Header->numberOfRelocations; ++ i)
+			*reinterpret_cast<int32_t *>(newLocation + relocationData[i]) += -reinterpret_cast<int32_t>(stage2Start) + reinterpret_cast<int32_t>(newLocation);
+	}
 
 	typedef void (*ExecuteType)();
 	ExecuteType executeFunction = reinterpret_cast<ExecuteType>(reinterpret_cast<size_t>(Execute) - reinterpret_cast<int32_t>(stage2Start) + reinterpret_cast<int32_t>(newLocation));
