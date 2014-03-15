@@ -573,8 +573,6 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const Strin
 		if(e == -1)
 			break;
 		String currentPath = WStringToString(path.substr(s, e - s));
-		if(architecture == ArchitectureWin32 && currentPath.icompare(Win32NativeHelper::get()->getSystem32Directory()) == 0)
-			currentPath = Win32NativeHelper::get()->getSysWOW64Directory();
 		searchPaths.push_back(currentPath);
 		s = e + 1;
 	}
