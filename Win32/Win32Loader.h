@@ -21,7 +21,7 @@ private:
 	Image image_;
 	List<Image> imports_;
 	List<uint64_t> entryPointQueue_;
-	Map<uint64_t, const Image *> loadedImages_;
+	Map<uint64_t, Image> loadedImages_;
 	Map<String, uint64_t, CaseInsensitiveStringComparator<String>> loadedLibraries_;
 	uint64_t loadLibrary(const String &filename, bool asDataFile = false);
 	uint64_t getFunctionAddress(uint64_t library, const String &functionName, int ordinal = -1);

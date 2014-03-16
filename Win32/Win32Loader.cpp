@@ -40,7 +40,7 @@ uint64_t Win32Loader::mapImage(Image &image)
 			*reinterpret_cast<int64_t *>(baseAddress + j) += static_cast<int64_t>(diff);
 
 	loadedLibraries_.insert(String(image.fileName), baseAddress);
-	loadedImages_.insert(baseAddress, &image);
+	loadedImages_.insert(baseAddress, image);
 	return baseAddress;
 }
 
@@ -135,13 +135,14 @@ void Win32Loader::executeEntryPointQueue()
 	{
 		uint64_t baseAddress = *i;
 		i = entryPointQueue_.remove(i);
-		executeEntryPoint(baseAddress, *loadedImages_[baseAddress]);
+		executeEntryPoint(baseAddress, loadedImages_[baseAddress]);
 	}
 }
 
 uint64_t Win32Loader::loadImage(Image &image, bool asDataFile)
 {
 	uint64_t baseAddress = mapImage(image);
+	loadedImages_.insert(baseAddress, image);
 	if(!asDataFile)
 		processImports(baseAddress, image);
 	adjustPageProtection(baseAddress, image);
@@ -221,7 +222,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 			format.setFileName(normalizedFilename);
 			auto &it = imports_.push_back(format.toImage());
 			loadedLibraries_.insert(normalizedFilename, baseAddress);
-			loadedImages_.insert(baseAddress, &*it);
+			loadedImages_.insert(baseAddress, *it);
 
 			if(it->fileName.icompare("kernelbase.dll") == 0 || it->fileName.icompare("kernel32.dll") == 0)
 			{
@@ -262,9 +263,16 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	}
 
 	Image *image = nullptr;
-	for(auto &i : imports_)
-		if(i.fileName.icompare(filename) == 0)
-			return loadImage(i, asDataFile);
+	for(auto it = imports_.begin(); it != imports_.end(); ++ it)
+	{
+		if(it->fileName.icompare(filename) == 0)
+		{
+			uint64_t result = loadImage(*it, asDataFile);
+			imports_.remove(it);
+
+			return result;
+		}
+	}
 
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath, (asDataFile ? -1 : image_.info.architecture));
 	if(!format.get())
@@ -278,8 +286,8 @@ uint64_t Win32Loader::getFunctionAddress(uint64_t library, const String &functio
 	if(it != loadedImages_.end())
 	{
 		uint32_t functionNameHash = fnv1a(functionName.c_str(), functionName.length());
-		const Image *image = it->value;
-		if(image->fileName.icompare("kernel32.dll") == 0 || image->fileName.icompare("kernelbase.dll") == 0)
+		const Image &image = it->value;
+		if(image.fileName.icompare("kernel32.dll") == 0 || image.fileName.icompare("kernelbase.dll") == 0)
 		{
 			if(functionNameHash == 0x1cd12702)
 				return reinterpret_cast<uint64_t>(LoadLibraryExWProxy);
@@ -308,7 +316,7 @@ uint64_t Win32Loader::getFunctionAddress(uint64_t library, const String &functio
 			else if(functionNameHash == 0x1c59c83)
 				return reinterpret_cast<uint64_t>(DisableThreadLibraryCallsProxy);
 		}
-		else if(image->fileName.icompare("ntdll.dll") == 0)
+		else if(image.fileName.icompare("ntdll.dll") == 0)
 		{
 			if(functionNameHash == 0x7385e79f)
 				return reinterpret_cast<uint64_t>(LdrAddRefDllProxy);
@@ -325,7 +333,7 @@ uint64_t Win32Loader::getFunctionAddress(uint64_t library, const String &functio
 		}
 
 		ExportFunction *item = nullptr;
-		for(auto &i : image->exports)
+		for(auto &i : image.exports)
 		{
 			if((functionNameHash != 0 && i.nameHash == functionNameHash) || (ordinal != -1 && ordinal == i.ordinal))
 			{
@@ -392,7 +400,7 @@ uint32_t __stdcall Win32Loader::GetModuleFileNameAProxy(void *hModule, char *lpF
 	{
 		auto &it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
 		if(it != loaderInstance_->loadedImages_.end())
-			path = File::combinePath(it->value->filePath, it->value->fileName);
+			path = File::combinePath(it->value.filePath, it->value.fileName);
 	}
 	if(nSize < path.length())
 		return path.length();
@@ -439,7 +447,7 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wc
 		size_t address = reinterpret_cast<size_t>(filename_);
 		for(auto &i : loaderInstance_->loadedImages_)
 		{
-			if(i.key <= address && address <= i.key + i.value->info.size)
+			if(i.key <= address && address <= i.key + i.value.info.size)
 			{
 				*result = reinterpret_cast<void *>(i.key);
 				return 1;
@@ -455,9 +463,9 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wc
 	String filename(WStringToString(WString(filename_)));
 	for(auto &i : loaderInstance_->loadedImages_)
 	{
-		if(i.value->fileName.icompare(filename) == 0 || 
-			File::combinePath(i.value->filePath, i.value->fileName).icompare(filename) == 0 || 
-			i.value->fileName.substr(0, i.value->fileName.length() - 4).icompare(filename) == 0)
+		if(i.value.fileName.icompare(filename) == 0 || 
+			File::combinePath(i.value.filePath, i.value.fileName).icompare(filename) == 0 || 
+			i.value.fileName.substr(0, i.value.fileName.length() - 4).icompare(filename) == 0)
 		{
 			*result = reinterpret_cast<void *>(i.key);
 			return 1;
