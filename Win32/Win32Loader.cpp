@@ -269,7 +269,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath, (asDataFile ? -1 : image_.info.architecture));
 	if(!format.get())
 		return 0;
-	return loadImage(*imports_.push_back(format->toImage()), asDataFile);
+	return loadImage(format->toImage(), asDataFile);
 }
 
 uint64_t Win32Loader::getFunctionAddress(uint64_t library, const String &functionName, int ordinal)
