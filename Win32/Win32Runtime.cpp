@@ -139,6 +139,22 @@ x64:
 	}
 }
 
+uint32_t Win32NativeHelper::getPEB64()
+{
+	_asm
+	{
+		push 0x33
+		push offset x64
+		call fword ptr[esp] //jump to x64 mode
+		add esp, 8
+		jmp end
+x64:
+		__asm __emit 0x65 __asm __emit 0x48 __asm __emit 0x8b __asm __emit 0x04 __asm __emit 0x25 __asm __emit 0x60 __asm __emit 0x00 __asm __emit 0x00 __asm __emit 0x00
+		retf //return to x32
+end:
+	}
+}
+
 void Win32NativeHelper::init()
 {
 	myPEB_ = reinterpret_cast<PEB *>(__readfsdword(0x30));
@@ -161,6 +177,7 @@ void Win32NativeHelper::init()
 			systemCalls_ = Win60SP1x64SystemCalls;
 		else if(sharedData->NtMajorVersion == 5)
 			systemCalls_ = Win5152x64SystemCalls;
+		myPEB64_ = reinterpret_cast<PEB64 *>(getPEB64());
 	}
 	else
 	{
@@ -179,6 +196,7 @@ void Win32NativeHelper::init()
 			systemCalls_ = Win51x86SystemCalls;
 		else if(sharedData->NtMajorVersion == 5 && sharedData->NtMinorVersion == 2)
 			systemCalls_ = Win52x86SystemCalls;
+		myPEB64_ = nullptr;
 	}
 }
 
@@ -189,8 +207,10 @@ size_t Win32NativeHelper::getMyBase() const
 
 void Win32NativeHelper::setMyBase(size_t address)
 {
-	myBase_ = address;;
+	myBase_ = address;
 	myPEB_->ImageBaseAddress = reinterpret_cast<void *>(address);
+	myPEB64_->ImageBaseAddress = address;
+	//we also have to modify 64bit peb if we are on wow64.
 }
 
 void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)

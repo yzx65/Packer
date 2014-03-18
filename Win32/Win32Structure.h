@@ -301,6 +301,24 @@ typedef struct _PEB {
 
 } PEB, *PPEB;
 
+
+typedef struct _PEB64
+{
+	union
+	{
+		struct 
+		{
+			int8_t InheritedAddressSpace;
+			int8_t ReadImageFileExecOptions;
+			int8_t BeingDebugged;
+			int8_t Spare;
+		};
+		uint64_t dummy;
+	};
+	uint64_t Mutant;
+	uint64_t ImageBaseAddress;
+} PEB64;
+
 #define DELETE                           (0x00010000L)
 #define READ_CONTROL                     (0x00020000L)
 #define WRITE_DAC                        (0x00040000L)

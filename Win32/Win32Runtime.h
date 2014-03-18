@@ -6,6 +6,8 @@
 
 struct _PEB;
 typedef struct _PEB PEB;
+struct _PEB64;
+typedef struct _PEB64 PEB64;
 
 struct Win32LoadedImage
 {
@@ -36,10 +38,12 @@ class Win32NativeHelper
 {
 private:
 	PEB *myPEB_;
+	PEB64 *myPEB64_;
 	size_t myBase_;
 	bool isWoW64_;
 	const uint16_t *systemCalls_;
 
+	uint32_t getPEB64();
 	void initHeap();
 	void initModuleList();
 	void relocateSelf(void *entry);
