@@ -150,6 +150,7 @@ uint32_t Win32NativeHelper::getPEB64()
 		jmp end
 x64:
 		__asm __emit 0x65 __asm __emit 0x48 __asm __emit 0x8b __asm __emit 0x04 __asm __emit 0x25 __asm __emit 0x60 __asm __emit 0x00 __asm __emit 0x00 __asm __emit 0x00
+		//mov rax, gs:[0x60]
 		retf //return to x32
 end:
 	}
