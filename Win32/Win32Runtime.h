@@ -30,6 +30,7 @@ enum SystemCall
 	NtSetInformationFile,
 	NtFlushBuffersFile,
 	NtFlushInstructionCache,
+	NtTerminateProcess,
 
 	SystemCallMax
 };
@@ -82,6 +83,9 @@ public:
 	String getSysWOW64Directory() const;
 
 	bool isWoW64();
+
+	void showError(const String &message);
+	void terminate();
 };
 
 #define GENERIC_READ                     (0x80000000L)
