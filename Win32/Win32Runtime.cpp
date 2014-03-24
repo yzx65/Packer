@@ -212,8 +212,8 @@ void Win32NativeHelper::setMyBase(size_t address)
 {
 	myBase_ = address;
 	myPEB_->ImageBaseAddress = reinterpret_cast<void *>(address);
-	myPEB64_->ImageBaseAddress = address;
-	//we also have to modify 64bit peb if we are on wow64.
+	if(isWoW64_) //we also have to modify 64bit peb if we are on wow64.
+		myPEB64_->ImageBaseAddress = address;
 }
 
 void *Win32NativeHelper::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
