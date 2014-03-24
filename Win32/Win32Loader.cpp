@@ -49,6 +49,13 @@ void Win32Loader::processImports(uint64_t baseAddress, const Image &image)
 	for(auto &i : image.imports)
 	{
 		uint64_t library = loadLibrary(i.libraryName);
+		if(!library)
+		{
+			String str = "Can't load library ";
+			str.append(i.libraryName);
+			Win32NativeHelper::get()->showError(str);
+			Win32NativeHelper::get()->terminate();
+		}
 		for(auto &j : i.functions)
 		{
 			uint64_t function = getFunctionAddress(library, j.name, j.ordinal);
