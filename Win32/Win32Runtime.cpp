@@ -81,8 +81,9 @@ uint32_t __declspec(naked) Win32NativeHelper::executeWin32Syscall(uint32_t sysca
 	{
 		push ebp
 		mov ebp, esp
+		push ebx
 
-		mov ecx, esp
+		mov ebx, esp
 		mov esp, dword ptr [argv] //setup stack as if we called ntdll function directly.
 		sub esp, 4
 
@@ -90,8 +91,9 @@ uint32_t __declspec(naked) Win32NativeHelper::executeWin32Syscall(uint32_t sysca
 		mov edx, 0x7ffe0300 //SharedUserData!SystemCallStub
 		call [edx]
 
-		mov esp, ecx
+		mov esp, ebx
 
+		pop ebx
 		pop ebp
 		ret
 	}
@@ -311,9 +313,9 @@ void *Win32NativeHelper::createFile(uint32_t DesiredAccess, const wchar_t *Filen
 	}
 	else
 	{
-		OBJECT_ATTRIBUTES attributes;
-		IO_STATUS_BLOCK statusBlock;
-		UNICODE_STRING name;
+		OBJECT_ATTRIBUTES attributes = {0, };
+		IO_STATUS_BLOCK statusBlock = {0, };
+		UNICODE_STRING name = {0, };
 		getPrefixedPathUnicodeString(&name, Filename, FilenameLength);
 
 		attributes.Length = sizeof(attributes);
