@@ -1,5 +1,21 @@
 #include "Image.h"
 
+#include "Allocator.h"
+
+#include "../LZMA/LzmaEnc.h"
+#include "../LZMA/LzmaDec.h"
+
+//lzma allocator functions
+static void *SzAlloc(void *, size_t size)
+{
+	return heapAlloc(size);
+}
+static void SzFree(void *, void *address)
+{
+	heapFree(address);
+}
+static ISzAlloc g_Alloc = {SzAlloc, SzFree};
+
 //both serialization and unserialization are done on machine with same endian.
 
 template<typename T>
@@ -32,7 +48,6 @@ Vector<uint8_t> Image::serialize() const
 {
 	Vector<uint8_t> result;
 #define A(...) appendToVector(result, __VA_ARGS__);
-	A(static_cast<uint32_t>(0));
 	
 	//imageinfo
 	A(info.architecture);
@@ -89,9 +104,25 @@ Vector<uint8_t> Image::serialize() const
 	A(header->get(), header->size());
 
 #undef A
-	*reinterpret_cast<uint32_t *>(&result[0]) = result.size();
 
-	return result;
+	CLzmaEncProps props;
+	LzmaEncProps_Init(&props);
+
+	props.numThreads = 1;
+	props.algo = 0; //fast
+	LzmaEncProps_Normalize(&props);
+
+	uint32_t sizeSize = sizeof(uint32_t) * 2;
+	uint32_t propsSize = LZMA_PROPS_SIZE;
+	uint32_t outSize = result.size() + result.size() / 40 + (1 << 12); //igor recommends (http://sourceforge.net/p/sevenzip/discussion/45798/thread/dd3b392c/)
+	Vector<uint8_t> compressed(outSize + propsSize + sizeSize);
+	LzmaEncode(&compressed[propsSize + sizeSize], &outSize, &result[0], result.size(), &props, &compressed[sizeSize], &propsSize, 0, nullptr, &g_Alloc, &g_Alloc);
+
+	*reinterpret_cast<uint32_t *>(&compressed[0]) = result.size();
+	*reinterpret_cast<uint32_t *>(&compressed[sizeof(uint32_t)]) = outSize;
+
+	compressed.resize(outSize + propsSize + sizeSize);
+	return compressed;
 }
 
 template<typename T>
@@ -120,25 +151,35 @@ Vector<uint8_t> readFromVector(uint8_t *data, size_t &offset)
 }
 
 template<typename T>
-T readFromVector(uint8_t *data, size_t &offset, SharedPtr<DataView> original);
+T readFromVector(uint8_t *data, size_t &offset, Vector<uint8_t> original);
 
 template<>
-SharedPtr<DataView> readFromVector(uint8_t *data, size_t &offset, SharedPtr<DataView> original)
+SharedPtr<DataView> readFromVector(uint8_t *data, size_t &offset, Vector<uint8_t> original)
 {
 	uint32_t len = readFromVector<uint32_t>(data, offset);
 	offset += len;
-	return original->getView(offset - len, len);
+	return original.getView(offset - len, len);
 }
 
 Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 {
+	uint32_t sizeSize = sizeof(uint32_t) * 2;
+	uint32_t propsSize = LZMA_PROPS_SIZE;
+
+	ELzmaStatus status;
+	uint8_t *compressedData = data_->get();
+	uint32_t uncompressedSize = *reinterpret_cast<uint32_t *>(compressedData);
+	uint32_t compressedSize = *reinterpret_cast<uint32_t *>(compressedData + sizeof(uint32_t));
+	Vector<uint8_t> uncompressed(uncompressedSize);
+	
+	LzmaDecode(&uncompressed[0], &uncompressedSize, compressedData + sizeSize + propsSize, &compressedSize, compressedData + sizeSize, propsSize, LZMA_FINISH_ANY, &status, &g_Alloc);
+	compressedSize += sizeSize + propsSize;
+	uint8_t *data = &uncompressed[0];
 	size_t offset = 0;
-	uint8_t *data = data_->get();
 	Image result;
 
 	if(processedSize)
-		*processedSize = *reinterpret_cast<uint32_t *>(data);
-	offset = sizeof(uint32_t);
+		*processedSize = compressedSize;
 
 #define R(t, ...) readFromVector<t>(data, offset, __VA_ARGS__)
 	result.info.architecture = R(ArchitectureType);
@@ -203,9 +244,9 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 		result.relocations.push_back(R(uint64_t));
 
 	for(auto &i : result.sections)
-		i.data = R(SharedPtr<DataView>, data_);
+		i.data = R(SharedPtr<DataView>, uncompressed);
 
-	result.header = R(SharedPtr<DataView>, data_);
+	result.header = R(SharedPtr<DataView>, uncompressed);
 #undef R
 	return result;
 }

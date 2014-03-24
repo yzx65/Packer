@@ -104,6 +104,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\LZMA\LzFind.c" />
+    <ClCompile Include="..\..\..\LZMA\LzmaDec.c" />
+    <ClCompile Include="..\..\..\LZMA\LzmaEnc.c" />
     <ClCompile Include="..\..\..\Runtime\Allocator.cpp" />
     <ClCompile Include="..\..\..\Runtime\Image.cpp" />
     <ClCompile Include="..\..\..\Runtime\PEFormat.cpp" />
@@ -114,6 +117,13 @@
     <ClCompile Include="..\..\Win32Loader.cpp" />
     <ClCompile Include="..\..\Win32Runtime.cpp" />
     <ClCompile Include="Stage2.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\LZMA\LzFind.h" />
+    <ClInclude Include="..\..\..\LZMA\LzHash.h" />
+    <ClInclude Include="..\..\..\LZMA\LzmaDec.h" />
+    <ClInclude Include="..\..\..\LZMA\LzmaEnc.h" />
+    <ClInclude Include="..\..\..\LZMA\Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

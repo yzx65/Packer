@@ -45,6 +45,9 @@ void Entry()
 	input->setFileName(file->getFileName());
 	input->setFilePath(file->getFilePath());
 
-	Win32Loader loader(input->toImage(), loadImport(input));
+	Vector<uint8_t> serialized = input->toImage().serialize();
+	Image image = Image::unserialize(serialized.getView(0, 0), nullptr);
+
+	Win32Loader loader(std::move(image), loadImport(input));
 	loader.execute();
 }

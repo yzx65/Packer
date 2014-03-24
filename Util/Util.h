@@ -74,6 +74,30 @@ static void copyMemory(DestinationType *dest_, const SourceType *src_, size_t si
 		*(dest + i) = *(src + i); //remaining
 }
 
+template<typename DestinationType, typename SourceType>
+static void moveMemory(DestinationType *dest_, const SourceType *src_, size_t size)
+{
+	uint8_t *dest = reinterpret_cast<uint8_t *>(dest_);
+	const uint8_t *src = reinterpret_cast<const uint8_t *>(src_);
+
+	if(!size)
+		return;
+
+	if(dest <= src || dest >= src + size) //non-overlapping
+		return copyMemory(dest_, src_, size);
+	 
+	//overlapping, copy from higher address
+	dest = dest + size - 1;
+	src = src + size - 1;
+
+	while(size--)
+	{
+		*dest = *src;
+		dest --;
+		src --;
+	}
+}
+
 template<typename DestinationType>
 static void zeroMemory(DestinationType *dest_, size_t size)
 {

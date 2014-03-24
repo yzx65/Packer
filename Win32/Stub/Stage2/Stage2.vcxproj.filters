@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="LZMA">
+      <UniqueIdentifier>{4af6ca65-7552-4a74-97a6-6f7c02fe1bc4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Stage2.cpp">
@@ -39,5 +42,31 @@
     <ClCompile Include="..\..\..\Runtime\Allocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\LZMA\LzmaDec.c">
+      <Filter>LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\LZMA\LzmaEnc.c">
+      <Filter>LZMA</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\LZMA\LzFind.c">
+      <Filter>LZMA</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\LZMA\LzHash.h">
+      <Filter>LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\LZMA\LzmaDec.h">
+      <Filter>LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\LZMA\LzmaEnc.h">
+      <Filter>LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\LZMA\Types.h">
+      <Filter>LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\LZMA\LzFind.h">
+      <Filter>LZMA</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

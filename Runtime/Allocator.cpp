@@ -116,6 +116,8 @@ void *heapAlloc(size_t size)
 
 void heapFree(void *ptr)
 {
+	if(!ptr)
+		return;
 	if(*reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(ptr) - 4) == BIGHEAP_TAG && ((reinterpret_cast<size_t>(ptr) - 4) & 0xFFFF) == 0 && freeVirtual(ptr))
 		return;
 

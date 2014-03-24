@@ -102,6 +102,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\LZMA\LzFind.c" />
+    <ClCompile Include="..\LZMA\LzmaDec.c" />
+    <ClCompile Include="..\LZMA\LzmaEnc.c" />
     <ClCompile Include="..\Runtime\Allocator.cpp" />
     <ClCompile Include="..\Runtime\Image.cpp" />
     <ClCompile Include="..\Runtime\Option.cpp" />
@@ -116,6 +119,11 @@
     <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\LZMA\LzFind.h" />
+    <ClInclude Include="..\LZMA\LzHash.h" />
+    <ClInclude Include="..\LZMA\LzmaDec.h" />
+    <ClInclude Include="..\LZMA\LzmaEnc.h" />
+    <ClInclude Include="..\LZMA\Types.h" />
     <ClInclude Include="..\Runtime\Allocator.h" />
     <ClInclude Include="..\Runtime\File.h" />
     <ClInclude Include="..\Runtime\FormatBase.h" />
