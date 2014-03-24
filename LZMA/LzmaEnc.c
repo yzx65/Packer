@@ -30,12 +30,12 @@ static int ttt = 0;
 
 #define kNumMaxDirectBits (31)
 
-#define kNumTopBits 24
+#define kNumTopBits 23
 #define kTopValue ((UInt32)1 << kNumTopBits)
 
-#define kNumBitModelTotalBits 11
+#define kNumBitModelTotalBits 12
 #define kBitModelTotal (1 << kNumBitModelTotalBits)
-#define kNumMoveBits 5
+#define kNumMoveBits 6
 #define kProbInitValue (kBitModelTotal >> 1)
 
 #define kNumMoveReducingBits 4
@@ -80,7 +80,7 @@ UInt32 LzmaEncProps_GetDictSize(const CLzmaEncProps *props2)
   return props.dictSize;
 }
 
-/* #define LZMA_LOG_BSR */
+#define LZMA_LOG_BSR
 /* Define it for Intel's CPU */
 
 

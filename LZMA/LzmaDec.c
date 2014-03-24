@@ -5,12 +5,12 @@
 
 #include <string.h>
 
-#define kNumTopBits 24
+#define kNumTopBits 23
 #define kTopValue ((UInt32)1 << kNumTopBits)
 
-#define kNumBitModelTotalBits 11
+#define kNumBitModelTotalBits 12
 #define kBitModelTotal (1 << kNumBitModelTotalBits)
-#define kNumMoveBits 5
+#define kNumMoveBits 6
 
 #define RC_INIT_SIZE 5
 
