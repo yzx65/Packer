@@ -25,6 +25,9 @@ enum Win32SystemCall
 class Win32SystemCaller
 {
 protected:
+	const uint16_t *systemCalls_;
+protected:
+	Win32SystemCaller(const uint16_t *systemCalls) : systemCalls_(systemCalls) {}
 	static uint32_t __cdecl executeWin32Syscall(uint32_t syscallno, uint32_t *argv);
 	static uint32_t __cdecl executeWoW64Syscall(uint32_t syscallno, uint64_t *argv);
 public:
@@ -43,15 +46,13 @@ public:
 	virtual void flushInstructionCache(size_t offset, size_t size) = 0;
 	virtual void terminate() = 0;
 
-	static Win32SystemCaller *get();
+	static Win32SystemCaller *get(bool forceinit = false);
 };
 
 class Win32x86SystemCaller : public Win32SystemCaller
 {
-private:
-	const uint16_t *systemCalls_;
 public:
-	Win32x86SystemCaller(const uint16_t *systemCalls);
+	Win32x86SystemCaller(const uint16_t *systemCalls) : Win32SystemCaller(systemCalls) {}
 
 	virtual bool freeVirtual(void *BaseAddress);
 	virtual void *allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);
@@ -71,10 +72,8 @@ public:
 
 class Win32WOW64SystemCaller : public Win32SystemCaller
 {
-private:
-	const uint16_t *systemCalls_;
 public:
-	Win32WOW64SystemCaller(const uint16_t *systemCalls);
+	Win32WOW64SystemCaller(const uint16_t *systemCalls) : Win32SystemCaller(systemCalls) {}
 
 	virtual bool freeVirtual(void *BaseAddress);
 	virtual void *allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect);

@@ -68,6 +68,7 @@ int Entry()
 void Execute()
 {
 	Win32NativeHelper::get()->init();
+	Win32SystemCaller::get(true);
 	Win32SystemCaller::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->getMyBase()));
 
 	Image mainImage = Image::unserialize(MakeShared<MemoryDataSource>(mainData)->getView(0), nullptr);

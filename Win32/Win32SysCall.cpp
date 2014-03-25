@@ -80,13 +80,13 @@ void normalizeCreateFileOptions(uint32_t *resultDesiredAccess, uint32_t *resultC
 	}
 }
 
-Win32SystemCaller *Win32SystemCaller::get()
+Win32SystemCaller *Win32SystemCaller::get(bool forceinit)
 {
 	static bool initialized = false;
 	static uint8_t callerStorage[sizeof(Win32SystemCaller)];
 
 	Win32SystemCaller *result;
-	if(initialized)
+	if(initialized && forceinit == false)
 		result = reinterpret_cast<Win32SystemCaller *>(callerStorage);
 	else
 	{
@@ -201,8 +201,6 @@ x64:
 		retf //return to x32
 	}
 }
-
-Win32WOW64SystemCaller::Win32WOW64SystemCaller(const uint16_t *systemCalls) : systemCalls_(systemCalls) {}
 
 void *Win32WOW64SystemCaller::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
 {
@@ -409,8 +407,6 @@ void Win32WOW64SystemCaller::terminate()
 	uint64_t args[] ={NtCurrentProcess64(), 0};
 	executeWoW64Syscall(systemCalls_[NtTerminateProcess], args);
 }
-
-Win32x86SystemCaller::Win32x86SystemCaller(const uint16_t *systemCalls) : systemCalls_(systemCalls) {}
 
 void *Win32x86SystemCaller::allocateVirtual(size_t DesiredAddress, size_t RegionSize, size_t AllocationType, size_t Protect)
 {
