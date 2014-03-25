@@ -96,7 +96,7 @@ int Entry()
 	{
 		uint32_t sectionName = *reinterpret_cast<uint32_t *>(sectionHeader[i].Name);
 		uint8_t *sectionData = reinterpret_cast<uint8_t *>(sectionHeader[i].VirtualAddress + reinterpret_cast<size_t>(myBase));
-		if(i == 3)
+		if(i == 2)
 		{
 			size_t sectionSize = sectionHeader[i].VirtualSize;
 			__asm

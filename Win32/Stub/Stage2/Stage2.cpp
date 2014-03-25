@@ -26,14 +26,14 @@ int Entry()
 		int cnt = 0;
 		for(auto &i : format.getSections())
 		{
-			if(cnt == 4)
+			if(cnt == 3)
 			{
 				mainData = new uint8_t[i.data->size()];
 				copyMemory(mainData, i.data->get(), i.data->size());
 				uint32_t seed = *reinterpret_cast<const uint32_t *>(i.name.c_str());
 				simpleDecrypt(seed, mainData, i.data->size());
 			}
-			else if(cnt == 5)
+			else if(cnt == 4)
 			{
 				impData = new uint8_t[i.data->size()];
 				copyMemory(impData, i.data->get(), i.data->size());
