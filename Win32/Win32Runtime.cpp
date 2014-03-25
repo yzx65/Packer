@@ -685,6 +685,14 @@ String Win32NativeHelper::getSysWOW64Directory() const
 	return SystemRoot + "\\SysWOW64";
 }
 
+uint32_t Win32NativeHelper::getRandomValue()
+{
+	KUSER_SHARED_DATA *sharedData = reinterpret_cast<KUSER_SHARED_DATA *>(0x7ffe0000);
+	uint64_t tick = sharedData->TickCountQuad;
+	uint32_t *temp = reinterpret_cast<uint32_t *>(&tick);
+	return ((temp[0] | temp[1]) ^ 0xbeafdead) * temp[0];
+}
+
 void Win32NativeHelper::showError(const String &message)
 {
 

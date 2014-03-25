@@ -90,7 +90,7 @@ size_t PEFormat::loadHeader(SharedPtr<DataSource> source, bool fromMemory)
 	{
 		Section section;
 		section.baseAddress = sectionHeaders[i].VirtualAddress;
-		section.name.assign(reinterpret_cast<const char *>(sectionHeaders[i].Name));
+		section.name.assign(sectionHeaders[i].Name, sectionHeaders[i].Name + 8);
 		section.size = sectionHeaders[i].VirtualSize;
 		section.flag = 0;
 

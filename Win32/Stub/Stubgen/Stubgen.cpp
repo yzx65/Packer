@@ -131,7 +131,8 @@ void Entry()
 	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
 	SharedPtr<Vector<uint8_t>> compressedStage2 = MakeShared<Vector<uint8_t>>(simpleRLECompress(data.get(), data.size()));
-	simpleCrypt(compressedStage2->get(), compressedStage2->size());
+	uint32_t seed = Win32NativeHelper::get()->getRandomValue();
+	simpleCrypt(seed, compressedStage2->get(), compressedStage2->size());
 
 	//create PE
 	PEFormat resultFormat;
@@ -146,13 +147,11 @@ void Entry()
 		if(i.data->size() == 0) //data
 			i.flag |= SectionFlagExecute;
 		lastAddress = static_cast<size_t>(i.baseAddress + i.size);
-		if(i.name == WIN32_STUB_STAGE2_SECTION_NAME)
-			stage2Section = i;
 	}
 	if(stage2Section.baseAddress == 0)
 		stage2Section.baseAddress = multipleOf(lastAddress, 0x1000);
 	stage2Section.size = compressedStage2->size();
-	stage2Section.name = WIN32_STUB_STAGE2_SECTION_NAME;
+	stage2Section.name.assign(reinterpret_cast<uint8_t *>(&seed), reinterpret_cast<uint8_t *>(&seed) + 4);
 	stage2Section.flag = SectionFlagData | SectionFlagRead | SectionFlagWrite;
 	stage2Section.data = compressedStage2->getView(0, compressedStage2->size());
 	resultSections.push_back(stage2Section);

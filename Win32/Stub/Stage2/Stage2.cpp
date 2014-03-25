@@ -22,17 +22,22 @@ int Entry()
 		SharedPtr<MemoryDataSource> selfImageSource = MakeShared<MemoryDataSource>(reinterpret_cast<uint8_t *>(myBase), 0);
 		format.load(selfImageSource, true);
 
+		int cnt = 0;
 		for(auto &i : format.getSections())
 		{
-			if(i.name == WIN32_STUB_MAIN_SECTION_NAME)
+			if(cnt == 4)
 			{
 				mainData = new uint8_t[i.data->size()];
 				copyMemory(mainData, i.data->get(), i.data->size());
+				uint32_t seed = *reinterpret_cast<const uint32_t *>(i.name.c_str());
+				simpleDecrypt(seed, mainData, i.data->size());
 			}
-			else if(i.name == WIN32_STUB_IMP_SECTION_NAME)
+			else if(cnt == 5)
 			{
 				impData = new uint8_t[i.data->size()];
 				copyMemory(impData, i.data->get(), i.data->size());
+				uint32_t seed = *reinterpret_cast<const uint32_t *>(i.name.c_str());
+				simpleDecrypt(seed, impData, i.data->size());
 			}
 			else
 			{
@@ -40,6 +45,7 @@ int Entry()
 				if(i.baseAddress + myBase < entryAddress && entryAddress < i.baseAddress + i.size + myBase)
 					stage2Header = reinterpret_cast<Win32StubStage2Header *>(i.data->get());
 			}
+			cnt ++;
 		}
 
 		//self relocation

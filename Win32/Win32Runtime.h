@@ -86,6 +86,8 @@ public:
 
 	void showError(const String &message);
 	void terminate();
+
+	uint32_t getRandomValue();
 };
 
 #define GENERIC_READ                     (0x80000000L)

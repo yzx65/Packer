@@ -1,9 +1,5 @@
 #pragma once
 
-#define WIN32_STUB_MAIN_SECTION_NAME ".main"
-#define WIN32_STUB_IMP_SECTION_NAME ".imp"
-#define WIN32_STUB_STAGE2_SECTION_NAME ".stage2"
-
 #define WIN32_STUB_STAGE2_MAGIC 0xf00df00d
 
 struct Win32StubStage2Header
@@ -24,9 +20,8 @@ inline uint32_t buildSignature(const uint8_t *data, size_t size)
 	return check;
 }
 
-inline void simpleCrypt(uint8_t *data, size_t size)
+inline void simpleCrypt(uint32_t seed, uint8_t *data, size_t size)
 {
-	uint32_t seed = 0xde1001ed;
 	size_t i;
 	for(i = 0; i < size - 4; i += 4)
 	{
@@ -39,9 +34,8 @@ inline void simpleCrypt(uint8_t *data, size_t size)
 		data[i] ^= seed;
 }
 
-inline void simpleDecrypt(uint8_t *data, size_t size)
+inline void simpleDecrypt(uint32_t seed, uint8_t *data, size_t size)
 {
-	uint32_t seed = 0xde1001ed;
 	size_t i = 0;
 	size_t lastData = reinterpret_cast<uint32_t *>(data)[i / 4];
 

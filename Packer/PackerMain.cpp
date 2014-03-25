@@ -6,6 +6,7 @@
 #include "../Win32/Stub/StubData.h"
 #include "../Util/Vector.h"
 #include "../Runtime/Signature.h"
+#include "../Win32/Win32Runtime.h"
 
 PackerMain::PackerMain(const Option &option) : option_(option)
 {
@@ -80,11 +81,13 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 		lastAddress = i.baseAddress + i.size;
 
 	Vector<uint8_t> mainData(image.serialize());
+	uint32_t seed = Win32NativeHelper::get()->getRandomValue();
+	simpleCrypt(seed, &mainData[0], mainData.size());
 
 	Section mainSection;
 	mainSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	mainSection.flag = SectionFlagData | SectionFlagRead;
-	mainSection.name = WIN32_STUB_MAIN_SECTION_NAME;
+	mainSection.name.assign(reinterpret_cast<uint8_t *>(&seed), reinterpret_cast<uint8_t *>(&seed) + 4);
 	mainSection.data = mainData.getView(0, mainData.size());
 	mainSection.size = mainData.size();
 	resultSections.push_back(mainSection);
@@ -96,11 +99,13 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 	impData.append(reinterpret_cast<uint8_t *>(&impCount), sizeof(impCount));
 	for(auto &i : imports)
 		impData.append(i.serialize());
+	seed = Win32NativeHelper::get()->getRandomValue();
+	simpleCrypt(seed, &impData[0], impData.size());
 
 	Section importSection;
 	importSection.baseAddress = multipleOf(static_cast<size_t>(lastAddress), 0x1000);
 	importSection.flag = SectionFlagData | SectionFlagRead;
-	importSection.name = WIN32_STUB_IMP_SECTION_NAME;
+	importSection.name.assign(reinterpret_cast<uint8_t *>(&seed), reinterpret_cast<uint8_t *>(&seed) + 4);
 	importSection.data = impData.getView(0, impData.size());
 	importSection.size = impData.size();
 	resultSections.push_back(importSection);
