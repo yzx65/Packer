@@ -6,7 +6,7 @@
 
 #include "../Win32Stub.h"
 
-Vector<uint8_t> encodeSize(uint8_t flag, uint32_t number)
+Vector<uint8_t> encodeVarInt(uint8_t flag, uint32_t number)
 {
 	//f1xxxxxx
 	//f01xxxxx xxxxxxxx
@@ -45,7 +45,7 @@ Vector<uint8_t> encodeSize(uint8_t flag, uint32_t number)
 	return result;
 }
 
-Vector<uint8_t> compress(const uint8_t *source, size_t size)
+Vector<uint8_t> simpleRLECompress(const uint8_t *source, size_t size)
 {
 	Vector<uint8_t> control;
 	Vector<uint8_t> data;
@@ -60,7 +60,7 @@ Vector<uint8_t> compress(const uint8_t *source, size_t size)
 		{
 			if(nonSuccessionCount > 1)
 			{
-				control.append(encodeSize(0, nonSuccessionCount - 1));
+				control.append(encodeVarInt(0, nonSuccessionCount - 1));
 				successionCount = 1;
 				nonSuccessionCount = 0;
 			}
@@ -71,7 +71,7 @@ Vector<uint8_t> compress(const uint8_t *source, size_t size)
 		{
 			if(successionCount > 1)
 			{
-				control.append(encodeSize(1, successionCount));
+				control.append(encodeVarInt(1, successionCount));
 				successionCount = 1;
 				nonSuccessionCount = 0;
 			}
@@ -81,9 +81,9 @@ Vector<uint8_t> compress(const uint8_t *source, size_t size)
 		lastData = source[i];
 	}
 	if(nonSuccessionCount > 1)
-		control.append(encodeSize(0, nonSuccessionCount - 1));
+		control.append(encodeVarInt(0, nonSuccessionCount - 1));
 	if(successionCount > 1)
-		control.append(encodeSize(1, successionCount));
+		control.append(encodeVarInt(1, successionCount));
 
 	Vector<uint8_t> result(4);
 	*reinterpret_cast<uint32_t *>(result.get()) = control.size();
@@ -130,7 +130,7 @@ void Entry()
 	stage2Header->signature = buildSignature(stage2Data, stage2Header->imageSize);
 	stage2Header->originalBase = static_cast<size_t>(stage2Format.getInfo().baseAddress);
 
-	SharedPtr<Vector<uint8_t>> compressedStage2 = MakeShared<Vector<uint8_t>>(compress(data.get(), data.size()));
+	SharedPtr<Vector<uint8_t>> compressedStage2 = MakeShared<Vector<uint8_t>>(simpleRLECompress(data.get(), data.size()));
 	simpleCrypt(compressedStage2->get(), compressedStage2->size());
 
 	//create PE
@@ -164,7 +164,7 @@ void Entry()
 	zeroMemory(resultData.get(), resultData.size());
 	resultFormat.save(resultData.asDataSource());
 	
-	Vector<uint8_t> compressedResult = compress(resultData.get(), resultSize);
+	Vector<uint8_t> compressedResult = simpleRLECompress(resultData.get(), resultSize);
 	const char *hex = "0123456789ABCDEF";
 
 	result->write("#pragma once\n", 13);

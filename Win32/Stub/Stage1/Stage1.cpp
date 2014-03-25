@@ -68,7 +68,7 @@ cont:
 	}
 
 	simpleDecrypt(reinterpret_cast<uint8_t *>(context->Edx), context->Ecx);
-	decompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
+	simpleRLEDecompress(reinterpret_cast<const uint8_t *>(context->Edx), reinterpret_cast<uint8_t *>(context->Ebx));
 	context->Eax = reinterpret_cast<size_t>(&temp); //don't trigger exception again.
 	return ExceptionContinueExecution;
 }

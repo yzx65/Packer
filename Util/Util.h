@@ -109,7 +109,7 @@ static size_t multipleOf(size_t value, size_t n)
 	return ((value + n - 1) / n) * n;
 }
 
-static const uint8_t *decodeSize(const uint8_t *ptr, uint8_t *flag, uint32_t *size)
+static const uint8_t *decodeVarInt(const uint8_t *ptr, uint8_t *flag, uint32_t *size)
 {
 	//f1xxxxxx
 	//f01xxxxx xxxxxxxx
@@ -158,7 +158,7 @@ static const uint8_t *decodeSize(const uint8_t *ptr, uint8_t *flag, uint32_t *si
 	return ptr;
 }
 
-static uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedData)
+static uint32_t simpleRLEDecompress(const uint8_t *compressedData, uint8_t *decompressedData)
 {
 	uint32_t controlSize = *reinterpret_cast<const uint32_t *>(compressedData);
 	const uint8_t *data = compressedData + controlSize + 4;
@@ -170,7 +170,7 @@ static uint32_t decompress(const uint8_t *compressedData, uint8_t *decompressedD
 	size_t size;
 	while(controlPtr < control + controlSize)
 	{
-		controlPtr = decodeSize(controlPtr, &flag, &size);
+		controlPtr = decodeVarInt(controlPtr, &flag, &size);
 		resultSize += size;
 		if(flag)
 		{

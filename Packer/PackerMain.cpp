@@ -71,7 +71,7 @@ void PackerMain::outputPE(Image &image, const List<Image> imports, SharedPtr<Fil
 {
 	PEFormat resultFormat;
 	Vector<uint8_t> stub(win32StubSize);
-	decompress(win32StubData, stub.get());
+	simpleRLEDecompress(win32StubData, stub.get());
 	resultFormat.load(stub.asDataSource(), false);
 	
 	List<Section> resultSections(resultFormat.getSections());
