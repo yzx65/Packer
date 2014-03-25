@@ -8,17 +8,17 @@
 
 struct Win32StubStage2Header
 {
-	size_t magic;
-	size_t signature;
-	size_t imageSize;
-	size_t numberOfRelocations;
-	size_t entryPoint;
-	size_t originalBase;
+	uint32_t magic;
+	uint32_t signature;
+	uint32_t imageSize;
+	uint32_t numberOfRelocations;
+	uint32_t entryPoint;
+	uint32_t originalBase;
 };
 
-inline size_t buildSignature(const uint8_t *data, size_t size)
+inline uint32_t buildSignature(const uint8_t *data, size_t size)
 {
-	size_t check = 0;
+	uint32_t check = 0;
 	for(size_t i = 0; i < size / 4; i ++)
 		check += reinterpret_cast<const uint32_t *>(data)[i];
 	return check;
