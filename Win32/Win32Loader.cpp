@@ -1,8 +1,9 @@
 #include "Win32Loader.h"
 
 #include "../Runtime/FormatBase.h"
-#include "Win32Runtime.h"
+#include "Win32NativeHelper.h"
 #include "Win32Structure.h"
+#include "Win32SysCall.h"
 #include "../Util/Util.h"
 #include "../Runtime/File.h"
 #include "../Runtime/PEFormat.h"
@@ -25,7 +26,7 @@ uint64_t Win32Loader::mapImage(Image &image)
 	uint64_t desiredAddress = 0;
 	if(!image.relocations.size())
 		desiredAddress = image.info.baseAddress;
-	uint64_t baseAddress = reinterpret_cast<uint64_t>(Win32NativeHelper::get()->allocateVirtual(static_cast<size_t>(desiredAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	uint64_t baseAddress = reinterpret_cast<uint64_t>(Win32SystemCaller::get()->allocateVirtual(static_cast<size_t>(desiredAddress), static_cast<size_t>(image.info.size), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 	copyMemory(reinterpret_cast<uint8_t *>(baseAddress), image.header->get(), image.header->size());
 
 	for(auto &i : image.sections)
@@ -54,7 +55,7 @@ void Win32Loader::processImports(uint64_t baseAddress, const Image &image)
 			String str = "Can't load library ";
 			str.append(i.libraryName);
 			Win32NativeHelper::get()->showError(str);
-			Win32NativeHelper::get()->terminate();
+			Win32SystemCaller::get()->terminate();
 		}
 		for(auto &j : i.functions)
 		{
@@ -84,9 +85,9 @@ void Win32Loader::adjustPageProtection(uint64_t baseAddress, const Image &image)
 				protect = PAGE_EXECUTE_READ;
 		}
 
-		Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size), protect);
+		Win32SystemCaller::get()->protectVirtual(reinterpret_cast<void *>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size), protect);
 		if(i.flag & SectionFlagExecute)
-			Win32NativeHelper::get()->flushInstructionCache(static_cast<size_t>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size));
+			Win32SystemCaller::get()->flushInstructionCache(static_cast<size_t>(baseAddress + i.baseAddress), static_cast<int32_t>(i.size));
 	}
 }
 
@@ -245,9 +246,9 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 								size_t dest = static_cast<size_t>(baseAddress + j.iat);
 								size_t old;
 
-								Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), PAGE_READWRITE, &old);
+								Win32SystemCaller::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), PAGE_READWRITE, &old);
 								*reinterpret_cast<size_t *>(dest) = reinterpret_cast<size_t>(LdrResolveDelayLoadedAPIProxy);
-								Win32NativeHelper::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), old, &old);
+								Win32SystemCaller::get()->protectVirtual(reinterpret_cast<void *>(dest), sizeof(size_t), old, &old);
 								break;
 							}
 						}
@@ -539,11 +540,11 @@ size_t __stdcall Win32Loader::LdrResolveDelayLoadedAPIProxy(void *base_, PCIMAGE
 			functionAddress = static_cast<size_t>(loaderInstance_->getFunctionAddress(static_cast<uint64_t>(*moduleHandle), String(nameEntry->Name)));
 
 		size_t old;
-		Win32NativeHelper::get()->protectVirtual(dest, 5, PAGE_READWRITE, &old);
+		Win32SystemCaller::get()->protectVirtual(dest, 5, PAGE_READWRITE, &old);
 		*dest = 0xe9; //jmp
 		size_t rel = functionAddress - (reinterpret_cast<size_t>(dest) + 5);
 		*reinterpret_cast<size_t *>(dest + 1) = rel;
-		Win32NativeHelper::get()->protectVirtual(dest, 5, old, &old);
+		Win32SystemCaller::get()->protectVirtual(dest, 5, old, &old);
 
 		return static_cast<size_t>(functionAddress);
 	}

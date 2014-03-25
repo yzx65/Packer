@@ -1,5 +1,6 @@
 #include "../../../Runtime/PEFormat.h"
-#include "../../Win32Runtime.h"
+#include "../../Win32NativeHelper.h"
+#include "../../Win32SysCall.h"
 #include "../../../Util/DataSource.h"
 #include "../../Win32Loader.h"
 #include "../Win32Stub.h"
@@ -49,7 +50,7 @@ int Entry()
 		}
 
 		//self relocation
-		newLocation = reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, stage2Header->imageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
+		newLocation = reinterpret_cast<uint8_t *>(Win32SystemCaller::get()->allocateVirtual(0, stage2Header->imageSize, MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
 		stage2Start = reinterpret_cast<uint8_t *>(stage2Header) + sizeof(Win32StubStage2Header);
 		copyMemory(newLocation, stage2Start, stage2Header->imageSize);
 		uint64_t *relocationData = reinterpret_cast<uint64_t *>(stage2Start + stage2Header->imageSize);
@@ -67,7 +68,7 @@ int Entry()
 void Execute()
 {
 	Win32NativeHelper::get()->init();
-	Win32NativeHelper::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->getMyBase()));
+	Win32SystemCaller::get()->unmapViewOfSection(reinterpret_cast<void *>(Win32NativeHelper::get()->getMyBase()));
 
 	Image mainImage = Image::unserialize(MakeShared<MemoryDataSource>(mainData)->getView(0), nullptr);
 

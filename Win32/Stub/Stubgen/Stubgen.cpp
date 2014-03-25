@@ -1,4 +1,4 @@
-#include "../../Win32Runtime.h"
+#include "../../Win32NativeHelper.h"
 #include "../../Win32File.h"
 #include "../../../Runtime/PEFormat.h"
 #include "../../../Util/Util.h"

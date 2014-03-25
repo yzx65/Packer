@@ -1,6 +1,6 @@
 #include "Allocator.h"
 
-#include "../Win32/Win32Runtime.h"
+#include "../Win32/Win32SysCall.h"
 #include "../Util/Util.h"
 
 #include <cstdint>
@@ -33,12 +33,12 @@ Bucket *lastBucket[BUCKET_COUNT];
 
 uint8_t *allocateVirtual(size_t size)
 {
-	return reinterpret_cast<uint8_t *>(Win32NativeHelper::get()->allocateVirtual(0, multipleOf(size, 4096), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+	return reinterpret_cast<uint8_t *>(Win32SystemCaller::get()->allocateVirtual(0, multipleOf(size, 4096), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
 }
 
 bool freeVirtual(void *ptr)
 {
-	return Win32NativeHelper::get()->freeVirtual(ptr);
+	return Win32SystemCaller::get()->freeVirtual(ptr);
 }
 
 uint8_t *searchEmpty(Bucket *bucket, uint8_t *ptr, size_t bucketSize, size_t capacity)

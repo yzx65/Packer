@@ -27,9 +27,6 @@
     <ClCompile Include="..\Win32\Win32Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\Win32\Win32Runtime.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Win32Entry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,12 +54,15 @@
     <ClCompile Include="..\LZMA\LzFind.c">
       <Filter>LZMA</Filter>
     </ClCompile>
+    <ClCompile Include="..\Win32\Win32SysCall.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Win32\Win32NativeHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="PackerMain.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Win32\Win32Runtime.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Win32\Win32Structure.h">
@@ -133,6 +133,12 @@
     </ClInclude>
     <ClInclude Include="..\LZMA\LzFind.h">
       <Filter>LZMA</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Win32\Win32SysCall.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Win32\Win32NativeHelper.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -6,7 +6,7 @@
 #include "../Util/Map.h"
 
 #ifdef _WIN32
-#include "../Win32/Win32Runtime.h" //for path search.
+#include "../Win32/Win32NativeHelper.h" //for path search.
 #endif
 
 template<typename T>

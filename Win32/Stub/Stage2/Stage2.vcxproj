@@ -115,7 +115,8 @@
     </ClCompile>
     <ClCompile Include="..\..\Win32File.cpp" />
     <ClCompile Include="..\..\Win32Loader.cpp" />
-    <ClCompile Include="..\..\Win32Runtime.cpp" />
+    <ClCompile Include="..\..\Win32NativeHelper.cpp" />
+    <ClCompile Include="..\..\Win32SysCall.cpp" />
     <ClCompile Include="Stage2.cpp" />
   </ItemGroup>
   <ItemGroup>

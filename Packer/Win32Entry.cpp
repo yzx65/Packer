@@ -1,5 +1,5 @@
 #include "PackerMain.h"
-#include "../Win32/Win32Runtime.h"
+#include "../Win32/Win32NativeHelper.h"
 #include "../Util/Util.h"
 
 void WindowsEntry()

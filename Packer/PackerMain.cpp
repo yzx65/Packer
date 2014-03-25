@@ -6,7 +6,7 @@
 #include "../Win32/Stub/StubData.h"
 #include "../Util/Vector.h"
 #include "../Runtime/Signature.h"
-#include "../Win32/Win32Runtime.h"
+#include "../Win32/Win32NativeHelper.h"
 
 PackerMain::PackerMain(const Option &option) : option_(option)
 {

@@ -114,7 +114,8 @@
     </ClCompile>
     <ClCompile Include="..\Win32\Win32File.cpp" />
     <ClCompile Include="..\Win32\Win32Loader.cpp" />
-    <ClCompile Include="..\Win32\Win32Runtime.cpp" />
+    <ClCompile Include="..\Win32\Win32NativeHelper.cpp" />
+    <ClCompile Include="..\Win32\Win32SysCall.cpp" />
     <ClCompile Include="PackerMain.cpp" />
     <ClCompile Include="Win32Entry.cpp" />
   </ItemGroup>
@@ -141,8 +142,9 @@
     <ClInclude Include="..\Util\Vector.h" />
     <ClInclude Include="..\Win32\Win32File.h" />
     <ClInclude Include="..\Win32\Win32Loader.h" />
-    <ClInclude Include="..\Win32\Win32Runtime.h" />
+    <ClInclude Include="..\Win32\Win32NativeHelper.h" />
     <ClInclude Include="..\Win32\Win32Structure.h" />
+    <ClInclude Include="..\Win32\Win32SysCall.h" />
     <ClInclude Include="PackerMain.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -2,7 +2,8 @@
 
 #include "../Util/Util.h"
 
-#include "Win32Runtime.h"
+#include "Win32SysCall.h"
+#include "Win32NativeHelper.h"
 
 Win32File::Win32File(const String &filename, bool write) : mapCounter_(0), write_(write), mapHandle_(INVALID_HANDLE_VALUE)
 {
@@ -46,24 +47,24 @@ void Win32File::open(const String &filename)
 		disposition = FILE_OVERWRITE_IF;
 	}
 
-	fileHandle_ = Win32NativeHelper::get()->createFile(access, fullPath.c_str(), fullPath.length(), FILE_SHARE_READ, disposition);
+	fileHandle_ = Win32SystemCaller::get()->createFile(access, fullPath.c_str(), fullPath.length(), FILE_SHARE_READ, disposition);
 	if(fileHandle_ == INVALID_HANDLE_VALUE)
 		return;
 }
 
 void Win32File::resize(uint64_t newSize)
 {
-	Win32NativeHelper::get()->setFileSize(fileHandle_, newSize);
+	Win32SystemCaller::get()->setFileSize(fileHandle_, newSize);
 }
 
 void Win32File::close() 
 {
 	if(mapHandle_ != INVALID_HANDLE_VALUE)
-		Win32NativeHelper::get()->closeHandle(mapHandle_);
+		Win32SystemCaller::get()->closeHandle(mapHandle_);
 	if(fileHandle_ != INVALID_HANDLE_VALUE)
 	{
-		Win32NativeHelper::get()->flushFile(fileHandle_);
-		Win32NativeHelper::get()->closeHandle(fileHandle_);
+		Win32SystemCaller::get()->flushFile(fileHandle_);
+		Win32SystemCaller::get()->closeHandle(fileHandle_);
 	}
 }
 
@@ -84,7 +85,7 @@ void *Win32File::getHandle()
 
 void Win32File::write(const uint8_t *data, size_t size)
 {
-	Win32NativeHelper::get()->writeFile(fileHandle_, data, size);
+	Win32SystemCaller::get()->writeFile(fileHandle_, data, size);
 }
 
 SharedPtr<DataView> Win32File::getView(uint64_t offset, size_t size)
@@ -99,7 +100,7 @@ uint8_t *Win32File::map(uint64_t offset)
 		int sectionProtect = PAGE_READONLY;
 		if(write_)
 			sectionProtect = PAGE_READWRITE;
-		mapHandle_ = Win32NativeHelper::get()->createSection(fileHandle_, sectionProtect, 0, nullptr, 0);
+		mapHandle_ = Win32SystemCaller::get()->createSection(fileHandle_, sectionProtect, 0, nullptr, 0);
 	}
 
 	if(mapCounter_ == 0)
@@ -107,7 +108,7 @@ uint8_t *Win32File::map(uint64_t offset)
 		uint32_t access = FILE_MAP_READ;
 		if(write_)
 			access = FILE_MAP_READ | FILE_MAP_WRITE;
-		mapAddress_ = static_cast<uint8_t *>(Win32NativeHelper::get()->mapViewOfSection(mapHandle_, access, 0, 0, 0));
+		mapAddress_ = static_cast<uint8_t *>(Win32SystemCaller::get()->mapViewOfSection(mapHandle_, access, 0, 0, 0));
 	}
 
 	mapCounter_ ++;
@@ -119,7 +120,7 @@ void Win32File::unmap()
 	mapCounter_ --;
 	if(mapCounter_ == 0)
 	{
-		Win32NativeHelper::get()->unmapViewOfSection(mapAddress_);
+		Win32SystemCaller::get()->unmapViewOfSection(mapAddress_);
 		mapAddress_ = 0;
 	}
 }
@@ -132,7 +133,7 @@ String File::combinePath(const String &directory, const String &filename)
 bool File::isPathExists(const String &path)
 {
 	WString widePath = StringToWString(path);
-	if(Win32NativeHelper::get()->getFileAttributes(widePath.c_str(), widePath.length()) == INVALID_FILE_ATTRIBUTES)
+	if(Win32SystemCaller::get()->getFileAttributes(widePath.c_str(), widePath.length()) == INVALID_FILE_ATTRIBUTES)
 		return false;
 	return true;
 }
