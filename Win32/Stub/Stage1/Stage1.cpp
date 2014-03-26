@@ -92,21 +92,17 @@ int Entry()
 	IMAGE_DOS_HEADER *dosHeader = reinterpret_cast<IMAGE_DOS_HEADER *>(myBase);
 	IMAGE_NT_HEADERS32 *ntHeader = reinterpret_cast<IMAGE_NT_HEADERS32 *>(myBase + dosHeader->e_lfanew);
 	IMAGE_SECTION_HEADER *sectionHeader = reinterpret_cast<IMAGE_SECTION_HEADER *>(myBase + dosHeader->e_lfanew + sizeof(uint32_t)+ sizeof(IMAGE_FILE_HEADER)+ ntHeader->FileHeader.SizeOfOptionalHeader);
-	for(int i = 0; i < ntHeader->FileHeader.NumberOfSections; ++ i)
+
+	uint32_t sectionName = *reinterpret_cast<uint32_t *>(sectionHeader[2].Name);
+	uint8_t *sectionData = reinterpret_cast<uint8_t *>(sectionHeader[2].VirtualAddress + reinterpret_cast<size_t>(myBase));
+
+	size_t sectionSize = sectionHeader[2].VirtualSize;
+	__asm
 	{
-		uint32_t sectionName = *reinterpret_cast<uint32_t *>(sectionHeader[i].Name);
-		uint8_t *sectionData = reinterpret_cast<uint8_t *>(sectionHeader[i].VirtualAddress + reinterpret_cast<size_t>(myBase));
-		if(i == 2)
-		{
-			size_t sectionSize = sectionHeader[i].VirtualSize;
-			__asm
-			{
-				mov edx, sectionName
-				mov eax, sectionData
-				mov ebx, sectionSize
-				xor ecx, ecx
-				in eax, 4
-			}
-		}
+		mov edx, sectionName
+		mov eax, sectionData
+		mov ebx, sectionSize
+		xor ecx, ecx
+		in eax, 4
 	}
 }
