@@ -282,7 +282,7 @@ uint64_t Win32Loader::loadLibrary(const String &filename, bool asDataFile)
 		}
 	}
 
-	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, image_.filePath, (asDataFile ? -1 : image_.info.architecture));
+	SharedPtr<FormatBase> format = FormatBase::loadImport(filename, (asDataFile ? -1 : image_.info.architecture));
 	if(!format.get())
 		return 0;
 	return loadImage(format->toImage(), asDataFile);
@@ -403,12 +403,12 @@ uint32_t __stdcall Win32Loader::GetModuleFileNameAProxy(void *hModule, char *lpF
 {
 	String path;
 	if(hModule == nullptr)
-		path = File::combinePath(loaderInstance_->image_.filePath, loaderInstance_->image_.fileName);
+		path = loaderInstance_->image_.fileName;
 	else
 	{
 		auto &it = loaderInstance_->loadedImages_.find(reinterpret_cast<uint64_t>(hModule));
 		if(it != loaderInstance_->loadedImages_.end())
-			path = File::combinePath(it->value.filePath, it->value.fileName);
+			path = it->value.fileName;
 	}
 	if(nSize < path.length())
 		return path.length();
@@ -472,7 +472,6 @@ uint32_t __stdcall Win32Loader::GetModuleHandleExWProxy(uint32_t flags, const wc
 	for(auto &i : loaderInstance_->loadedImages_)
 	{
 		if(i.value.fileName.icompare(filename) == 0 || 
-			File::combinePath(i.value.filePath, i.value.fileName).icompare(filename) == 0 || 
 			i.value.fileName.substr(0, i.value.fileName.length() - 4).icompare(filename) == 0)
 		{
 			*result = reinterpret_cast<void *>(i.key);

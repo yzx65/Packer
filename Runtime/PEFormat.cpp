@@ -368,7 +368,6 @@ Image PEFormat::toImage()
 
 	Image image;
 	image.fileName = getFileName();
-	image.filePath = getFilePath();
 	image.info = info_;
 	image.imports = std::move(imports_);
 	image.sections = std::move(sections_);
@@ -533,14 +532,13 @@ SharedPtr<FormatBase> loadImport(const String &path, int architecture)
 	return result;
 }
 
-SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, const String &hint, int architecture)
+SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, int architecture)
 {
 	if(File::isPathExists(filename))
 		return ::loadImport(filename, architecture);
 
 	List<String> searchPaths;
-	if(hint.length())
-		searchPaths.push_back(hint);
+	searchPaths.push_back(WStringToString(Win32NativeHelper::get()->getCurrentDirectory()));
 #ifdef _WIN32
 	wchar_t *environmentBlock = Win32NativeHelper::get()->getEnvironments();
 	WString path;

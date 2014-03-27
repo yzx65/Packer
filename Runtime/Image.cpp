@@ -58,7 +58,6 @@ Vector<uint8_t> Image::serialize() const
 	A(info.platformData1);
 	A(info.size);
 
-	A(filePath);
 	A(fileName);
 
 	A(static_cast<uint32_t>(exports.size()));
@@ -208,7 +207,6 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 	result.info.platformData1 = R(uint64_t);
 	result.info.size = R(uint64_t);
 
-	result.filePath = R(String);
 	result.fileName = R(String);
 
 	uint32_t exportLen = R(uint32_t);

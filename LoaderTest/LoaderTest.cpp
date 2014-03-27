@@ -21,7 +21,7 @@ List<Image> loadImport(SharedPtr<FormatBase> input)
 
 		if(input->isSystemLibrary(fileName))
 			continue;
-		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input->getFilePath(), input->getInfo().architecture);
+		SharedPtr<FormatBase> import = FormatBase::loadImport(fileName, input->getInfo().architecture);
 		loadedFiles_->push_back(import->getFileName());
 		result.push_back(import->toImage());
 
