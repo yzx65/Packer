@@ -538,7 +538,8 @@ SharedPtr<FormatBase> FormatBase::loadImport(const String &filename, int archite
 		return ::loadImport(filename, architecture);
 
 	List<String> searchPaths;
-	searchPaths.push_back(WStringToString(Win32NativeHelper::get()->getCurrentDirectory()));
+	String currentDirectory = WStringToString(Win32NativeHelper::get()->getCurrentDirectory());
+	searchPaths.push_back(currentDirectory.substr(0, currentDirectory.length() - 1));
 #ifdef _WIN32
 	wchar_t *environmentBlock = Win32NativeHelper::get()->getEnvironments();
 	WString path;
