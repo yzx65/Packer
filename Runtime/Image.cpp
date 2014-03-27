@@ -128,7 +128,6 @@ Vector<uint8_t> Image::serialize() const
 	LzmaEncProps_Init(&props);
 
 	props.numThreads = 1;
-	props.algo = 0; //fast
 	LzmaEncProps_Normalize(&props);
 
 	uint32_t sizeSize = sizeof(uint32_t) * 2;
