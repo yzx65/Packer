@@ -533,6 +533,9 @@ void *Win32x86SystemCaller::mapViewOfSection(void *section, uint32_t dwDesiredAc
 	uint32_t viewSize;
 	size_t protect = normalizeMapViewOfSectionOptions(dwDesiredAccess);
 
+	sectionOffset.QuadPart = offset;
+	viewSize = dwNumberOfBytesToMap;
+
 	uint32_t args[] ={reinterpret_cast<uint32_t>(section), NtCurrentProcess(), reinterpret_cast<uint32_t>(&result), 0, 0,
 		reinterpret_cast<uint32_t>(&sectionOffset), reinterpret_cast<uint32_t>(&viewSize), 1, 0, protect};
 	executeWin32Syscall(systemCalls_[NtMapViewOfSection], args);
