@@ -99,7 +99,26 @@ Vector<uint8_t> Image::serialize() const
 		A(i);
 
 	for(auto &i : sections)
+	{
 		A(i.data->get(), i.data->size());
+		if((i.flag & SectionFlagCode) && i.data->size())
+		{
+			uint8_t *codeStart = result.end() - i.data->size();
+			for(size_t j = 0; j < i.data->size() - 5; j ++)
+			{
+				if(codeStart[j] == 0xE8 || codeStart[j] == 0xE9) //call rel32, jmp rel32
+				{
+					*reinterpret_cast<int32_t *>(codeStart + j + 1) += (j + 5);
+					j += 4;
+				}
+				else if(codeStart[j] == 0x0f && (codeStart[j + 1] >= 0x80 && codeStart[j + 1] <= 0x8f)) //conditional jmp rel32
+				{
+					*reinterpret_cast<int32_t *>(codeStart + j + 2) += (j + 6);
+					j += 5;
+				}
+			}
+		}
+	}
 
 	A(header->get(), header->size());
 
@@ -244,7 +263,26 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 		result.relocations.push_back(R(uint64_t));
 
 	for(auto &i : result.sections)
+	{
 		i.data = R(SharedPtr<DataView>, uncompressed);
+		if((i.flag & SectionFlagCode) && i.data->size())
+		{
+			uint8_t *codeStart = i.data->get();
+			for(size_t j = 0; j < i.data->size() - 5; j ++)
+			{
+				if(codeStart[j] == 0xE8 || codeStart[j] == 0xE9) //call rel32, jmp rel32
+				{
+					*reinterpret_cast<int32_t *>(codeStart + j + 1) -= (j + 5);
+					j += 4;
+				}
+				else if(codeStart[j] == 0x0f && (codeStart[j + 1] >= 0x80 && codeStart[j + 1] <= 0x8f)) //conditional jmp rel32
+				{
+					*reinterpret_cast<int32_t *>(codeStart + j + 2) -= (j + 6);
+					j += 5;
+				}
+			}
+		}
+	}
 
 	result.header = R(SharedPtr<DataView>, uncompressed);
 #undef R
