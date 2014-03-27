@@ -101,7 +101,7 @@ Vector<uint8_t> Image::serialize() const
 	for(auto &i : sections)
 	{
 		A(i.data->get(), i.data->size());
-		if((i.flag & SectionFlagCode) && i.data->size())
+		if((i.flag & SectionFlagCode) && i.data->size() > 5)
 		{
 			uint8_t *codeStart = result.end() - i.data->size();
 			for(size_t j = 0; j < i.data->size() - 5; j ++)
@@ -265,7 +265,7 @@ Image Image::unserialize(SharedPtr<DataView> data_, size_t *processedSize)
 	for(auto &i : result.sections)
 	{
 		i.data = R(SharedPtr<DataView>, uncompressed);
-		if((i.flag & SectionFlagCode) && i.data->size())
+		if((i.flag & SectionFlagCode) && i.data->size() > 5)
 		{
 			uint8_t *codeStart = i.data->get();
 			for(size_t j = 0; j < i.data->size() - 5; j ++)
